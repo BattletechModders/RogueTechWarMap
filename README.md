@@ -22,8 +22,10 @@ You can run the app locally by running `yarn dev`
 
 ## Setting up VSCode
 
-- Install the `ESLint` plugin
-- Install the `Prettier` plugin
+- Install the `ESLint` extension
+- Install the `Prettier` extension
+- Install `PostCSS Language Support` extension
+- Install `Tailwind CSS IntelliSense` extension
 
 # React + TypeScript + Vite
 
