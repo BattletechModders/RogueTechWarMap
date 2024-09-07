@@ -1,23 +1,31 @@
 # Overview
- 
+
 This project is for the rewrite of the Rogue War Online Map. The project is written in React and uses Vite - https://vitejs.dev/guide/
 
 # Setup environment
 
-Setup your local environment
-* Install Git.
-* Install Git client of choice (SourceTree is good if you don't have a favourite)
-* Install a node version manager (e.g. https://github.com/coreybutler/nvm-windows) and node
-* Install `yarn` by doing the following
-	*  `corepack enable` - enable **corepack**
-	*  `corepack yarn` - install **yarn**
-* Run `yarn --version`
-	* If the command fails to execute, open a powershell window with admin permissions and run
-	`Set-ExecutionPolicy RemoteSigned` to set your execution policy.
-* `yarn add -D vite` to install vite
-* Run `yarn install` to install all the required dependencies
+## Setup your local environment
+
+- Install Git.
+- Install Git client of choice (SourceTree is good if you don't have a favourite)
+- Install a node version manager (e.g. https://github.com/coreybutler/nvm-windows) and node
+- Install `yarn` by doing the following
+  - `corepack enable` - enable **corepack**
+  - `corepack yarn` - install **yarn**
+- Run `yarn --version`
+  - If the command fails to execute, open a powershell window with admin permissions and run
+    `Set-ExecutionPolicy RemoteSigned` to set your execution policy.
+- `yarn add -D vite` to install vite
+- Run `yarn install` to install all the required dependencies
 
 You can run the app locally by running `yarn dev`
+
+## Setting up VSCode
+
+- Install the `ESLint` extension
+- Install the `Prettier` extension
+- Install `PostCSS Language Support` extension
+- Install `Tailwind CSS IntelliSense` extension
 
 # React + TypeScript + Vite
 
@@ -43,7 +51,7 @@ export default tseslint.config({
       tsconfigRootDir: import.meta.dirname,
     },
   },
-})
+});
 ```
 
 - Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
@@ -52,7 +60,7 @@ export default tseslint.config({
 
 ```js
 // eslint.config.js
-import react from 'eslint-plugin-react'
+import react from 'eslint-plugin-react';
 
 export default tseslint.config({
   // Set the react version
@@ -67,6 +75,5 @@ export default tseslint.config({
     ...react.configs.recommended.rules,
     ...react.configs['jsx-runtime'].rules,
   },
-})
+});
 ```
-
