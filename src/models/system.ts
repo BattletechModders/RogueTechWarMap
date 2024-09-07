@@ -1,5 +1,7 @@
 export type System = {
-  id: number;
-  colour: string;
-  prettyName: string;
+  name: string;
+  owner: string;
+  posX: number;
+  posY: number;
+  sysUrl: string;
 };
