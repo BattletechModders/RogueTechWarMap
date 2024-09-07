@@ -1,48 +1,27 @@
-import { useState } from 'react';
-import rtLogo from './assets/rtLogo.png';
 import { MenuOptions } from './menu-options';
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
     <>
-      <div className="wrapper">
-        <nav id="sidebar">
-          <div className="sidebar-header">
+      <div className="w-full flex h-svh max-h-svh">
+        <div className="h-full flex-[0.15]" id="sideBar">
+          {/* SideBar */}
+          <h5 className="block font-sans text-xl antialiased font-semibold leading-snug tracking-normal text-blue-gray-900">
             <img id="RoguewarLogo" src="/src/assets/rtLogo.png" />
-          </div>
+          </h5>
           <MenuOptions />
-          <a href="/tos" style={{ position: 'absolute', bottom: '5px' }}>
-            <span className="fas fa-list-alt"></span>
-            Terms of Data Use
-          </a>
-        </nav>
-        <div
-          id="content"
-          className="container"
-          style={{ margin: '0px', padding: '0px' }}
-        >
-          <h1 className="text-4xl text-blue-500">Rogue War Online Map</h1>
-          <div className="unsupported-browser"></div>
-          <nav
-            className="navbar navbar-dark bg-dark"
-            style={{ padding: '0.5rem 0rem' }}
-          >
-            <div
-              className="container-fluid"
-              // style="padding-left: 0px"
-            >
-              <button
-                type="button"
-                id="sidebarCollapse"
-                className="btn btn-outline-light"
-              >
-                <i className="fas fa-align-left"></i>
-              </button>
-            </div>
-          </nav>
-          <div id="container"></div>
+          <div className="absolute inset-0">
+            <a href="/tos" style={{ position: 'absolute', bottom: '5px' }}>
+              <span className="fas fa-list-alt"></span>
+              Terms of Data Use
+            </a>
+          </div>
+        </div>
+        <div className="h-full flex-1">
+          <div className="flex h-full flex-col justify-between overflow-y-scroll bg-black">
+            {/* ContentArea */}
+            <div className="text-white">Content Area</div>
+          </div>
         </div>
       </div>
     </>

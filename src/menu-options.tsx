@@ -1,166 +1,122 @@
+import {
+  HomeIcon,
+  ChevronRightIcon,
+  ChevronLeftIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from './icons';
+
 export const MenuOptions = () => {
   return (
     <>
-      <ul className="list-unstyled components">
-        <li>
-          <a href="/index">
-            <span className="fas fa-home"></span>
-            Home
-          </a>
-        </li>
-        <li>
-          <a href="/recenthistory">
-            <span className="fas fa-history"></span>
-            Recent Activity
-          </a>
-        </li>
-        <li>
-          <a
-            href="#infoSubmenu"
-            data-toggle="collapse"
-            aria-expanded="false"
-            className="dropdown-toggle"
-          >
-            <span className="fas fa-info-circle"></span>
-            War Info
-          </a>
-          <ul className="collapse list-unstyled" id="infoSubmenu">
-            <li>
-              <a href="/howitworks">
-                <span className="fas fa-atom"></span>
-                How It Works
-              </a>
-            </li>
-            <li>
-              <a href="/contract-info">
-                <span className="fas fa-file-signature"></span>
-                Contracts
-              </a>
-            </li>
-            <li>
-              <a href="/globalsettings">
-                <span className="fas fa-globe"></span>
-                View Globals
-              </a>
-            </li>
-            <li>
-              <a href="/playersearch">
-                <span className="fas fa-fingerprint"></span>
-                Career Lookup
-              </a>
-            </li>
-            <li>
-              <a href="/insurrectsettings">
-                <span className="fas fa-chalkboard-teacher"></span>
-                Insurrection Information
-              </a>
-            </li>
-            <li>
-              <a href="/blackmarkets">
-                <span className="fas fa-digital-tachograph"></span>
-                About Black Markets
-              </a>
-            </li>
-            <li>
-              <a href="/systemdamage">
-                <span className="fas fa-skull"></span>
-                System Damage Information
-              </a>
-            </li>
-          </ul>
-        </li>
-        <li>
-          <a href="/factions">
-            <span className="fas fa-crown"></span>
-            Factions
-          </a>
-        </li>
-        <li>
-          <a href="/rtolegends">
-            <span className="fas fa-user-secret"></span>
-            RTO Pilots
-          </a>
-        </li>
-        <li>
-          <a href="/systems">
-            <span className="fas fa-atlas"></span>
-            Star Systems
-          </a>
-        </li>
-        <li>
-          <a href="/factorygoods">
-            <span className="fas fa-industry"></span>
-            Factory Goods
-          </a>
-        </li>
-        <li>
-          <a href="/insurrections">
-            <span className="fab fa-rebel"></span>
-            Insurrections
-          </a>
-        </li>
-        <li>
-          <a href="/events">
-            <span className="fas fa-newspaper"></span>
-            Events
-          </a>
-        </li>
-        <li>
-          <a href="/warstats">
-            <span className="fas fa-chart-bar"></span>
-            War Stats
-          </a>
-        </li>
-        <li>
-          <a href="/blackboxMessages">
-            <span className="fas fa-satellite-dish"></span>
-            K-series Transmitter
-          </a>
-        </li>
-        <li>
-          <a
-            href="#seasonSubmenu"
-            data-toggle="collapse"
-            aria-expanded="false"
-            className="dropdown-toggle"
-          >
-            <span className="fas fa-monument"></span>
-            Historical Ages
-          </a>
-          <ul className="collapse list-unstyled" id="seasonSubmenu">
-            <li>
-              <a href="/ages/s1/overview">
-                <span className="fas fa-journal-whills"></span>
-                Season 1
-              </a>
-            </li>
-            <li>
-              <a href="/ages/s1.5/overview">
-                <span className="fas fa-journal-whills"></span>
-                Season 1.5
-              </a>
-            </li>
-            <li>
-              <a href="/ages/s2r/overview">
-                <span className="fas fa-journal-whills"></span>
-                Season 2R
-              </a>
-            </li>
-            <li>
-              <a href="/ages/s3/overview">
-                <span className="fas fa-journal-whills"></span>
-                Season 3
-              </a>
-            </li>
-          </ul>
-        </li>
-        <li>
-          <a href="/warmap">
-            <span className="fas fa-map-marked-alt"></span>
-            War Map
-          </a>
-        </li>
-      </ul>
+      <nav className="flex min-w-[240px] flex-col gap-1 p-2 font-sans text-base font-normal text-blue-gray-700">
+        <SideMenuOption icon={<HomeIcon />} label="Home" url="/index" />
+        <SideMenuOption
+          icon={<ChevronUpIcon />}
+          label="Recent Activity"
+          url="/recenthistory"
+        />
+        <CollapsableSideMenuOption icon={<ChevronRightIcon />} label="War Info">
+          <SideMenuOption
+            icon={<ChevronLeftIcon />}
+            url="/howitworks"
+            label="How It Works"
+          />
+        </CollapsableSideMenuOption>
+        <SideMenuOption
+          icon={<ChevronDownIcon />}
+          label="Factions"
+          url="/factions"
+        />
+        <SideMenuOption
+          icon={<HomeIcon />}
+          label="RTO Pilots"
+          url="rtolegends"
+        />
+        <SideMenuOption
+          icon={<HomeIcon />}
+          label="Star Systems"
+          url="rtolegends"
+        />
+        <SideMenuOption
+          icon={<HomeIcon />}
+          label="Factory Goods"
+          url="factorygoods"
+        />
+        <SideMenuOption
+          icon={<HomeIcon />}
+          label="Insurrections"
+          url="/insurrections"
+        />
+        <SideMenuOption
+          icon={<ChevronRightIcon />}
+          label="Events"
+          url="/events"
+        />
+        <SideMenuOption
+          icon={<ChevronLeftIcon />}
+          label="War Stats"
+          url="/warstats"
+        />
+        <SideMenuOption
+          icon={<ChevronUpIcon />}
+          label="K-series Transmitter"
+          url="/blackboxMessages"
+        />
+        <CollapsableSideMenuOption icon={<HomeIcon />} label="Historical Ages">
+          <SideMenuOption
+            icon={<ChevronDownIcon />}
+            url="/ages/s1/overview"
+            label="Season 1"
+          />
+        </CollapsableSideMenuOption>
+        <SideMenuOption icon={<HomeIcon />} label="War Map" url="warmap" />
+      </nav>
+    </>
+  );
+};
+
+export interface SideMenuOptionProps {
+  label: string;
+  url: string;
+  icon: React.ReactNode;
+}
+
+export const SideMenuOption = (props: SideMenuOptionProps) => {
+  return (
+    <>
+      <a href={props.url} key={props.label}>
+        <div
+          role="button"
+          className="flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:bg-blue-gray-50 hover:bg-opacity-80 hover:text-blue-gray-900 focus:bg-blue-gray-50 focus:bg-opacity-80 
+          focus:text-blue-gray-900 active:bg-blue-gray-50 active:bg-opacity-80 active:text-blue-gray-900"
+        >
+          <div className="grid mr-4 place-items-center">{props.icon}</div>
+          {props.label}
+        </div>
+      </a>
+    </>
+  );
+};
+
+export interface CollapsableSideMenuProps {
+  label: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}
+
+export const CollapsableSideMenuOption = (props: CollapsableSideMenuProps) => {
+  return (
+    <>
+      <div
+        role="button"
+        className="flex items-center w-full p-3 leading-tight transition-all rounded-lg outline-none text-start hover:bg-blue-gray-50 hover:bg-opacity-80 hover:text-blue-gray-900 focus:bg-blue-gray-50 focus:bg-opacity-80 
+          focus:text-blue-gray-900 active:bg-blue-gray-50 active:bg-opacity-80 active:text-blue-gray-900"
+      >
+        <div className="grid mr-4 place-items-center">{props.icon}</div>
+        {props.label}
+      </div>
+      <div>{props.children}</div>
     </>
   );
 };

@@ -2,7 +2,6 @@
 
 .wrapper {
   display: flex;
-  /*width: 100%;*/
   align-items: stretch;
 }
 
@@ -107,10 +106,6 @@ a[aria-expanded='true']::before {
   font-size: 0.6em;
 }
 
-/*#sidebar a[aria-expanded="true"]::before {*/
-/*    content: '\e260';*/
-/*}*/
-
 #sidebar ul ul a {
   font-size: 0.9em !important;
   padding-left: 30px !important;
@@ -140,7 +135,6 @@ img#FactionLogo {
 #content table,
 tr {
   width: 100%;
-  /*border: 1px  solid black;*/
   vertical-align: top;
 }
 
