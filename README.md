@@ -1,6 +1,6 @@
 # Overview
  
-This project is for the rewrite of the Rogue War Online Map.
+This project is for the rewrite of the Rogue War Online Map. The project is written in React and uses Vite - https://vitejs.dev/guide/
 
 # Setup environment
 
