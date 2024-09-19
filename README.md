@@ -15,17 +15,12 @@ This project is for the rewrite of the Rogue War Online Map. The project is writ
 - Run `yarn --version`
   - If the command fails to execute, open a powershell window with admin permissions and run
     `Set-ExecutionPolicy RemoteSigned` to set your execution policy.
+
+## How the project was setup
+
 - `yarn add -D vite` to install vite
+- `yarn run tailwindcss init -p` to configure tailwind
 - Run `yarn install` to install all the required dependencies
-
-You can run the app locally by running `yarn dev`
-
-## Setting up VSCode
-
-- Install the `ESLint` extension
-- Install the `Prettier` extension
-- Install `PostCSS Language Support` extension
-- Install `Tailwind CSS IntelliSense` extension
 
 # React + TypeScript + Vite
 
@@ -47,7 +42,7 @@ export default tseslint.config({
   languageOptions: {
     // other options...
     parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      project: ["./tsconfig.node.json", "./tsconfig.app.json"],
       tsconfigRootDir: import.meta.dirname,
     },
   },
@@ -60,11 +55,11 @@ export default tseslint.config({
 
 ```js
 // eslint.config.js
-import react from 'eslint-plugin-react';
+import react from "eslint-plugin-react";
 
 export default tseslint.config({
   // Set the react version
-  settings: { react: { version: '18.3' } },
+  settings: { react: { version: "18.3" } },
   plugins: {
     // Add the react plugin
     react,
@@ -73,7 +68,7 @@ export default tseslint.config({
     // other rules...
     // Enable its recommended rules
     ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
+    ...react.configs["jsx-runtime"].rules,
   },
 });
 ```
