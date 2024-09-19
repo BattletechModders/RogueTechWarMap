@@ -28,10 +28,12 @@ export function SideMenu() {
         </div>
       </Link>
       <br />
-      <ul>
-        <MenuItem icon={FaHome} label="Home" path="/" key="Home" />
-        <MenuItem icon={FaMap} label="Map" path="/map" key="Map" />
-      </ul>
+      <nav>
+        <ul>
+          <MenuItem icon={FaHome} label="Home" path="/" key="Home" />
+          <MenuItem icon={FaMap} label="Map" path="/map" key="Map" />
+        </ul>
+      </nav>
       <div className="absolute inset-x-0 bottom-0 h-16 items-center text-2x text-white">
         <Link to="/tos" className="inline-">
           <FaList className="inline-block w-4 h-4 mr-2 -mt-1" />

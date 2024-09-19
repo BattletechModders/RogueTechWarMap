@@ -4,7 +4,6 @@ import {
   Route,
   RouterProvider,
 } from 'react-router-dom';
-import './App.css';
 import { Home, Map } from './components/pages/';
 import ErrorPage from './components/pages/Error';
 import { ToS } from './components/pages/ToS';
