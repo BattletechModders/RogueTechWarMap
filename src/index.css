@@ -55,7 +55,27 @@
     max-height: 95%;
   }
 
+  .text-info {
+    color: var(--info);
+  }
+
   .text-primary {
     color: var(--primary);
+  }
+
+  .border-info {
+    border-color: var(--info);
+  }
+
+  .border-primary {
+    border-color: var(--primary);
+  }
+
+  .button-info {
+    background-color: var(--info);
+  }
+
+  .button-primary {
+    background-color: var(--primary);
   }
 }

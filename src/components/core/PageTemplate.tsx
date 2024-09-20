@@ -6,7 +6,7 @@ function PageTemplate({
   return (
     <div className="bg-black">
       <SideMenu />
-      <div className="ml-60 pl-2">{children}</div>
+      <div className="ml-40 pl-2">{children}</div>
     </div>
   );
 }
