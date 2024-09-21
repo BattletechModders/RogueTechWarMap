@@ -43,7 +43,7 @@ export function HomeCard({
       <CardBody className="relative pt-2">{children}</CardBody>
       <CardFooter className="pt-10 absolute inset-x-5 bottom-8 ">
         <a target="_blank" href={buttonUri}>
-          <Button className={`text-red-50 ${buttonColor} rounded p-2`}>
+          <Button className={` ${buttonColor} rounded p-2`}>
             {buttonLabel}
           </Button>
         </a>
