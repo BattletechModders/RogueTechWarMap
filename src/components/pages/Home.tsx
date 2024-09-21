@@ -27,23 +27,23 @@ export function HomeCard({
   buttonUri,
   children,
 }: React.PropsWithChildren<HomeCardInterface>) {
-  const borderColor = `border${style}`;
-  const buttonColor = `button${style}`;
-  const textColor = `text${style}`;
+  const borderColor =
+    style === CardStyle.Primary ? 'border-primary' : 'border-info';
+  const buttonColor =
+    style === CardStyle.Primary ? 'button-primary' : 'button-info';
+  const textColor = style === CardStyle.Primary ? 'text-primary' : 'text-info';
 
   return (
     <Card
-      className={`mt-6 w-96 h-56 border-2 ${borderColor} p-5 rounded-lg ml-14 inline-block h-96 relative`}
+      className={`mt-6 w-96 h-56 border-2 ${borderColor} p-5 rounded-lg ml-14 inline-block h-96 relative grow-0`}
     >
       <CardHeader className={`relative font-bold ${textColor}`}>
         {heading}
       </CardHeader>
-
       <CardBody className="relative pt-2">{children}</CardBody>
-
       <CardFooter className="pt-10 absolute inset-x-5 bottom-8 ">
         <a target="_blank" href={buttonUri}>
-          <Button className={`${buttonColor} rounded p-2`}>
+          <Button className={`text-red-50 ${buttonColor} rounded p-2`}>
             {buttonLabel}
           </Button>
         </a>
