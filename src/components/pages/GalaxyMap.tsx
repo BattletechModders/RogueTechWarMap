@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import Konva from "konva";
 import { Stage, Layer, Image, Circle, Text, Label, Tag } from "react-konva";
+import galaxyBackground from "/src/assets/galaxyBackground2.svg";
 
 const GalaxyMap = () => {
   const stageRef = useRef<Konva.Stage | null>(null);
@@ -13,7 +14,7 @@ const GalaxyMap = () => {
 
   useEffect(() => {
     const image = new window.Image();
-    image.src = "/static/images/galaxyBackground2.svg";
+    image.src = galaxyBackground;
     image.onload = () => setBackground(image);
 
     const fetchData = async () => {
