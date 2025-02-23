@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from "react";
-import Konva from "konva";
-import { Stage, Layer, Image, Circle, Text, Label, Tag } from "react-konva";
-import galaxyBackground from "/src/assets/galaxyBackground2.svg";
+import { useEffect, useState, useRef } from 'react';
+import Konva from 'konva';
+import { Stage, Layer, Image, Circle, Text, Label, Tag } from 'react-konva';
+import galaxyBackground from '/src/assets/galaxyBackground2.svg';
 
 const GalaxyMap = () => {
   // Reference to the Konva Stage element, used for zoom and drag operations
@@ -11,19 +11,33 @@ const GalaxyMap = () => {
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
 
   // State to store the list of star systems, each with position, name, and owner
-  const [systems, setSystems] = useState<{ posX: string; posY: string; name: string; owner: string }[]>([]);
+  const [systems, setSystems] = useState<
+    { posX: string; posY: string; name: string; owner: string }[]
+  >([]);
 
   // State to store faction data, where each faction has a color and a pretty name
-  const [factions, setFactions] = useState<{ [key: string]: { colour: string; prettyName: string } }>({});
+  const [factions, setFactions] = useState<{
+    [key: string]: { colour: string; prettyName: string };
+  }>({});
 
   // State to handle tooltip visibility and position
-  const [tooltip, setTooltip] = useState({ visible: false, text: "", x: 0, y: 0 });
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    text: '',
+    x: 0,
+    y: 0,
+  });
 
   // State to manage zoom level (scaling factor)
   const [scale, setScale] = useState(1);
 
   // State to track the stage position for panning
   const [position, setPosition] = useState({ x: 600, y: 400 });
+
+  // Track touch state for pinch-to-zoom
+  const touchState = useRef<{ lastDistance: number | null }>({
+    lastDistance: null,
+  });
 
   useEffect(() => {
     // Load the background image and set it in state
@@ -35,28 +49,32 @@ const GalaxyMap = () => {
     const fetchData = async () => {
       try {
         const [systemData, factionData] = await Promise.all([
-          fetch("https://roguewar.org/api/v1/starmap/warmap").then(res => res.json()),
-          fetch("https://roguewar.org/api/v1/factions/warmap").then(res => res.json()),
+          fetch('https://roguewar.org/api/v1/starmap/warmap').then((res) =>
+            res.json()
+          ),
+          fetch('https://roguewar.org/api/v1/factions/warmap').then((res) =>
+            res.json()
+          ),
         ]);
 
         // Add a default faction for systems with no owner
-        factionData["NoFaction"] = {
-          colour: "gray",
-          prettyName: "Unaffiliated",
+        factionData['NoFaction'] = {
+          colour: 'gray',
+          prettyName: 'Unaffiliated',
         };
 
         // Update state with fetched data
         setSystems(systemData);
         setFactions(factionData);
       } catch (error) {
-        console.error("Failed to fetch data:", error);
+        console.error('Failed to fetch data:', error);
       }
     };
 
     fetchData();
   }, []); // Runs only once when the component mounts
 
-  // Handles zooming in and out with the mouse wheel
+  // Handle Mouse Wheel Zoom (Desktop)
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     const scaleBy = 1.25; // Defines the zoom factor
@@ -64,14 +82,14 @@ const GalaxyMap = () => {
     // Ensure the stage reference exists
     const stage = stageRef.current;
     if (!stage) {
-      console.warn("Stage reference is null, skipping zoom.");
+      console.warn('Stage reference is null, skipping zoom.');
       return;
     }
 
     // Ensure pointer position is valid
     const pointer = stage.getPointerPosition();
     if (!pointer) {
-      console.warn("Pointer position is null, skipping zoom.");
+      console.warn('Pointer position is null, skipping zoom.');
       return;
     }
 
@@ -81,7 +99,7 @@ const GalaxyMap = () => {
 
     // Ensure stage position is valid
     if (isNaN(stage.x()) || isNaN(stage.y())) {
-      console.warn("Stage position is invalid, resetting to default.");
+      console.warn('Stage position is invalid, resetting to default.');
       setPosition({ x: 0, y: 0 });
       return;
     }
@@ -132,7 +150,16 @@ const GalaxyMap = () => {
     >
       {/* Background layer */}
       <Layer>
-        {background && <Image image={background} x={-4800} y={-2700} width={9600} height={5400} opacity={0.2} />}
+        {background && (
+          <Image
+            image={background}
+            x={-4800}
+            y={-2700}
+            width={9600}
+            height={5400}
+            opacity={0.2}
+          />
+        )}
       </Layer>
 
       {/* Star system layer */}
@@ -143,29 +170,38 @@ const GalaxyMap = () => {
             x={Number(system.posX)} // Converts stored X position to number
             y={-Number(system.posY)} // Converts and negates Y position to match coordinate system
             radius={3} // Size of the star system marker
-            fill={factions[system.owner]?.colour || "gray"} // Uses faction color or gray as default
+            fill={factions[system.owner]?.colour || 'gray'} // Uses faction color or gray as default
             onMouseEnter={(e) => {
               const stage = e.target.getStage();
               if (!stage) return;
 
               const pointer = stage.getPointerPosition();
               if (!pointer) {
-                console.warn("Pointer position is null, skipping tooltip update.");
+                console.warn(
+                  'Pointer position is null, skipping tooltip update.'
+                );
                 return;
               }
 
               // Get absolute mouse position relative to viewport
-              const pointerAbs = stage.getRelativePointerPosition() || { x: pointer.x, y: pointer.y };
+              const pointerAbs = stage.getRelativePointerPosition() || {
+                x: pointer.x,
+                y: pointer.y,
+              };
 
               // Show tooltip with system name, faction, and coordinates
               setTooltip({
                 visible: true,
-                text: `${system.name}\n${factions[system.owner]?.prettyName}\n(${system.posX}, ${system.posY})`,
+                text: `${system.name}\n${
+                  factions[system.owner]?.prettyName
+                }\n(${system.posX}, ${system.posY})`,
                 x: pointerAbs.x,
                 y: pointerAbs.y,
               });
             }}
-            onMouseLeave={() => setTooltip({ visible: false, text: "", x: 0, y: 0 })} // Hide tooltip on mouse leave
+            onMouseLeave={() =>
+              setTooltip({ visible: false, text: '', x: 0, y: 0 })
+            } // Hide tooltip on mouse leave
           />
         ))}
       </Layer>
@@ -173,9 +209,9 @@ const GalaxyMap = () => {
       {/* Tooltip layer */}
       <Layer>
         {tooltip.visible && (
-          <Label 
+          <Label
             x={tooltip.x} // Tooltip follows mouse directly
-            y={tooltip.y} 
+            y={tooltip.y}
             opacity={0.75}
           >
             <Tag
@@ -188,7 +224,13 @@ const GalaxyMap = () => {
               shadowOffset={{ x: 10, y: 10 }}
               shadowOpacity={0.2}
             />
-            <Text text={tooltip.text} fontFamily="Calibri" fontSize={18} padding={5} fill="black" />
+            <Text
+              text={tooltip.text}
+              fontFamily="Calibri"
+              fontSize={18}
+              padding={5}
+              fill="black"
+            />
           </Label>
         )}
       </Layer>
@@ -197,5 +239,5 @@ const GalaxyMap = () => {
 };
 
 // Export component for use in the application
-export const Map = GalaxyMap; 
+export const Map = GalaxyMap;
 export default GalaxyMap;
