@@ -213,19 +213,21 @@ const GalaxyMap = () => {
       </Layer>
 
       {/* Tooltip layer */}
-      <Layer>
+      <Layer listening={false}>
         {tooltip.visible && (
           <Label
-            x={tooltip.x} // Tooltip follows mouse directly
+            x={tooltip.x}
             y={tooltip.y}
             opacity={0.75}
+            scaleX={2.5 / scale} // Inverse scaling to keep size fixed
+            scaleY={2.5 / scale} // Inverse scaling to keep size fixed
           >
             <Tag
-              fill="white" // Tooltip background color
-              pointerDirection="down" // Pointer direction for tooltip arrow
+              fill="white"
+              pointerDirection="down"
               pointerWidth={10}
               pointerHeight={10}
-              shadowColor="gray" // Adds slight shadow effect
+              shadowColor="gray"
               shadowBlur={10}
               shadowOffset={{ x: 10, y: 10 }}
               shadowOpacity={0.2}
@@ -233,7 +235,7 @@ const GalaxyMap = () => {
             <Text
               text={tooltip.text}
               fontFamily="Calibri"
-              fontSize={18}
+              fontSize={18} // Font size remains the same visually
               padding={5}
               fill="black"
             />
