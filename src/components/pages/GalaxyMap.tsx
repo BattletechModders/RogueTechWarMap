@@ -31,13 +31,16 @@ const GalaxyMap = () => {
   // State to manage zoom level (scaling factor)
   const [scale, setScale] = useState(1);
 
+  const MIN_SCALE = 0.2; // Prevents excessive zooming out
+  const MAX_SCALE = 10; // Prevents excessive zooming in
+
   // State to track the stage position for panning
   const [position, setPosition] = useState({ x: 600, y: 400 });
 
   // Track touch state for pinch-to-zoom
-  const touchState = useRef<{ lastDistance: number | null }>({
-    lastDistance: null,
-  });
+  // const touchState = useRef<{ lastDistance: number | null }>({
+  //   lastDistance: null,
+  // });
 
   useEffect(() => {
     // Load the background image and set it in state
@@ -95,7 +98,10 @@ const GalaxyMap = () => {
 
     // Determine the new scale based on scroll direction
     const oldScale = stage.scaleX();
-    const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+    let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+
+    // Constrain the scale within min and max bounds
+    newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
 
     // Ensure stage position is valid
     if (isNaN(stage.x()) || isNaN(stage.y())) {
