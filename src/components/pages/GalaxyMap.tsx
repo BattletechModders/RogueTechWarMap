@@ -32,15 +32,13 @@ const GalaxyMap = () => {
   const [scale, setScale] = useState(1);
 
   const MIN_SCALE = 0.2; // Prevents excessive zooming out
-  const MAX_SCALE = 10; // Prevents excessive zooming in
+  const MAX_SCALE = 15; // Prevents excessive zooming in
 
   // State to track the stage position for panning
-  const [position, setPosition] = useState({ x: 600, y: 400 });
-
-  // Track touch state for pinch-to-zoom
-  // const touchState = useRef<{ lastDistance: number | null }>({
-  //   lastDistance: null,
-  // });
+  const [position, setPosition] = useState({
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2,
+  });
 
   useEffect(() => {
     // Load the background image and set it in state
@@ -140,6 +138,40 @@ const GalaxyMap = () => {
     });
   };
 
+  //Troubleshooting Grid interval
+  const GRID_INTERVAL = 500;
+
+  const generateGridLabels = () => {
+    const labels = [];
+    for (let x = -5000; x <= 5000; x += GRID_INTERVAL) {
+      labels.push(
+        <Text
+          key={`x-${x}`}
+          x={x}
+          y={0}
+          text={`${x}`}
+          fontSize={12}
+          fill="white"
+          align="center"
+        />
+      );
+    }
+    for (let y = -5000; y <= 5000; y += GRID_INTERVAL) {
+      labels.push(
+        <Text
+          key={`y-${y}`}
+          x={0}
+          y={y}
+          text={`${y}`}
+          fontSize={12}
+          fill="white"
+          align="center"
+        />
+      );
+    }
+    return labels;
+  };
+
   return (
     <Stage
       width={window.innerWidth} // Stage width set to full window
@@ -154,6 +186,11 @@ const GalaxyMap = () => {
       onDragMove={handleDragMove} // Handles dragging movement
       onDragEnd={handleDragEnd} // Handles end of dragging
     >
+      <Layer>{generateGridLabels()}</Layer>
+      {/* Center position marker */}
+      <Layer>
+        <Circle x={0} y={0} radius={10} fill="red" opacity={0.8} />
+      </Layer>
       {/* Background layer */}
       <Layer>
         {background && (
@@ -167,7 +204,6 @@ const GalaxyMap = () => {
           />
         )}
       </Layer>
-
       {/* Star system layer */}
       <Layer>
         {systems.map((system, index) => (
@@ -211,7 +247,6 @@ const GalaxyMap = () => {
           />
         ))}
       </Layer>
-
       {/* Tooltip layer */}
       <Layer listening={false}>
         {tooltip.visible && (
