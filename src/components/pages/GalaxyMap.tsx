@@ -94,7 +94,8 @@ const GalaxyMap = () => {
     setPosition({ x: e.target.x(), y: e.target.y() });
   };
 
-  // Begin new mobile functionality
+  // Begin mobile functionality
+
   // Computes distance between two touch points for pinch zooming
   const getDistance = (touch1: Touch, touch2: Touch) => {
     const dx = touch1.clientX - touch2.clientX;
