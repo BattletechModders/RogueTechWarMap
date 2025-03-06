@@ -180,18 +180,17 @@ const GalaxyMap = () => {
               const pointer = stage.getPointerPosition();
               if (!pointer) return;
 
-              const pointerAbs = stage.getRelativePointerPosition() || {
-                x: pointer.x,
-                y: pointer.y,
-              };
+              const pointerPosition = stage.getPointerPosition();
+              if (!pointerPosition) return;
+              const stageScale = stage.scaleX(); // Assuming uniform scale
 
               setTooltip({
                 visible: true,
                 text: `${system.name}\n${
                   factions[system.owner]?.prettyName
                 }\n(${system.posX}, ${system.posY})`,
-                x: pointer.x / scale,
-                y: pointer.y / scale,
+                x: (pointerPosition.x - stage.x()) / stageScale,
+                y: (pointerPosition.y - stage.y()) / stageScale,
               });
             }}
             onMouseLeave={() =>
@@ -225,8 +224,8 @@ const GalaxyMap = () => {
             x={tooltip.x}
             y={tooltip.y}
             opacity={0.75}
-            scaleX={2.5 / scale}
-            scaleY={2.5 / scale}
+            scaleX={2 / scale}
+            scaleY={2 / scale} // Keep the tooltip size constant despite zooming
           >
             <Tag
               fill="white"
