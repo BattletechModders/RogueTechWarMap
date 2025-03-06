@@ -211,7 +211,7 @@ const GalaxyMap = () => {
             key={index}
             x={Number(system.posX)} // Converts stored X position to number
             y={-Number(system.posY)} // Converts and negates Y position to match coordinate system
-            radius={3} // Size of the star system marker
+            radius={2.25} // Size of the star system marker
             fill={factions[system.owner]?.colour || 'gray'} // Uses faction color or gray as default
             onMouseEnter={(e) => {
               const stage = e.target.getStage();
