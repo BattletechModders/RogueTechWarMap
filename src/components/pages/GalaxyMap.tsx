@@ -33,7 +33,7 @@ const GalaxyMap = () => {
 
   const MIN_SCALE = 0.2;
   const MAX_SCALE = 15;
-  const lastDistance = useRef(0); // Ensures distance tracking persists across renders
+  const lastDistance = useRef(0); // Stores the previous pinch distance to calculate scaling
 
   useEffect(() => {
     const image = new window.Image();
@@ -94,16 +94,22 @@ const GalaxyMap = () => {
     setPosition({ x: e.target.x(), y: e.target.y() });
   };
 
+  // Begin new mobile functionality
+  // Computes distance between two touch points for pinch zooming
+  const getDistance = (touch1: Touch, touch2: Touch) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
   const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
     if (e.evt.touches.length === 1) {
       const stage = e.target.getStage();
       if (!stage) return;
 
-      // Check if the tapped object is a Circle (i.e., a system)
       const isCircle = e.target.className === 'Circle';
 
       if (!isCircle) {
-        // If tapped outside a system, hide the tooltip
         setTooltip({ visible: false, text: '', x: 0, y: 0 });
       }
     }
@@ -159,7 +165,7 @@ const GalaxyMap = () => {
     <Stage
       width={window.innerWidth}
       height={window.innerHeight}
-      draggable={!isPinching} // Prevents unintended dragging while pinching
+      draggable={!isPinching}
       scaleX={scale}
       scaleY={scale}
       x={position.x}
@@ -172,7 +178,6 @@ const GalaxyMap = () => {
       onTouchEnd={handleTouchEnd}
     >
       <Layer>
-        <Circle x={0} y={0} radius={10} fill="red" opacity={0.8} />
         {background && (
           <Image
             image={background}
@@ -236,7 +241,7 @@ const GalaxyMap = () => {
                 }
 
                 setTooltip((prevTooltip) => ({
-                  visible: !prevTooltip.visible, // Toggle tooltip visibility
+                  visible: !prevTooltip.visible,
                   text: `${system.name}\n${
                     factions[system.owner]?.prettyName
                   }\n(${system.posX}, ${system.posY})`,
@@ -279,13 +284,6 @@ const GalaxyMap = () => {
       </Layer>
     </Stage>
   );
-};
-
-// Utility function for touch distance calculations
-const getDistance = (touch1: Touch, touch2: Touch) => {
-  const dx = touch1.clientX - touch2.clientX;
-  const dy = touch1.clientY - touch2.clientY;
-  return Math.sqrt(dx * dx + dy * dy);
 };
 
 export const Map = GalaxyMap;
