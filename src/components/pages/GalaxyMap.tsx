@@ -7,7 +7,13 @@ const GalaxyMap = () => {
   const stageRef = useRef<Konva.Stage | null>(null);
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
   const [systems, setSystems] = useState<
-    { posX: string; posY: string; name: string; owner: string }[]
+    {
+      posX: string;
+      posY: string;
+      name: string;
+      owner: string;
+      sysUrl: string;
+    }[]
   >([]);
   const [factions, setFactions] = useState<{
     [key: string]: { colour: string; prettyName: string };
@@ -186,6 +192,11 @@ const GalaxyMap = () => {
             y={-Number(system.posY)}
             radius={2.25}
             fill={factions[system.owner]?.colour || 'gray'}
+            onClick={() => {
+              if (system.sysUrl) {
+                window.location.href = `https://www.roguewar.org${system.sysUrl}`;
+              }
+            }}
             onMouseEnter={(e) => {
               const stage = e.target.getStage();
               if (!stage) return;
