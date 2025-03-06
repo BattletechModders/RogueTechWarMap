@@ -89,6 +89,19 @@ const GalaxyMap = () => {
   };
 
   const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
+    if (e.evt.touches.length === 1) {
+      const stage = e.target.getStage();
+      if (!stage) return;
+
+      // Check if the tapped object is a Circle (i.e., a system)
+      const isCircle = e.target.className === 'Circle';
+
+      if (!isCircle) {
+        // If tapped outside a system, hide the tooltip
+        setTooltip({ visible: false, text: '', x: 0, y: 0 });
+      }
+    }
+
     if (e.evt.touches.length === 2) {
       setIsPinching(true);
       lastDistance.current = getDistance(e.evt.touches[0], e.evt.touches[1]);
