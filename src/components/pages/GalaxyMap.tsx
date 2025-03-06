@@ -229,6 +229,12 @@ const GalaxyMap = () => {
                 const pointer = stage.getRelativePointerPosition();
                 if (!pointer) return;
 
+                // If tooltip is already visible for this system, navigate to its page
+                if (tooltip.visible && tooltip.text.includes(system.name)) {
+                  window.location.href = `https://www.roguewar.org${system.sysUrl}`;
+                  return;
+                }
+
                 setTooltip((prevTooltip) => ({
                   visible: !prevTooltip.visible, // Toggle tooltip visibility
                   text: `${system.name}\n${
