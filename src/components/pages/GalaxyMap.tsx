@@ -63,6 +63,19 @@ const GalaxyMap = () => {
     };
 
     fetchData();
+
+    // Add passive event listener to prevent scrolling issues
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const container = stage.container();
+    const preventDefault = (e: Event) => e.preventDefault();
+
+    container.addEventListener('touchmove', preventDefault, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchmove', preventDefault);
+    };
   }, []);
 
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
@@ -129,9 +142,10 @@ const GalaxyMap = () => {
       const newDistance = getDistance(touch1, touch2);
       if (!lastDistance.current) return;
 
-      const scaleFactor = 2.5; // Adjust zoom speed
-      const scaleBy = Math.pow(newDistance / lastDistance.current, scaleFactor);
-      let newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale * scaleBy));
+      const scaleFactor = 1.2; // Reduce excessive scaling
+      const scaleBy = newDistance / lastDistance.current;
+      let newScale = scale * Math.pow(scaleBy, scaleFactor);
+      newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
 
       if (stageRef.current) {
         const stage = stageRef.current;
