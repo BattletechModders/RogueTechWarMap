@@ -4,49 +4,36 @@ import { Stage, Layer, Image, Circle, Text, Label, Tag } from 'react-konva';
 import galaxyBackground from '/src/assets/galaxyBackground2.svg';
 
 const GalaxyMap = () => {
-  // Reference to the Konva Stage element, used for zoom and drag operations
   const stageRef = useRef<Konva.Stage | null>(null);
-
-  // State to store the background image once it's loaded
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
-
-  // State to store the list of star systems, each with position, name, and owner
   const [systems, setSystems] = useState<
     { posX: string; posY: string; name: string; owner: string }[]
   >([]);
-
-  // State to store faction data, where each faction has a color and a pretty name
   const [factions, setFactions] = useState<{
     [key: string]: { colour: string; prettyName: string };
   }>({});
-
-  // State to handle tooltip visibility and position
   const [tooltip, setTooltip] = useState({
     visible: false,
     text: '',
     x: 0,
     y: 0,
   });
-
-  // State to manage zoom level (scaling factor)
   const [scale, setScale] = useState(1);
-
-  const MIN_SCALE = 0.2; // Prevents excessive zooming out
-  const MAX_SCALE = 15; // Prevents excessive zooming in
-
-  // State to track the stage position for panning
   const [position, setPosition] = useState({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
   });
+  const [isPinching, setIsPinching] = useState(false);
+
+  const MIN_SCALE = 0.2;
+  const MAX_SCALE = 15;
+  const lastDistance = useRef(0); // Ensures distance tracking persists across renders
 
   useEffect(() => {
-    // Load the background image and set it in state
     const image = new window.Image();
     image.src = galaxyBackground;
     image.onload = () => setBackground(image);
 
-    // Fetch star system and faction data from the API
     const fetchData = async () => {
       try {
         const [systemData, factionData] = await Promise.all([
@@ -58,13 +45,10 @@ const GalaxyMap = () => {
           ),
         ]);
 
-        // Add a default faction for systems with no owner
         factionData['NoFaction'] = {
           colour: 'gray',
           prettyName: 'Unaffiliated',
         };
-
-        // Update state with fetched data
         setSystems(systemData);
         setFactions(factionData);
       } catch (error) {
@@ -73,48 +57,26 @@ const GalaxyMap = () => {
     };
 
     fetchData();
-  }, []); // Runs only once when the component mounts
+  }, []);
 
-  // Handle Mouse Wheel Zoom (Desktop)
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
-    const scaleBy = 1.25; // Defines the zoom factor
-
-    // Ensure the stage reference exists
+    const scaleBy = 1.25;
     const stage = stageRef.current;
-    if (!stage) {
-      console.warn('Stage reference is null, skipping zoom.');
-      return;
-    }
+    if (!stage) return;
 
-    // Ensure pointer position is valid
     const pointer = stage.getPointerPosition();
-    if (!pointer) {
-      console.warn('Pointer position is null, skipping zoom.');
-      return;
-    }
+    if (!pointer) return;
 
-    // Determine the new scale based on scroll direction
     const oldScale = stage.scaleX();
     let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
-
-    // Constrain the scale within min and max bounds
     newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
 
-    // Ensure stage position is valid
-    if (isNaN(stage.x()) || isNaN(stage.y())) {
-      console.warn('Stage position is invalid, resetting to default.');
-      setPosition({ x: 0, y: 0 });
-      return;
-    }
-
-    // Adjust stage position to zoom relative to the pointer
     const mousePointTo = {
       x: (pointer.x - stage.x()) / oldScale,
       y: (pointer.y - stage.y()) / oldScale,
     };
 
-    // Update scale and position
     setScale(newScale);
     setPosition({
       x: pointer.x - mousePointTo.x * newScale,
@@ -122,77 +84,76 @@ const GalaxyMap = () => {
     });
   };
 
-  // Handles dragging movement of the stage
   const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
-    setPosition({
-      x: e.target.x(),
-      y: e.target.y(),
-    });
+    setPosition({ x: e.target.x(), y: e.target.y() });
   };
 
-  // Handles the end of dragging, ensuring the new position is set
-  const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
-    setPosition({
-      x: e.target.x(),
-      y: e.target.y(),
-    });
+  const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
+    if (e.evt.touches.length === 2) {
+      setIsPinching(true);
+      lastDistance.current = getDistance(e.evt.touches[0], e.evt.touches[1]);
+    }
   };
 
-  //Troubleshooting Grid interval
-  const GRID_INTERVAL = 500;
+  const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
+    if (e.evt.touches.length === 2 && isPinching) {
+      e.evt.preventDefault();
 
-  const generateGridLabels = () => {
-    const labels = [];
-    for (let x = -5000; x <= 5000; x += GRID_INTERVAL) {
-      labels.push(
-        <Text
-          key={`x-${x}`}
-          x={x}
-          y={0}
-          text={`${x}`}
-          fontSize={12}
-          fill="white"
-          align="center"
-        />
-      );
+      const [touch1, touch2] = e.evt.touches;
+      const newDistance = getDistance(touch1, touch2);
+      if (!lastDistance.current) return;
+
+      const scaleFactor = 2.5; // Adjust zoom speed
+      const scaleBy = Math.pow(newDistance / lastDistance.current, scaleFactor);
+      let newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale * scaleBy));
+
+      if (stageRef.current) {
+        const stage = stageRef.current;
+        const pointer = {
+          x: (touch1.clientX + touch2.clientX) / 2,
+          y: (touch1.clientY + touch2.clientY) / 2,
+        };
+
+        const mousePointTo = {
+          x: (pointer.x - stage.x()) / scale,
+          y: (pointer.y - stage.y()) / scale,
+        };
+
+        setScale(newScale);
+        setPosition({
+          x: pointer.x - mousePointTo.x * newScale,
+          y: pointer.y - mousePointTo.y * newScale,
+        });
+      }
+
+      lastDistance.current = newDistance;
     }
-    for (let y = -5000; y <= 5000; y += GRID_INTERVAL) {
-      labels.push(
-        <Text
-          key={`y-${y}`}
-          x={0}
-          y={y}
-          text={`${y}`}
-          fontSize={12}
-          fill="white"
-          align="center"
-        />
-      );
+  };
+
+  const handleTouchEnd = (e: Konva.KonvaEventObject<TouchEvent>) => {
+    if (e.evt.touches.length < 2) {
+      setIsPinching(false);
     }
-    return labels;
   };
 
   return (
     <Stage
-      width={window.innerWidth} // Stage width set to full window
-      height={window.innerHeight} // Stage height set to full window
-      draggable // Allows panning by dragging
-      scaleX={scale} // Sets horizontal zoom scale
-      scaleY={scale} // Sets vertical zoom scale
-      x={position.x} // Sets x position of stage
-      y={position.y} // Sets y position of stage
-      ref={stageRef} // Assigns stage reference
-      onWheel={handleWheel} // Handles zooming
-      onDragMove={handleDragMove} // Handles dragging movement
-      onDragEnd={handleDragEnd} // Handles end of dragging
+      width={window.innerWidth}
+      height={window.innerHeight}
+      draggable={!isPinching} // Prevents unintended dragging while pinching
+      scaleX={scale}
+      scaleY={scale}
+      x={position.x}
+      y={position.y}
+      ref={stageRef}
+      onWheel={handleWheel}
+      onDragMove={handleDragMove}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
-      <Layer>{generateGridLabels()}</Layer>
-      {/* Center position marker */}
       <Layer>
         <Circle x={0} y={0} radius={10} fill="red" opacity={0.8} />
-      </Layer>
-      {/* Background layer */}
-      <Layer>
         {background && (
           <Image
             image={background}
@@ -204,34 +165,26 @@ const GalaxyMap = () => {
           />
         )}
       </Layer>
-      {/* Star system layer */}
       <Layer>
         {systems.map((system, index) => (
           <Circle
             key={index}
-            x={Number(system.posX)} // Converts stored X position to number
-            y={-Number(system.posY)} // Converts and negates Y position to match coordinate system
-            radius={2.25} // Size of the star system marker
-            fill={factions[system.owner]?.colour || 'gray'} // Uses faction color or gray as default
+            x={Number(system.posX)}
+            y={-Number(system.posY)}
+            radius={2.25}
+            fill={factions[system.owner]?.colour || 'gray'}
             onMouseEnter={(e) => {
               const stage = e.target.getStage();
               if (!stage) return;
 
               const pointer = stage.getPointerPosition();
-              if (!pointer) {
-                console.warn(
-                  'Pointer position is null, skipping tooltip update.'
-                );
-                return;
-              }
+              if (!pointer) return;
 
-              // Get absolute mouse position relative to viewport
               const pointerAbs = stage.getRelativePointerPosition() || {
                 x: pointer.x,
                 y: pointer.y,
               };
 
-              // Show tooltip with system name, faction, and coordinates
               setTooltip({
                 visible: true,
                 text: `${system.name}\n${
@@ -243,19 +196,18 @@ const GalaxyMap = () => {
             }}
             onMouseLeave={() =>
               setTooltip({ visible: false, text: '', x: 0, y: 0 })
-            } // Hide tooltip on mouse leave
+            }
           />
         ))}
       </Layer>
-      {/* Tooltip layer */}
       <Layer listening={false}>
         {tooltip.visible && (
           <Label
             x={tooltip.x}
             y={tooltip.y}
             opacity={0.75}
-            scaleX={2.5 / scale} // Inverse scaling to keep size fixed
-            scaleY={2.5 / scale} // Inverse scaling to keep size fixed
+            scaleX={2.5 / scale}
+            scaleY={2.5 / scale}
           >
             <Tag
               fill="white"
@@ -270,7 +222,7 @@ const GalaxyMap = () => {
             <Text
               text={tooltip.text}
               fontFamily="Calibri"
-              fontSize={18} // Font size remains the same visually
+              fontSize={18}
               padding={5}
               fill="black"
             />
@@ -281,6 +233,12 @@ const GalaxyMap = () => {
   );
 };
 
-// Export component for use in the application
+// Utility function for touch distance calculations
+const getDistance = (touch1: Touch, touch2: Touch) => {
+  const dx = touch1.clientX - touch2.clientX;
+  const dy = touch1.clientY - touch2.clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+};
+
 export const Map = GalaxyMap;
 export default GalaxyMap;
