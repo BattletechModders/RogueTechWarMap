@@ -190,13 +190,32 @@ const GalaxyMap = () => {
                 text: `${system.name}\n${
                   factions[system.owner]?.prettyName
                 }\n(${system.posX}, ${system.posY})`,
-                x: pointerAbs.x,
-                y: pointerAbs.y,
+                x: pointer.x / scale,
+                y: pointer.y / scale,
               });
             }}
             onMouseLeave={() =>
               setTooltip({ visible: false, text: '', x: 0, y: 0 })
             }
+            onTouchStart={(e) => {
+              if (e.evt.touches.length === 1) {
+                e.evt.preventDefault(); // Prevents unintended drag behavior
+                const stage = e.target.getStage();
+                if (!stage) return;
+
+                const pointer = stage.getRelativePointerPosition();
+                if (!pointer) return;
+
+                setTooltip((prevTooltip) => ({
+                  visible: !prevTooltip.visible, // Toggle tooltip visibility
+                  text: `${system.name}\n${
+                    factions[system.owner]?.prettyName
+                  }\n(${system.posX}, ${system.posY})`,
+                  x: pointer.x,
+                  y: pointer.y,
+                }));
+              }
+            }}
           />
         ))}
       </Layer>
