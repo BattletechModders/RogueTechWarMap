@@ -30,14 +30,14 @@ const GalaxyMap = () => {
     y: window.innerHeight / 2,
   });
 
-  const updateScaleAndPosition = (
-    newScale: number,
-    newX: number,
-    newY: number
-  ) => {
-    scaleRef.current = newScale;
-    positionRef.current = { x: newX, y: newY };
-  };
+  // const updateScaleAndPosition = (
+  //   newScale: number,
+  //   newX: number,
+  //   newY: number
+  // ) => {
+  //   scaleRef.current = newScale;
+  //   positionRef.current = { x: newX, y: newY };
+  // };
 
   const [isPinching, setIsPinching] = useState(false);
 
@@ -131,6 +131,8 @@ const GalaxyMap = () => {
     return Math.sqrt(dx * dx + dy * dy);
   };
 
+  const pinchMidpoint = useRef<{ x: number; y: number } | null>(null);
+
   const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
     if (e.evt.touches.length === 1) {
       const stage = e.target.getStage();
@@ -146,6 +148,18 @@ const GalaxyMap = () => {
     if (e.evt.touches.length === 2) {
       setIsPinching(true);
       lastDistance.current = getDistance(e.evt.touches[0], e.evt.touches[1]);
+
+      // Store midpoint at the START of pinch
+      pinchMidpoint.current = {
+        x: (e.evt.touches[0].clientX + e.evt.touches[1].clientX) / 2,
+        y: (e.evt.touches[0].clientY + e.evt.touches[1].clientY) / 2,
+      };
+      console.log(
+        '🔹 Pinch Start - Midpoint Set:',
+        JSON.stringify(pinchMidpoint.current, null, 2)
+      );
+
+      console.log('📏 Pinch Start - Initial Distance:', lastDistance.current);
     }
   };
 
@@ -153,32 +167,49 @@ const GalaxyMap = () => {
     if (e.evt.touches.length === 2 && isPinching) {
       e.evt.preventDefault();
 
+      if (!pinchMidpoint.current) return;
+
       const [touch1, touch2] = e.evt.touches;
       const newDistance = getDistance(touch1, touch2);
       if (!lastDistance.current) return;
 
-      const scaleFactor = 1.2;
       const scaleBy = newDistance / lastDistance.current;
-      let newScale = scaleRef.current * Math.pow(scaleBy, scaleFactor);
-      newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+      let newScale = Math.max(
+        MIN_SCALE,
+        Math.min(MAX_SCALE, scaleRef.current * scaleBy)
+      );
 
       if (stageRef.current) {
         const stage = stageRef.current;
-        const pointer = {
-          x: (touch1.clientX + touch2.clientX) / 2,
-          y: (touch1.clientY + touch2.clientY) / 2,
+
+        // ✅ Fix: Position should scale relative to midpoint, not jump away
+        const newPosition = {
+          x:
+            pinchMidpoint.current.x -
+            (pinchMidpoint.current.x - positionRef.current.x) * scaleBy,
+          y:
+            pinchMidpoint.current.y -
+            (pinchMidpoint.current.y - positionRef.current.y) * scaleBy,
         };
 
-        const mousePointTo = {
-          x: (pointer.x - stage.x()) / scaleRef.current,
-          y: (pointer.y - stage.y()) / scaleRef.current,
-        };
+        // 🔥 Debugging Logs 🔥
+        console.log('🔄 Pinching...');
+        console.log(`📏 New Distance: ${newDistance.toFixed(2)}`);
+        console.log(`📌 New Scale: ${newScale.toFixed(2)}`);
+        console.log(
+          `🎯 Midpoint (Stable): x=${pinchMidpoint.current.x.toFixed(
+            1
+          )}, y=${pinchMidpoint.current.y.toFixed(1)}`
+        );
+        console.log(
+          `🗺 New Position (Stable): x=${newPosition.x.toFixed(
+            1
+          )}, y=${newPosition.y.toFixed(1)}`
+        );
 
+        // Apply updates
         scaleRef.current = newScale;
-        positionRef.current = {
-          x: pointer.x - mousePointTo.x * newScale,
-          y: pointer.y - mousePointTo.y * newScale,
-        };
+        positionRef.current = newPosition;
 
         requestAnimationFrame(() => {
           stage.scale({ x: newScale, y: newScale });
