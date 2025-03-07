@@ -24,11 +24,21 @@ const GalaxyMap = () => {
     x: 0,
     y: 0,
   });
-  const [scale, setScale] = useState(1);
-  const [position, setPosition] = useState({
+  const scaleRef = useRef(1);
+  const positionRef = useRef({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
   });
+
+  const updateScaleAndPosition = (
+    newScale: number,
+    newX: number,
+    newY: number
+  ) => {
+    scaleRef.current = newScale;
+    positionRef.current = { x: newX, y: newY };
+  };
+
   const [isPinching, setIsPinching] = useState(false);
 
   const MIN_SCALE = 0.2;
@@ -87,7 +97,7 @@ const GalaxyMap = () => {
     const pointer = stage.getPointerPosition();
     if (!pointer) return;
 
-    const oldScale = stage.scaleX();
+    const oldScale = scaleRef.current; // Use ref instead of stage.scaleX()
     let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
     newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
 
@@ -96,15 +106,20 @@ const GalaxyMap = () => {
       y: (pointer.y - stage.y()) / oldScale,
     };
 
-    setScale(newScale);
-    setPosition({
+    scaleRef.current = newScale;
+    positionRef.current = {
       x: pointer.x - mousePointTo.x * newScale,
       y: pointer.y - mousePointTo.y * newScale,
-    });
+    };
+
+    // **Update Stage manually to reflect changes**
+    stage.scale({ x: newScale, y: newScale });
+    stage.position(positionRef.current);
+    stage.batchDraw(); // Force redraw
   };
 
   const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
-    setPosition({ x: e.target.x(), y: e.target.y() });
+    positionRef.current = { x: e.target.x(), y: e.target.y() };
   };
 
   // Begin mobile functionality
@@ -142,9 +157,9 @@ const GalaxyMap = () => {
       const newDistance = getDistance(touch1, touch2);
       if (!lastDistance.current) return;
 
-      const scaleFactor = 1.2; // Reduce excessive scaling
+      const scaleFactor = 1.2;
       const scaleBy = newDistance / lastDistance.current;
-      let newScale = scale * Math.pow(scaleBy, scaleFactor);
+      let newScale = scaleRef.current * Math.pow(scaleBy, scaleFactor);
       newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
 
       if (stageRef.current) {
@@ -155,14 +170,20 @@ const GalaxyMap = () => {
         };
 
         const mousePointTo = {
-          x: (pointer.x - stage.x()) / scale,
-          y: (pointer.y - stage.y()) / scale,
+          x: (pointer.x - stage.x()) / scaleRef.current,
+          y: (pointer.y - stage.y()) / scaleRef.current,
         };
 
-        setScale(newScale);
-        setPosition({
+        scaleRef.current = newScale;
+        positionRef.current = {
           x: pointer.x - mousePointTo.x * newScale,
           y: pointer.y - mousePointTo.y * newScale,
+        };
+
+        requestAnimationFrame(() => {
+          stage.scale({ x: newScale, y: newScale });
+          stage.position(positionRef.current);
+          stage.batchDraw();
         });
       }
 
@@ -181,10 +202,10 @@ const GalaxyMap = () => {
       width={window.innerWidth}
       height={window.innerHeight}
       draggable={!isPinching}
-      scaleX={scale}
-      scaleY={scale}
-      x={position.x}
-      y={position.y}
+      scaleX={scaleRef.current} // Updated
+      scaleY={scaleRef.current} // Updated
+      x={positionRef.current.x} // Updated
+      y={positionRef.current.y} // Updated
       ref={stageRef}
       onWheel={handleWheel}
       onDragMove={handleDragMove}
@@ -274,8 +295,8 @@ const GalaxyMap = () => {
             x={tooltip.x}
             y={tooltip.y}
             opacity={0.75}
-            scaleX={2 / scale}
-            scaleY={2 / scale} // Keep the tooltip size constant despite zooming
+            scaleX={2 / scaleRef.current}
+            scaleY={2 / scaleRef.current} // Keep the tooltip size constant despite zooming
           >
             <Tag
               fill="white"
