@@ -1,25 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
-import { Stage, Layer, Image, Circle, Text, Label, Tag } from 'react-konva';
+import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import warmapAPIFeeds, { StarSystemType } from '../hooks/warmapAPIFeeds';
+import StarSystem from '../ui/StarSystem';
 import galaxyBackground from '/src/assets/galaxyBackground2.svg';
 
 const GalaxyMap = () => {
   const { systems, factions } = warmapAPIFeeds();
   const stageRef = useRef<Konva.Stage | null>(null);
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
-  // const [systems, setSystems] = useState<
-  //   {
-  //     posX: string;
-  //     posY: string;
-  //     name: string;
-  //     owner: string;
-  //     sysUrl: string;
-  //   }[]
-  // >([]);
-  // const [factions, setFactions] = useState<{
-  //   [key: string]: { colour: string; prettyName: string };
-  // }>({});
   const [tooltip, setTooltip] = useState({
     visible: false,
     text: '',
@@ -42,30 +31,6 @@ const GalaxyMap = () => {
     const image = new window.Image();
     image.src = galaxyBackground;
     image.onload = () => setBackground(image);
-
-    // const fetchData = async () => {
-    //   try {
-    //     const [systemData, factionData] = await Promise.all([
-    //       fetch('https://roguewar.org/api/v1/starmap/warmap').then((res) =>
-    //         res.json()
-    //       ),
-    //       fetch('https://roguewar.org/api/v1/factions/warmap').then((res) =>
-    //         res.json()
-    //       ),
-    //     ]);
-
-    //     factionData['NoFaction'] = {
-    //       colour: 'gray',
-    //       prettyName: 'Unaffiliated',
-    //     };
-    //     setSystems(systemData);
-    //     setFactions(factionData);
-    //   } catch (error) {
-    //     console.error('Failed to fetch data:', error);
-    //   }
-    // };
-
-    // fetchData();
 
     const stage = stageRef.current;
     if (!stage) return;
@@ -224,64 +189,13 @@ const GalaxyMap = () => {
       </Layer>
       <Layer>
         {systems.map((system: StarSystemType, index: number) => (
-          <Circle
+          <StarSystem
             key={index}
-            x={Number(system.posX)}
-            y={-Number(system.posY)}
-            radius={2.25}
-            fill={factions[system.owner]?.colour || 'gray'}
-            onClick={() => {
-              if (system.sysUrl) {
-                window.location.href = `https://www.roguewar.org${system.sysUrl}`;
-              }
-            }}
-            onMouseEnter={(e) => {
-              const stage = e.target.getStage();
-              if (!stage) return;
-
-              const pointer = stage.getPointerPosition();
-              if (!pointer) return;
-
-              const pointerPosition = stage.getPointerPosition();
-              if (!pointerPosition) return;
-              const stageScale = stage.scaleX();
-
-              setTooltip({
-                visible: true,
-                text: `${system.name}\n${
-                  factions[system.owner]?.prettyName
-                }\n(${system.posX}, ${system.posY})`,
-                x: (pointerPosition.x - stage.x()) / stageScale,
-                y: (pointerPosition.y - stage.y()) / stageScale,
-              });
-            }}
-            onMouseLeave={() =>
-              setTooltip({ visible: false, text: '', x: 0, y: 0 })
-            }
-            onTouchStart={(e) => {
-              if (e.evt.touches.length === 1) {
-                e.evt.preventDefault();
-                const stage = e.target.getStage();
-                if (!stage) return;
-
-                const pointer = stage.getRelativePointerPosition();
-                if (!pointer) return;
-
-                if (tooltip.visible && tooltip.text.includes(system.name)) {
-                  window.location.href = `https://www.roguewar.org${system.sysUrl}`;
-                  return;
-                }
-
-                setTooltip((prevTooltip) => ({
-                  visible: !prevTooltip.visible,
-                  text: `${system.name}\n${
-                    factions[system.owner]?.prettyName
-                  }\n(${system.posX}, ${system.posY})`,
-                  x: pointer.x,
-                  y: pointer.y,
-                }));
-              }
-            }}
+            system={system}
+            factionColor={factions[system.owner]?.colour || 'gray'}
+            factions={factions}
+            tooltip={tooltip}
+            setTooltip={setTooltip}
           />
         ))}
       </Layer>
