@@ -34,7 +34,7 @@ const GalaxyMap = () => {
 
   const MIN_SCALE = 0.2;
   const MAX_SCALE = 15;
-  const lastDistance = useRef(0); // Stores the previous pinch distance to calculate scaling
+  const lastDistance = useRef(0);
 
   useEffect(() => {
     const image = new window.Image();
@@ -65,7 +65,6 @@ const GalaxyMap = () => {
 
     fetchData();
 
-    // Add passive event listener to prevent scrolling issues
     const stage = stageRef.current;
     if (!stage) return;
 
@@ -88,7 +87,7 @@ const GalaxyMap = () => {
     const pointer = stage.getPointerPosition();
     if (!pointer) return;
 
-    const oldScale = scaleRef.current; // Use ref instead of stage.scaleX()
+    const oldScale = scaleRef.current;
     let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
     newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
 
@@ -103,10 +102,9 @@ const GalaxyMap = () => {
       y: pointer.y - mousePointTo.y * newScale,
     };
 
-    // **Update Stage manually to reflect changes**
     stage.scale({ x: newScale, y: newScale });
     stage.position(positionRef.current);
-    stage.batchDraw(); // Force redraw
+    stage.batchDraw();
   };
 
   const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
@@ -115,7 +113,6 @@ const GalaxyMap = () => {
 
   // Begin mobile functionality
 
-  // Computes distance between two touch points for pinch zooming
   const getDistance = (touch1: Touch, touch2: Touch) => {
     const dx = touch1.clientX - touch2.clientX;
     const dy = touch1.clientY - touch2.clientY;
@@ -140,17 +137,10 @@ const GalaxyMap = () => {
       setIsPinching(true);
       lastDistance.current = getDistance(e.evt.touches[0], e.evt.touches[1]);
 
-      // Store midpoint at the START of pinch
       pinchMidpoint.current = {
         x: (e.evt.touches[0].clientX + e.evt.touches[1].clientX) / 2,
         y: (e.evt.touches[0].clientY + e.evt.touches[1].clientY) / 2,
       };
-      console.log(
-        '🔹 Pinch Start - Midpoint Set:',
-        JSON.stringify(pinchMidpoint.current, null, 2)
-      );
-
-      console.log('📏 Pinch Start - Initial Distance:', lastDistance.current);
     }
   };
 
@@ -173,7 +163,6 @@ const GalaxyMap = () => {
       if (stageRef.current) {
         const stage = stageRef.current;
 
-        // ✅ Fix: Position should scale relative to midpoint, not jump away
         const newPosition = {
           x:
             pinchMidpoint.current.x -
@@ -183,22 +172,6 @@ const GalaxyMap = () => {
             (pinchMidpoint.current.y - positionRef.current.y) * scaleBy,
         };
 
-        // 🔥 Debugging Logs 🔥
-        console.log('🔄 Pinching...');
-        console.log(`📏 New Distance: ${newDistance.toFixed(2)}`);
-        console.log(`📌 New Scale: ${newScale.toFixed(2)}`);
-        console.log(
-          `🎯 Midpoint (Stable): x=${pinchMidpoint.current.x.toFixed(
-            1
-          )}, y=${pinchMidpoint.current.y.toFixed(1)}`
-        );
-        console.log(
-          `🗺 New Position (Stable): x=${newPosition.x.toFixed(
-            1
-          )}, y=${newPosition.y.toFixed(1)}`
-        );
-
-        // Apply updates
         scaleRef.current = newScale;
         positionRef.current = newPosition;
 
@@ -224,10 +197,10 @@ const GalaxyMap = () => {
       width={window.innerWidth}
       height={window.innerHeight}
       draggable={!isPinching}
-      scaleX={scaleRef.current} // Updated
-      scaleY={scaleRef.current} // Updated
-      x={positionRef.current.x} // Updated
-      y={positionRef.current.y} // Updated
+      scaleX={scaleRef.current}
+      scaleY={scaleRef.current}
+      x={positionRef.current.x}
+      y={positionRef.current.y}
       ref={stageRef}
       onWheel={handleWheel}
       onDragMove={handleDragMove}
@@ -269,7 +242,7 @@ const GalaxyMap = () => {
 
               const pointerPosition = stage.getPointerPosition();
               if (!pointerPosition) return;
-              const stageScale = stage.scaleX(); // Assuming uniform scale
+              const stageScale = stage.scaleX();
 
               setTooltip({
                 visible: true,
@@ -285,14 +258,13 @@ const GalaxyMap = () => {
             }
             onTouchStart={(e) => {
               if (e.evt.touches.length === 1) {
-                e.evt.preventDefault(); // Prevents unintended drag behavior
+                e.evt.preventDefault();
                 const stage = e.target.getStage();
                 if (!stage) return;
 
                 const pointer = stage.getRelativePointerPosition();
                 if (!pointer) return;
 
-                // If tooltip is already visible for this system, navigate to its page
                 if (tooltip.visible && tooltip.text.includes(system.name)) {
                   window.location.href = `https://www.roguewar.org${system.sysUrl}`;
                   return;
@@ -318,7 +290,7 @@ const GalaxyMap = () => {
             y={tooltip.y}
             opacity={0.75}
             scaleX={2 / scaleRef.current}
-            scaleY={2 / scaleRef.current} // Keep the tooltip size constant despite zooming
+            scaleY={2 / scaleRef.current}
           >
             <Tag
               fill="white"
