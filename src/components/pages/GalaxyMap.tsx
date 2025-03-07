@@ -30,15 +30,6 @@ const GalaxyMap = () => {
     y: window.innerHeight / 2,
   });
 
-  // const updateScaleAndPosition = (
-  //   newScale: number,
-  //   newX: number,
-  //   newY: number
-  // ) => {
-  //   scaleRef.current = newScale;
-  //   positionRef.current = { x: newX, y: newY };
-  // };
-
   const [isPinching, setIsPinching] = useState(false);
 
   const MIN_SCALE = 0.2;
@@ -338,6 +329,7 @@ const GalaxyMap = () => {
               shadowBlur={10}
               shadowOffset={{ x: 10, y: 10 }}
               shadowOpacity={0.2}
+              cornerRadius={8}
             />
             <Text
               text={tooltip.text}
