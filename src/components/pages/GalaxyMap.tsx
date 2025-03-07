@@ -1,23 +1,25 @@
 import { useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Circle, Text, Label, Tag } from 'react-konva';
+import warmapAPIFeeds, { StarSystemType } from '../hooks/warmapAPIFeeds';
 import galaxyBackground from '/src/assets/galaxyBackground2.svg';
 
 const GalaxyMap = () => {
+  const { systems, factions } = warmapAPIFeeds();
   const stageRef = useRef<Konva.Stage | null>(null);
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
-  const [systems, setSystems] = useState<
-    {
-      posX: string;
-      posY: string;
-      name: string;
-      owner: string;
-      sysUrl: string;
-    }[]
-  >([]);
-  const [factions, setFactions] = useState<{
-    [key: string]: { colour: string; prettyName: string };
-  }>({});
+  // const [systems, setSystems] = useState<
+  //   {
+  //     posX: string;
+  //     posY: string;
+  //     name: string;
+  //     owner: string;
+  //     sysUrl: string;
+  //   }[]
+  // >([]);
+  // const [factions, setFactions] = useState<{
+  //   [key: string]: { colour: string; prettyName: string };
+  // }>({});
   const [tooltip, setTooltip] = useState({
     visible: false,
     text: '',
@@ -41,29 +43,29 @@ const GalaxyMap = () => {
     image.src = galaxyBackground;
     image.onload = () => setBackground(image);
 
-    const fetchData = async () => {
-      try {
-        const [systemData, factionData] = await Promise.all([
-          fetch('https://roguewar.org/api/v1/starmap/warmap').then((res) =>
-            res.json()
-          ),
-          fetch('https://roguewar.org/api/v1/factions/warmap').then((res) =>
-            res.json()
-          ),
-        ]);
+    // const fetchData = async () => {
+    //   try {
+    //     const [systemData, factionData] = await Promise.all([
+    //       fetch('https://roguewar.org/api/v1/starmap/warmap').then((res) =>
+    //         res.json()
+    //       ),
+    //       fetch('https://roguewar.org/api/v1/factions/warmap').then((res) =>
+    //         res.json()
+    //       ),
+    //     ]);
 
-        factionData['NoFaction'] = {
-          colour: 'gray',
-          prettyName: 'Unaffiliated',
-        };
-        setSystems(systemData);
-        setFactions(factionData);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      }
-    };
+    //     factionData['NoFaction'] = {
+    //       colour: 'gray',
+    //       prettyName: 'Unaffiliated',
+    //     };
+    //     setSystems(systemData);
+    //     setFactions(factionData);
+    //   } catch (error) {
+    //     console.error('Failed to fetch data:', error);
+    //   }
+    // };
 
-    fetchData();
+    // fetchData();
 
     const stage = stageRef.current;
     if (!stage) return;
@@ -221,7 +223,7 @@ const GalaxyMap = () => {
         )}
       </Layer>
       <Layer>
-        {systems.map((system, index) => (
+        {systems.map((system: StarSystemType, index: number) => (
           <Circle
             key={index}
             x={Number(system.posX)}
