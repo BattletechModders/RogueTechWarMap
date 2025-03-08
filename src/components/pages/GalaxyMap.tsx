@@ -3,18 +3,19 @@ import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import warmapAPIFeeds, { StarSystemType } from '../hooks/warmapAPIFeeds';
 import StarSystem from '../ui/StarSystem';
+import useTooltip from '../hooks/useTooltip';
 import galaxyBackground from '/src/assets/galaxyBackground2.svg';
 
 const GalaxyMap = () => {
   const { systems, factions } = warmapAPIFeeds();
   const stageRef = useRef<Konva.Stage | null>(null);
-  // const [background, setBackground] = useState<HTMLImageElement | null>(null);
-  const [tooltip, setTooltip] = useState({
-    visible: false,
-    text: '',
-    x: 0,
-    y: 0,
-  });
+  const { tooltip, showTooltip, hideTooltip } = useTooltip();
+  // const [tooltip, setTooltip] = useState({
+  //   visible: false,
+  //   text: '',
+  //   x: 0,
+  //   y: 0,
+  // });
   const scaleRef = useRef(1);
   const positionRef = useRef({
     x: window.innerWidth / 2,
@@ -94,12 +95,8 @@ const GalaxyMap = () => {
     if (e.evt.touches.length === 1) {
       const stage = e.target.getStage();
       if (!stage) return;
-
       const isCircle = e.target.className === 'Circle';
-
-      if (!isCircle) {
-        setTooltip({ visible: false, text: '', x: 0, y: 0 });
-      }
+      if (!isCircle) hideTooltip();
     }
 
     if (e.evt.touches.length === 2) {
@@ -196,8 +193,9 @@ const GalaxyMap = () => {
             system={system}
             factionColor={factions[system.owner]?.colour || 'gray'}
             factions={factions}
+            showTooltip={showTooltip}
+            hideTooltip={hideTooltip}
             tooltip={tooltip}
-            setTooltip={setTooltip}
           />
         ))}
       </Layer>
