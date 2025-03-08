@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import warmapAPIFeeds, { StarSystemType } from '../hooks/warmapAPIFeeds';
@@ -8,7 +8,7 @@ import galaxyBackground from '/src/assets/galaxyBackground2.svg';
 const GalaxyMap = () => {
   const { systems, factions } = warmapAPIFeeds();
   const stageRef = useRef<Konva.Stage | null>(null);
-  const [background, setBackground] = useState<HTMLImageElement | null>(null);
+  // const [background, setBackground] = useState<HTMLImageElement | null>(null);
   const [tooltip, setTooltip] = useState({
     visible: false,
     text: '',
@@ -27,11 +27,13 @@ const GalaxyMap = () => {
   const MAX_SCALE = 15;
   const lastDistance = useRef(0);
 
-  useEffect(() => {
-    const image = new window.Image();
-    image.src = galaxyBackground;
-    image.onload = () => setBackground(image);
+  const background = useMemo(() => {
+    const img = new window.Image();
+    img.src = galaxyBackground;
+    return img;
+  }, []);
 
+  useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
 
