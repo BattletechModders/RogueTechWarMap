@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
 
+export interface StarSystemType {
+  name: string;
+  posX: number;
+  posY: number;
+  owner: string;
+  sysUrl?: string;
+}
+
 const warmapAPIFeeds = () => {
   const [systems, setSystems] = useState([]);
   const [factions, setFactions] = useState<{

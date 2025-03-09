@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import warmapAPIFeeds, { StarSystemType } from '../hooks/warmapAPIFeeds';
@@ -135,33 +135,42 @@ const GalaxyMap = () => {
       const newDistance = getDistance(touch1, touch2);
       if (!lastDistance.current) return;
 
+      const stage = stageRef.current;
+      if (!stage) return;
+
       const scaleBy = newDistance / lastDistance.current;
       let newScale = Math.max(
         MIN_SCALE,
         Math.min(MAX_SCALE, scaleRef.current * scaleBy)
       );
 
-      if (stageRef.current) {
-        const stage = stageRef.current;
+      const stagePos = stage.getPosition();
+      const stageScale = stage.scaleX(); // Both X & Y are the same
 
-        const newPosition = {
-          x:
-            pinchMidpoint.current.x -
-            (pinchMidpoint.current.x - positionRef.current.x) * scaleBy,
-          y:
-            pinchMidpoint.current.y -
-            (pinchMidpoint.current.y - positionRef.current.y) * scaleBy,
+      // Adjust position dynamically based on the pinch midpoint
+      const pinchCenter = {
+        x: (touch1.clientX + touch2.clientX) / 2,
+        y: (touch1.clientY + touch2.clientY) / 2,
+      };
+
+      const worldPos = {
+        x: (pinchCenter.x - stagePos.x) / stageScale,
+        y: (pinchCenter.y - stagePos.y) / stageScale,
+      };
+
+      requestAnimationFrame(() => {
+        const newPos = {
+          x: pinchCenter.x - worldPos.x * newScale,
+          y: pinchCenter.y - worldPos.y * newScale,
         };
 
         scaleRef.current = newScale;
-        positionRef.current = newPosition;
+        positionRef.current = newPos;
 
-        requestAnimationFrame(() => {
-          stage.scale({ x: newScale, y: newScale });
-          stage.position(positionRef.current);
-          stage.batchDraw();
-        });
-      }
+        stage.scale({ x: newScale, y: newScale });
+        stage.position(newPos);
+        stage.batchDraw();
+      });
 
       lastDistance.current = newDistance;
     }
