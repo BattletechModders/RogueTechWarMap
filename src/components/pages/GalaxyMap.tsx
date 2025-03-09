@@ -18,15 +18,20 @@ const GalaxyMap = () => {
   });
 
   const [isPinching, setIsPinching] = useState(false);
+  const [background, setBackground] = useState<HTMLImageElement | null>(null);
+  const [bgLoaded, setBgLoaded] = useState(false);
 
   const MIN_SCALE = 0.2;
   const MAX_SCALE = 15;
   const lastDistance = useRef(0);
 
-  const background = useMemo(() => {
+  useEffect(() => {
     const img = new window.Image();
     img.src = galaxyBackground;
-    return img;
+    img.onload = () => {
+      setBackground(img);
+      setBgLoaded(true);
+    };
   }, []);
 
   useEffect(() => {
@@ -170,7 +175,7 @@ const GalaxyMap = () => {
       onTouchEnd={handleTouchEnd}
     >
       <Layer>
-        {background && (
+        {bgLoaded && background ? (
           <Image
             image={background}
             x={-4800}
@@ -178,6 +183,15 @@ const GalaxyMap = () => {
             width={9600}
             height={5400}
             opacity={0.2}
+          />
+        ) : (
+          <Text
+            text="Loading Background..."
+            x={window.innerWidth / 2}
+            y={window.innerHeight / 2}
+            fontSize={24}
+            fill="white"
+            align="center"
           />
         )}
       </Layer>
