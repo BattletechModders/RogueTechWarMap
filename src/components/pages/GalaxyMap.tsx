@@ -138,14 +138,17 @@ const GalaxyMap = () => {
       const stage = stageRef.current;
       if (!stage) return;
 
-      const scaleBy = newDistance / lastDistance.current;
+      const zoomSpeed = newDistance > lastDistance.current ? 1.1 : 0.9;
+
+      const scaleBy = (newDistance / lastDistance.current) * zoomSpeed;
+
       let newScale = Math.max(
         MIN_SCALE,
         Math.min(MAX_SCALE, scaleRef.current * scaleBy)
       );
 
       const stagePos = stage.getPosition();
-      const stageScale = stage.scaleX(); // Both X & Y are the same
+      const stageScale = stage.scaleX();
 
       // Adjust position dynamically based on the pinch midpoint
       const pinchCenter = {
