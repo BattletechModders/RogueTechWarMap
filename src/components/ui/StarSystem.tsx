@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Circle } from 'react-konva';
 import { StarSystemType } from '../hooks/warmapAPIFeeds';
 
@@ -74,4 +75,4 @@ const StarSystem: React.FC<StarSystemProps> = ({
   );
 };
 
-export default StarSystem;
+export default memo(StarSystem);

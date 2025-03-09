@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import warmapAPIFeeds, { StarSystemType } from '../hooks/warmapAPIFeeds';
@@ -10,12 +10,7 @@ const GalaxyMap = () => {
   const { systems, factions } = warmapAPIFeeds();
   const stageRef = useRef<Konva.Stage | null>(null);
   const { tooltip, showTooltip, hideTooltip } = useTooltip();
-  // const [tooltip, setTooltip] = useState({
-  //   visible: false,
-  //   text: '',
-  //   x: 0,
-  //   y: 0,
-  // });
+
   const scaleRef = useRef(1);
   const positionRef = useRef({
     x: window.innerWidth / 2,
@@ -189,7 +184,7 @@ const GalaxyMap = () => {
       <Layer>
         {systems.map((system: StarSystemType, index: number) => (
           <StarSystem
-            key={index}
+            key={system.name || index}
             system={system}
             factionColor={factions[system.owner]?.colour || 'gray'}
             factions={factions}
