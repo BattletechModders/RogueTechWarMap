@@ -39,11 +39,26 @@ const GalaxyMap = () => {
     if (!stage) return;
 
     const container = stage.container();
-    const preventDefault = (e: Event) => e.preventDefault();
 
-    container.addEventListener('touchmove', preventDefault, { passive: true });
+    const preventDefault = (e: Event) => {
+      if (e.cancelable) e.preventDefault();
+    };
+
+    container.addEventListener('gesturestart', preventDefault, {
+      passive: false,
+    });
+    container.addEventListener('gesturechange', preventDefault, {
+      passive: false,
+    });
+    container.addEventListener('gestureend', preventDefault, {
+      passive: false,
+    });
+    container.addEventListener('touchmove', preventDefault, { passive: false });
 
     return () => {
+      container.removeEventListener('gesturestart', preventDefault);
+      container.removeEventListener('gesturechange', preventDefault);
+      container.removeEventListener('gestureend', preventDefault);
       container.removeEventListener('touchmove', preventDefault);
     };
   }, []);
