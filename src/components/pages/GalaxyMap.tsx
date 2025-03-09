@@ -6,11 +6,14 @@ import StarSystem from '../ui/StarSystem';
 import useTooltip from '../hooks/useTooltip';
 import galaxyBackground from '/src/assets/galaxyBackground2.svg';
 
+const MIN_SCALE = 0.2;
+const MAX_SCALE = 15;
+
 const GalaxyMap = () => {
   const { systems, factions } = warmapAPIFeeds();
-  const stageRef = useRef<Konva.Stage | null>(null);
   const { tooltip, showTooltip, hideTooltip } = useTooltip();
 
+  const stageRef = useRef<Konva.Stage | null>(null);
   const scaleRef = useRef(1);
   const positionRef = useRef({
     x: window.innerWidth / 2,
@@ -18,12 +21,11 @@ const GalaxyMap = () => {
   });
 
   const [isPinching, setIsPinching] = useState(false);
+  const lastDistance = useRef(0);
+  const pinchMidpoint = useRef<{ x: number; y: number } | null>(null);
+
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
   const [bgLoaded, setBgLoaded] = useState(false);
-
-  const MIN_SCALE = 0.2;
-  const MAX_SCALE = 15;
-  const lastDistance = useRef(0);
 
   useEffect(() => {
     const img = new window.Image();
@@ -39,7 +41,6 @@ const GalaxyMap = () => {
     if (!stage) return;
 
     const container = stage.container();
-
     const preventDefault = (e: Event) => {
       if (e.cancelable) e.preventDefault();
     };
@@ -62,6 +63,12 @@ const GalaxyMap = () => {
       container.removeEventListener('touchmove', preventDefault);
     };
   }, []);
+
+  const getDistance = (touch1: Touch, touch2: Touch) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
 
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
@@ -96,16 +103,6 @@ const GalaxyMap = () => {
     positionRef.current = { x: e.target.x(), y: e.target.y() };
   };
 
-  // Begin mobile functionality
-
-  const getDistance = (touch1: Touch, touch2: Touch) => {
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
-
-  const pinchMidpoint = useRef<{ x: number; y: number } | null>(null);
-
   const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
     if (e.evt.touches.length === 1) {
       const stage = e.target.getStage();
@@ -133,9 +130,11 @@ const GalaxyMap = () => {
 
       const [touch1, touch2] = e.evt.touches;
       const newDistance = getDistance(touch1, touch2);
+
       if (!lastDistance.current) return;
 
       const stage = stageRef.current;
+
       if (!stage) return;
 
       const zoomSpeed = newDistance > lastDistance.current ? 1.1 : 0.9;
@@ -150,7 +149,6 @@ const GalaxyMap = () => {
       const stagePos = stage.getPosition();
       const stageScale = stage.scaleX();
 
-      // Adjust position dynamically based on the pinch midpoint
       const pinchCenter = {
         x: (touch1.clientX + touch2.clientX) / 2,
         y: (touch1.clientY + touch2.clientY) / 2,
