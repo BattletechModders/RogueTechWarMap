@@ -68,7 +68,11 @@ const StarSystem: React.FC<StarSystemProps> = ({
           if (!pointer) return;
 
           if (tooltip.visible && tooltip.text.includes(system.name)) {
-            window.location.href = `https://www.roguewar.org${system.sysUrl}`;
+            window.open(
+              `https://www.roguewar.org${system.sysUrl}`,
+              '_blank',
+              'noopener,noreferrer'
+            );
             return;
           }
 
