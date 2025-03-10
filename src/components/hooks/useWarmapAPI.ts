@@ -15,9 +15,7 @@ export type FactionType = {
   capital: string;
 };
 
-export type FactionDataType = {
-  [key: string]: FactionType;
-};
+export type FactionDataType = Record<string, FactionType>;
 
 const useWarmapAPI = () => {
   const [systems, setSystems] = useState([]);

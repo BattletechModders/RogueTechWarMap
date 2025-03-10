@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Circle } from 'react-konva';
-import { findFaction } from '../helpers';
+import { findFaction, openInNewTab } from '../helpers';
 import { FactionDataType, StarSystemType } from '../hooks/useWarmapAPI';
 
 const CAPITAL_RADIUS = 2.5;
@@ -39,11 +39,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
       fill={factionColor}
       onClick={() => {
         if (system.sysUrl) {
-          window.open(
-            `https://www.roguewar.org${system.sysUrl}`,
-            '_blank',
-            'noopener,noreferrer'
-          );
+          openInNewTab(`https://www.roguewar.org${system.sysUrl}`);
         }
       }}
       onMouseEnter={(e) => {
