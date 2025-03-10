@@ -6,7 +6,13 @@ interface StarSystemProps {
   system: StarSystemType;
   factionColor: string;
   factions: { [key: string]: { colour: string; prettyName: string } };
-  showTooltip: (text: string, x: number, y: number) => void;
+  showTooltip: (
+    text: string,
+    x: number,
+    y: number,
+    stageX?: number,
+    stageY?: number
+  ) => void;
   hideTooltip: () => void;
   tooltip: { visible: boolean; text: string };
 }
@@ -37,14 +43,14 @@ const StarSystem: React.FC<StarSystemProps> = ({
         const pointer = stage.getPointerPosition();
         if (!pointer) return;
 
-        const stageScale = stage.scaleX();
-
         showTooltip(
           `${system.name}\n${
             factions[system.owner]?.prettyName || 'Unknown'
           }\n(${system.posX}, ${system.posY})`,
-          (pointer.x - stage.x()) / stageScale, // Adjust for scale
-          (pointer.y - stage.y()) / stageScale // Adjust for scale
+          pointer.x,
+          pointer.y,
+          stage.x(),
+          stage.y()
         );
       }}
       onMouseLeave={hideTooltip}

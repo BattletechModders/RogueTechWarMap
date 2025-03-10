@@ -10,11 +10,11 @@ const MIN_SCALE = 0.2;
 const MAX_SCALE = 15;
 
 const GalaxyMap = () => {
+  const scaleRef = useRef(1);
   const { systems, factions } = warmapAPIFeeds();
-  const { tooltip, showTooltip, hideTooltip } = useTooltip();
+  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
 
   const stageRef = useRef<Konva.Stage | null>(null);
-  const scaleRef = useRef(1);
   const positionRef = useRef({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
