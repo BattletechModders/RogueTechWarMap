@@ -1,17 +1,22 @@
 import { useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
-import warmapAPIFeeds, { StarSystemType } from '../hooks/warmapAPIFeeds';
+import WarmapAPIFeeds, { StarSystemType } from '../hooks/warmapAPIFeeds';
 import StarSystem from '../ui/StarSystem';
 import useTooltip from '../hooks/useTooltip';
 import galaxyBackground from '/src/assets/galaxyBackground2.svg';
+import { findFaction } from '../helpers';
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 15;
 
+function isCapital(systemName: string, capitals: string[]): boolean {
+  return capitals.includes(systemName);
+}
+
 const GalaxyMap = () => {
   const scaleRef = useRef(1);
-  const { systems, factions } = warmapAPIFeeds();
+  const { systems, factions, capitals } = WarmapAPIFeeds();
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
 
   const stageRef = useRef<Konva.Stage | null>(null);
@@ -152,7 +157,7 @@ const GalaxyMap = () => {
 
       const scaleBy = (newDistance / lastDistance.current) * zoomSpeed;
 
-      let newScale = Math.max(
+      const newScale = Math.max(
         MIN_SCALE,
         Math.min(MAX_SCALE, scaleRef.current * scaleBy)
       );
@@ -232,17 +237,22 @@ const GalaxyMap = () => {
         )}
       </Layer>
       <Layer>
-        {systems.map((system: StarSystemType, index: number) => (
-          <StarSystem
-            key={system.name || index}
-            system={system}
-            factionColor={factions[system.owner]?.colour || 'gray'}
-            factions={factions}
-            showTooltip={showTooltip}
-            hideTooltip={hideTooltip}
-            tooltip={tooltip}
-          />
-        ))}
+        {systems.map((system: StarSystemType, index: number) => {
+          const faction = findFaction(system.owner, factions);
+
+          return (
+            <StarSystem
+              key={system.name || index}
+              isCapital={isCapital(system.name, capitals)}
+              system={system}
+              factionColor={faction?.colour || 'gray'}
+              factions={factions}
+              showTooltip={showTooltip}
+              hideTooltip={hideTooltip}
+              tooltip={tooltip}
+            />
+          );
+        })}
       </Layer>
       <Layer listening={false}>
         {tooltip.visible && (

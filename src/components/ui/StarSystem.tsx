@@ -1,11 +1,16 @@
 import { memo } from 'react';
 import { Circle } from 'react-konva';
-import { StarSystemType } from '../hooks/warmapAPIFeeds';
+import { FactionDataType, StarSystemType } from '../hooks/warmapAPIFeeds';
+import { findFaction } from '../helpers';
+
+const CAPITAL_RADIUS = 2.5;
+const PLANET_RADIUS = 1;
 
 interface StarSystemProps {
   system: StarSystemType;
+  isCapital: boolean;
   factionColor: string;
-  factions: { [key: string]: { colour: string; prettyName: string } };
+  factions: FactionDataType;
   showTooltip: (
     text: string,
     x: number,
@@ -19,6 +24,7 @@ interface StarSystemProps {
 
 const StarSystem: React.FC<StarSystemProps> = ({
   system,
+  isCapital,
   factionColor,
   factions,
   showTooltip,
@@ -29,11 +35,15 @@ const StarSystem: React.FC<StarSystemProps> = ({
     <Circle
       x={Number(system.posX)}
       y={-Number(system.posY)}
-      radius={2.25}
+      radius={isCapital ? CAPITAL_RADIUS : PLANET_RADIUS}
       fill={factionColor}
       onClick={() => {
         if (system.sysUrl) {
-          window.location.href = `https://www.roguewar.org${system.sysUrl}`;
+          window.open(
+            `https://www.roguewar.org${system.sysUrl}`,
+            '_blank',
+            'noopener,noreferrer'
+          );
         }
       }}
       onMouseEnter={(e) => {
@@ -43,10 +53,12 @@ const StarSystem: React.FC<StarSystemProps> = ({
         const pointer = stage.getPointerPosition();
         if (!pointer) return;
 
+        const faction = findFaction(system.owner, factions);
+
         showTooltip(
-          `${system.name}\n${
-            factions[system.owner]?.prettyName || 'Unknown'
-          }\n(${system.posX}, ${system.posY})`,
+          `${system.name}\n${faction?.prettyName || 'Unknown'}\n(${
+            system.posX
+          }, ${system.posY})`,
           pointer.x,
           pointer.y,
           stage.x(),
@@ -64,14 +76,18 @@ const StarSystem: React.FC<StarSystemProps> = ({
           if (!pointer) return;
 
           if (tooltip.visible && tooltip.text.includes(system.name)) {
-            window.location.href = `https://www.roguewar.org${system.sysUrl}`;
+            window.open(
+              `https://www.roguewar.org${system.sysUrl}`,
+              '_blank',
+              'noopener,noreferrer'
+            );
             return;
           }
 
+          const faction = findFaction(system.owner, factions);
+
           showTooltip(
-            `${system.name}\n${factions[system.owner]?.prettyName}\n(${
-              system.posX
-            }, ${system.posY})`,
+            `${system.name}\n${faction?.prettyName}\n(${system.posX}, ${system.posY})`,
             pointer.x,
             pointer.y
           );
