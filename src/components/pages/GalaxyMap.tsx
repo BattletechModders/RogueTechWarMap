@@ -11,8 +11,37 @@ const MAX_SCALE = 15;
 
 const GalaxyMap = () => {
   const scaleRef = useRef(1);
-  const { systems, factions } = useWarmapAPI();
+  // const { systems, factions } = useWarmapAPI();
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
+
+  const [data, setData] = useState<{
+    systems: StarSystemType[];
+    factions: Record<string, { colour: string; prettyName: string }>;
+  }>({
+    systems: [],
+    factions: {},
+  });
+
+  const { systems, factions } = useWarmapAPI(); // Fetch latest data
+
+  // const fetchData = () => {
+
+  //   setData({ systems, factions });
+  //   console.log('🔄 API Data Refreshed at', new Date().toLocaleTimeString());
+  //   console.log('🌍 Updated Data:', { systems, factions });
+  // };
+
+  useEffect(() => {
+    setData({ systems, factions }); // ✅ Update State on API Data Change
+    console.log('🔄 Initial API Fetch:', { systems, factions });
+
+    const interval = setInterval(() => {
+      console.log('🔄 API Data Refreshing at', new Date().toLocaleTimeString());
+      setData({ systems, factions }); // ✅ Refresh Data Correctly
+    }, 300000);
+
+    return () => clearInterval(interval); // ✅ Cleanup on Unmount
+  }, [systems, factions]); // ✅ Depend on API data to trigger updates
 
   const stageRef = useRef<Konva.Stage | null>(null);
   const positionRef = useRef({
@@ -232,12 +261,12 @@ const GalaxyMap = () => {
         )}
       </Layer>
       <Layer>
-        {systems.map((system: StarSystemType, index: number) => (
+        {data.systems.map((system: StarSystemType, index: number) => (
           <StarSystem
             key={system.name || index}
             system={system}
-            factionColor={factions[system.owner]?.colour || 'gray'}
-            factions={factions}
+            factionColor={data.factions[system.owner]?.colour || 'gray'}
+            factions={data.factions}
             showTooltip={showTooltip}
             hideTooltip={hideTooltip}
             tooltip={tooltip}
