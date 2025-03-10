@@ -11,7 +11,6 @@ const MAX_SCALE = 15;
 
 const GalaxyMap = () => {
   const scaleRef = useRef(1);
-  // const { systems, factions } = useWarmapAPI();
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
 
   const [data, setData] = useState<{
@@ -22,26 +21,19 @@ const GalaxyMap = () => {
     factions: {},
   });
 
-  const { systems, factions } = useWarmapAPI(); // Fetch latest data
-
-  // const fetchData = () => {
-
-  //   setData({ systems, factions });
-  //   console.log('🔄 API Data Refreshed at', new Date().toLocaleTimeString());
-  //   console.log('🌍 Updated Data:', { systems, factions });
-  // };
+  const { systems, factions } = useWarmapAPI();
 
   useEffect(() => {
-    setData({ systems, factions }); // ✅ Update State on API Data Change
+    setData({ systems, factions });
     console.log('🔄 Initial API Fetch:', { systems, factions });
 
     const interval = setInterval(() => {
       console.log('🔄 API Data Refreshing at', new Date().toLocaleTimeString());
-      setData({ systems, factions }); // ✅ Refresh Data Correctly
+      setData({ systems, factions });
     }, 300000);
 
-    return () => clearInterval(interval); // ✅ Cleanup on Unmount
-  }, [systems, factions]); // ✅ Depend on API data to trigger updates
+    return () => clearInterval(interval);
+  }, [systems, factions]);
 
   const stageRef = useRef<Konva.Stage | null>(null);
   const positionRef = useRef({
