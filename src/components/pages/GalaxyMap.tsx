@@ -6,7 +6,7 @@ import useTooltip from '../hooks/useTooltip';
 import galaxyBackground from '/src/assets/galaxyBackground2.svg';
 import { findFaction } from '../helpers';
 import useWarmapAPI, {
-  FactionType,
+  FactionDataType,
   StarSystemType,
 } from '../hooks/useWarmapAPI';
 
@@ -18,30 +18,65 @@ function isCapital(systemName: string, capitals: string[]): boolean {
 }
 
 const GalaxyMap = () => {
-  const scaleRef = useRef(1);
-  const { systems, factions, capitals } = useWarmapAPI();
-  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
+  const { systems, factions, capitals, fetchFactionData, fetchSystemData } =
+    useWarmapAPI();
 
-  const [data, setData] = useState<{
-    systems: StarSystemType[];
-    factions: Record<string, FactionType>;
-  }>({
-    systems: [],
-    factions: {},
-  });
+  const [initialDataLoaded, setInitialDataLoaded] = useState<boolean>(false);
 
   useEffect(() => {
-    setData({ systems, factions });
-    console.log('🔄 Initial API Fetch:', { systems, factions });
+    if (!initialDataLoaded) {
+      console.log('Loading data...');
+      fetchFactionData();
+      fetchSystemData();
+      setInitialDataLoaded(true);
+    }
 
     const interval = setInterval(() => {
       console.log('🔄 API Data Refreshing at', new Date().toLocaleTimeString());
-      setData({ systems, factions });
-    }, 300000);
+      fetchSystemData();
+    }, 300_000);
 
     return () => clearInterval(interval);
-  }, [systems, factions]);
+  }, [
+    systems,
+    factions,
+    capitals,
+    fetchFactionData,
+    fetchSystemData,
+    initialDataLoaded,
+  ]);
 
+  if (
+    systems &&
+    systems.length > 0 &&
+    factions &&
+    capitals &&
+    capitals.length > 0
+  ) {
+    return (
+      <GalaxyMapRender
+        systems={systems}
+        factions={factions}
+        capitals={capitals}
+      />
+    );
+  }
+
+  return null;
+};
+
+const GalaxyMapRender = ({
+  systems,
+  factions,
+  capitals,
+}: {
+  systems: StarSystemType[];
+  factions: FactionDataType;
+  capitals: string[];
+}) => {
+  const scaleRef = useRef(1);
+  //const { systems, factions, capitals } = useWarmapAPI();
+  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
   const stageRef = useRef<Konva.Stage | null>(null);
   const positionRef = useRef({
     x: window.innerWidth / 2,
@@ -276,13 +311,13 @@ const GalaxyMap = () => {
             />
           );
         })}
-        {data.systems.map((system: StarSystemType, index: number) => (
+        {systems.map((system: StarSystemType, index: number) => (
           <StarSystem
             key={system.name || index}
             isCapital={isCapital(system.name, capitals)}
             system={system}
-            factionColor={data.factions[system.owner]?.colour || 'gray'}
-            factions={data.factions}
+            factionColor={factions[system.owner]?.colour || 'gray'}
+            factions={factions}
             showTooltip={showTooltip}
             hideTooltip={hideTooltip}
             tooltip={tooltip}
