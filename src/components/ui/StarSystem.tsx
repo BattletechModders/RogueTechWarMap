@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Circle } from 'react-konva';
-import { StarSystemType } from '../hooks/warmapAPIFeeds';
+import { StarSystemType } from '../hooks/useWarmapAPI';
 
 interface StarSystemProps {
   system: StarSystemType;

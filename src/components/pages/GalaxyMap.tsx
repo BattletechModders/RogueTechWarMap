@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
-import warmapAPIFeeds, { StarSystemType } from '../hooks/warmapAPIFeeds';
+import useWarmapAPI, { StarSystemType } from '../hooks/useWarmapAPI';
 import StarSystem from '../ui/StarSystem';
 import useTooltip from '../hooks/useTooltip';
 import galaxyBackground from '/src/assets/galaxyBackground2.svg';
@@ -11,7 +11,7 @@ const MAX_SCALE = 15;
 
 const GalaxyMap = () => {
   const scaleRef = useRef(1);
-  const { systems, factions } = warmapAPIFeeds();
+  const { systems, factions } = useWarmapAPI();
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
 
   const stageRef = useRef<Konva.Stage | null>(null);
