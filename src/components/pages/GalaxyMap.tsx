@@ -70,6 +70,17 @@ const GalaxyMap = () => {
     return Math.sqrt(dx * dx + dy * dy);
   };
 
+  let frameRequested = false;
+  const requestBatchDraw = (stage: Konva.Stage) => {
+    if (!frameRequested) {
+      frameRequested = true;
+      requestAnimationFrame(() => {
+        requestBatchDraw(stage);
+        frameRequested = false;
+      });
+    }
+  };
+
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     const scaleBy = 1.25;
@@ -96,7 +107,7 @@ const GalaxyMap = () => {
 
     stage.scale({ x: newScale, y: newScale });
     stage.position(positionRef.current);
-    stage.batchDraw();
+    requestBatchDraw(stage);
   };
 
   const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
@@ -170,7 +181,7 @@ const GalaxyMap = () => {
 
         stage.scale({ x: newScale, y: newScale });
         stage.position(newPos);
-        stage.batchDraw();
+        requestBatchDraw(stage);
       });
 
       lastDistance.current = newDistance;
