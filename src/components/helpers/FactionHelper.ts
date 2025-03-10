@@ -1,4 +1,4 @@
-import { FactionDataType, FactionType } from '../hooks/warmapAPIFeeds';
+import { FactionDataType } from '../hooks/useWarmapAPI';
 
 export function findFaction(
   factionKey: string,

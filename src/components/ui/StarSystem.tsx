@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Circle } from 'react-konva';
-import { FactionDataType, StarSystemType } from '../hooks/warmapAPIFeeds';
 import { findFaction } from '../helpers';
+import { FactionDataType, StarSystemType } from '../hooks/useWarmapAPI';
 
 const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;

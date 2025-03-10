@@ -1,11 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
-import WarmapAPIFeeds, { StarSystemType } from '../hooks/warmapAPIFeeds';
 import StarSystem from '../ui/StarSystem';
 import useTooltip from '../hooks/useTooltip';
 import galaxyBackground from '/src/assets/galaxyBackground2.svg';
 import { findFaction } from '../helpers';
+import useWarmapAPI, {
+  FactionType,
+  StarSystemType,
+} from '../hooks/useWarmapAPI';
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 15;
@@ -16,8 +19,28 @@ function isCapital(systemName: string, capitals: string[]): boolean {
 
 const GalaxyMap = () => {
   const scaleRef = useRef(1);
-  const { systems, factions, capitals } = WarmapAPIFeeds();
+  const { systems, factions, capitals } = useWarmapAPI();
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
+
+  const [data, setData] = useState<{
+    systems: StarSystemType[];
+    factions: Record<string, FactionType>;
+  }>({
+    systems: [],
+    factions: {},
+  });
+
+  useEffect(() => {
+    setData({ systems, factions });
+    console.log('🔄 Initial API Fetch:', { systems, factions });
+
+    const interval = setInterval(() => {
+      console.log('🔄 API Data Refreshing at', new Date().toLocaleTimeString());
+      setData({ systems, factions });
+    }, 300000);
+
+    return () => clearInterval(interval);
+  }, [systems, factions]);
 
   const stageRef = useRef<Konva.Stage | null>(null);
   const positionRef = useRef({
@@ -253,6 +276,18 @@ const GalaxyMap = () => {
             />
           );
         })}
+        {data.systems.map((system: StarSystemType, index: number) => (
+          <StarSystem
+            key={system.name || index}
+            isCapital={isCapital(system.name, capitals)}
+            system={system}
+            factionColor={data.factions[system.owner]?.colour || 'gray'}
+            factions={data.factions}
+            showTooltip={showTooltip}
+            hideTooltip={hideTooltip}
+            tooltip={tooltip}
+          />
+        ))}
       </Layer>
       <Layer listening={false}>
         {tooltip.visible && (
