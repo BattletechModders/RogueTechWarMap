@@ -33,7 +33,11 @@ const StarSystem: React.FC<StarSystemProps> = ({
       fill={factionColor}
       onClick={() => {
         if (system.sysUrl) {
-          window.location.href = `https://www.roguewar.org${system.sysUrl}`;
+          window.open(
+            `https://www.roguewar.org${system.sysUrl}`,
+            '_blank',
+            'noopener,noreferrer'
+          );
         }
       }}
       onMouseEnter={(e) => {
