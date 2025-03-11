@@ -137,7 +137,7 @@ const GalaxyMapRender = ({
     if (!frameRequested) {
       frameRequested = true;
       requestAnimationFrame(() => {
-        requestBatchDraw(stage);
+        stage.batchDraw();
         frameRequested = false;
       });
     }
