@@ -32,7 +32,7 @@ const GalaxyMap = () => {
     }
 
     const interval = setInterval(() => {
-      console.log('🔄 API Data Refreshing at', new Date().toLocaleTimeString());
+      console.log('API Data Refreshing at', new Date().toLocaleTimeString());
       fetchSystemData();
     }, 300_000);
 
@@ -75,7 +75,6 @@ const GalaxyMapRender = ({
   capitals: string[];
 }) => {
   const scaleRef = useRef(1);
-  //const { systems, factions, capitals } = useWarmapAPI();
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
   const stageRef = useRef<Konva.Stage | null>(null);
   const positionRef = useRef({
