@@ -256,6 +256,19 @@ const GalaxyMapRender = ({
     }
   };
 
+  const isVisible = (system: StarSystemType) => {
+    const scale = scaleRef.current;
+    const viewportWidth = window.innerWidth / scale;
+    const viewportHeight = window.innerHeight / scale;
+
+    return (
+      system.posX > positionRef.current.x - viewportWidth / 2 &&
+      system.posX < positionRef.current.x + viewportWidth / 2 &&
+      system.posY > positionRef.current.y - viewportHeight / 2 &&
+      system.posY < positionRef.current.y + viewportHeight / 2
+    );
+  };
+
   return (
     <Stage
       width={window.innerWidth}
@@ -294,7 +307,7 @@ const GalaxyMapRender = ({
         )}
       </Layer>
       <Layer>
-        {systems.map((system: StarSystemType, index: number) => {
+        {systems.filter(isVisible).map((system, index) => {
           const faction = findFaction(system.owner, factions);
 
           return (
