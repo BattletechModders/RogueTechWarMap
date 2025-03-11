@@ -72,11 +72,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
           if (!pointer) return;
 
           if (tooltip.visible && tooltip.text.includes(system.name)) {
-            window.open(
-              `https://www.roguewar.org${system.sysUrl}`,
-              '_blank',
-              'noopener,noreferrer'
-            );
+            openInNewTab(`https://www.roguewar.org${system.sysUrl}`);
             return;
           }
 
