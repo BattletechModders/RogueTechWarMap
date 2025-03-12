@@ -261,11 +261,14 @@ const GalaxyMapRender = ({
     const viewportWidth = window.innerWidth / scale;
     const viewportHeight = window.innerHeight / scale;
 
+    const halfViewportWidth = viewportWidth / 2;
+    const halfViewportHeight = viewportHeight / 2;
+
     return (
-      system.posX > positionRef.current.x - viewportWidth / 2 &&
-      system.posX < positionRef.current.x + viewportWidth / 2 &&
-      system.posY > positionRef.current.y - viewportHeight / 2 &&
-      system.posY < positionRef.current.y + viewportHeight / 2
+      system.posX > positionRef.current.x - halfViewportWidth &&
+      system.posX < positionRef.current.x + halfViewportWidth &&
+      system.posY > positionRef.current.y - halfViewportHeight &&
+      system.posY < positionRef.current.y + halfViewportHeight
     );
   };
 
