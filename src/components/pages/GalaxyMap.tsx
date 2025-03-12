@@ -326,18 +326,6 @@ const GalaxyMapRender = ({
             />
           );
         })}
-        {systems.map((system: StarSystemType, index: number) => (
-          <StarSystem
-            key={system.name || index}
-            isCapital={isCapital(system.name, capitals)}
-            system={system}
-            factionColor={factions[system.owner]?.colour || 'gray'}
-            factions={factions}
-            showTooltip={showTooltip}
-            hideTooltip={hideTooltip}
-            tooltip={tooltip}
-          />
-        ))}
       </Layer>
       <Layer listening={false}>
         {tooltip.visible && (
