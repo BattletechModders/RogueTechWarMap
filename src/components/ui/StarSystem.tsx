@@ -11,6 +11,7 @@ interface StarSystemProps {
   isCapital: boolean;
   factionColor: string;
   factions: FactionDataType;
+  scale: number;
   showTooltip: (
     text: string,
     x: number,
@@ -25,17 +26,21 @@ interface StarSystemProps {
 const StarSystem: React.FC<StarSystemProps> = ({
   system,
   isCapital,
+  scale,
   factionColor,
   factions,
   showTooltip,
   hideTooltip,
   tooltip,
 }) => {
+  const radius =
+    (isCapital ? CAPITAL_RADIUS : PLANET_RADIUS) / (scale < 1 ? scale : 1);
+
   return (
     <Circle
       x={Number(system.posX)}
       y={-Number(system.posY)}
-      radius={isCapital ? CAPITAL_RADIUS : PLANET_RADIUS}
+      radius={radius}
       fill={factionColor}
       onDblClick={() => {
         if (system.sysUrl) {

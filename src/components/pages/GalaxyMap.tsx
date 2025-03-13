@@ -319,6 +319,7 @@ const GalaxyMapRender = ({
             <StarSystem
               key={system.name || index}
               isCapital={isCapital(system.name, capitals)}
+              scale={scaleRef.current}
               system={system}
               factionColor={faction?.colour || 'gray'}
               factions={factions}
