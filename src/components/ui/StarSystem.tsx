@@ -37,7 +37,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
       y={-Number(system.posY)}
       radius={isCapital ? CAPITAL_RADIUS : PLANET_RADIUS}
       fill={factionColor}
-      onClick={() => {
+      onDblClick={() => {
         if (system.sysUrl) {
           openInNewTab(`https://www.roguewar.org${system.sysUrl}`);
         }

@@ -257,19 +257,21 @@ const GalaxyMapRender = ({
   };
 
   const isVisible = (system: StarSystemType) => {
-    const scale = scaleRef.current;
-    const viewportWidth = window.innerWidth / scale;
-    const viewportHeight = window.innerHeight / scale;
+    // const scale = scaleRef.current;
+    // const viewportWidth = window.innerWidth / scale;
+    // const viewportHeight = window.innerHeight / scale;
 
-    const halfViewportWidth = viewportWidth / 2;
-    const halfViewportHeight = viewportHeight / 2;
+    // const halfViewportWidth = viewportWidth / 2;
+    // const halfViewportHeight = viewportHeight / 2;
 
-    return (
-      system.posX > positionRef.current.x - halfViewportWidth &&
-      system.posX < positionRef.current.x + halfViewportWidth &&
-      system.posY > positionRef.current.y - halfViewportHeight &&
-      system.posY < positionRef.current.y + halfViewportHeight
-    );
+    // return (
+    //   system.posX > positionRef.current.x - halfViewportWidth &&
+    //   system.posX < positionRef.current.x + halfViewportWidth &&
+    //   system.posY > positionRef.current.y - halfViewportHeight &&
+    //   system.posY < positionRef.current.y + halfViewportHeight
+    //);
+
+    return true;
   };
 
   return (
