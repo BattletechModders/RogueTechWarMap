@@ -39,7 +39,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
       .map((faction) => {
         const factionData = findFaction(faction.Name, allFactions);
         const displayName = factionData?.prettyName || faction.Name;
-        return `${displayName}: ${faction.control}% (${faction.ActivePlayers} players)`;
+        return `${displayName}: ${faction.control}%\n (${faction.ActivePlayers} players)`;
       })
       .join('\n');
   };
