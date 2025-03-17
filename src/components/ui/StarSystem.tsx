@@ -31,6 +31,19 @@ const StarSystem: React.FC<StarSystemProps> = ({
   hideTooltip,
   tooltip,
 }) => {
+  const formatFactionControl = (
+    factions: StarSystemType['factions'],
+    allFactions: FactionDataType
+  ) => {
+    return factions
+      .map((faction) => {
+        const factionData = findFaction(faction.Name, allFactions);
+        const displayName = factionData?.prettyName || faction.Name;
+        return `${displayName}: ${faction.control}%\n (${faction.ActivePlayers} players)`;
+      })
+      .join('\n');
+  };
+
   return (
     <Circle
       x={Number(system.posX)}
@@ -50,11 +63,12 @@ const StarSystem: React.FC<StarSystemProps> = ({
         if (!pointer) return;
 
         const faction = findFaction(system.owner, factions);
+        const controlDetails = formatFactionControl(system.factions, factions);
 
         showTooltip(
           `${system.name}\n${faction?.prettyName || 'Unknown'}\n(${
             system.posX
-          }, ${system.posY})`,
+          }, ${system.posY})\n\nFaction Control:\n${controlDetails}`,
           pointer.x,
           pointer.y,
           stage.x(),
@@ -77,9 +91,13 @@ const StarSystem: React.FC<StarSystemProps> = ({
           }
 
           const faction = findFaction(system.owner, factions);
+          const controlDetails = formatFactionControl(
+            system.factions,
+            factions
+          );
 
           showTooltip(
-            `${system.name}\n${faction?.prettyName}\n(${system.posX}, ${system.posY})`,
+            `${system.name}\n${faction?.prettyName}\n(${system.posX}, ${system.posY})\n\nFaction Control:\n${controlDetails}`,
             pointer.x,
             pointer.y
           );
