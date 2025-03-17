@@ -274,6 +274,9 @@ const GalaxyMapRender = ({
     return true;
   };
 
+  const isMobile = window.innerWidth < 768;
+  const tooltipScale = isMobile ? 1.5 / scaleRef.current : 2 / scaleRef.current;
+
   return (
     <Stage
       width={window.innerWidth}
@@ -335,8 +338,8 @@ const GalaxyMapRender = ({
             x={tooltip.x}
             y={tooltip.y}
             opacity={0.75}
-            scaleX={2 / scaleRef.current}
-            scaleY={2 / scaleRef.current}
+            scaleX={tooltipScale}
+            scaleY={tooltipScale}
           >
             <Tag
               fill="white"
