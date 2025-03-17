@@ -1,11 +1,18 @@
 import { useState } from 'react';
 
+export interface ControlInfo {
+  Name: string;
+  control: number;
+  ActivePlayers: number;
+}
+
 export interface StarSystemType {
   name: string;
   posX: number;
   posY: number;
   owner: string;
   sysUrl?: string;
+  factions: ControlInfo[];
 }
 
 export type FactionType = {
