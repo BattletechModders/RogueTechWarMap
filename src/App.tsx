@@ -11,11 +11,11 @@ import { ToS } from './components/pages/ToS';
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
-      <Route path="/" element={<Home />} errorElement={<ErrorPage />} />
+      <Route path="/" element={<Map />} errorElement={<ErrorPage />} />
 
-      <Route index element={<Home />} />
-      <Route path="/map" element={<Map />} />
-      <Route path="/tos" element={<ToS />} />
+      <Route index element={<Map />} />
+      {/* <Route path="/map" element={<Map />} /> */}
+      {/* <Route path="/tos" element={<ToS />} /> */}
     </>
   )
 );
