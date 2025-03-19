@@ -101,7 +101,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
           );
 
           showTooltip(
-            `${system.name}\n${faction?.prettyName}\n\nFaction Control:\n${controlDetails}`,
+            `${system.name}\n${faction?.prettyName}\n\nFaction Control:\n${controlDetails}\n\n[Tap to open]`,
             // `${system.name}\n${faction?.prettyName}\n(${system.posX}, ${system.posY})\n\nFaction Control:\n${controlDetails}`,
             pointer.x,
             pointer.y,
