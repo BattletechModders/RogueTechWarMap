@@ -181,7 +181,10 @@ const GalaxyMapRender = ({
       const stage = e.target.getStage();
       if (!stage) return;
       const isCircle = e.target.className === 'Circle';
-      if (!isCircle) hideTooltip();
+      const isTooltip = e.target.findAncestor('Label', true);
+      if (!isCircle && !isTooltip) {
+        hideTooltip();
+      }
     }
 
     if (e.evt.touches.length === 2) {
@@ -314,7 +317,7 @@ const GalaxyMapRender = ({
           );
         })}
       </Layer>
-      <Layer listening={false}>
+      <Layer>
         {tooltip.visible && (
           <Label
             x={tooltip.x}
@@ -322,6 +325,12 @@ const GalaxyMapRender = ({
             opacity={0.75}
             scaleX={tooltipScale}
             scaleY={tooltipScale}
+            onTouchStart={(e) => {
+              e.evt.preventDefault();
+              if (tooltip.onTouch) {
+                tooltip.onTouch();
+              }
+            }}
           >
             <Tag
               fill="white"
