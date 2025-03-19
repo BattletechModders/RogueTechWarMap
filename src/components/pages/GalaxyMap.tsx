@@ -256,24 +256,6 @@ const GalaxyMapRender = ({
     }
   };
 
-  const isVisible = (system: StarSystemType) => {
-    // const scale = scaleRef.current;
-    // const viewportWidth = window.innerWidth / scale;
-    // const viewportHeight = window.innerHeight / scale;
-
-    // const halfViewportWidth = viewportWidth / 2;
-    // const halfViewportHeight = viewportHeight / 2;
-
-    // return (
-    //   system.posX > positionRef.current.x - halfViewportWidth &&
-    //   system.posX < positionRef.current.x + halfViewportWidth &&
-    //   system.posY > positionRef.current.y - halfViewportHeight &&
-    //   system.posY < positionRef.current.y + halfViewportHeight
-    //);
-
-    return true;
-  };
-
   const isMobile = window.innerWidth < 768;
   const tooltipScale = isMobile ? 1.5 / scaleRef.current : 2 / scaleRef.current;
 
@@ -315,7 +297,7 @@ const GalaxyMapRender = ({
         )}
       </Layer>
       <Layer>
-        {systems.filter(isVisible).map((system, index) => {
+        {systems.map((system, index) => {
           const faction = findFaction(system.owner, factions);
 
           return (
