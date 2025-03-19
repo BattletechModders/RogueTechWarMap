@@ -11,7 +11,7 @@ import useWarmapAPI, {
 } from '../hooks/useWarmapAPI';
 
 const MIN_SCALE = 0.2;
-const MAX_SCALE = 15;
+const MAX_SCALE = 25;
 
 function isCapital(systemName: string, capitals: string[]): boolean {
   return capitals.includes(systemName);
