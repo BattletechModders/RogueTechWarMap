@@ -5,14 +5,19 @@ import StarSystem from '../ui/StarSystem';
 import useTooltip from '../hooks/useTooltip';
 import galaxyBackground from '/galaxyBackground2.svg';
 import { DisplayStarSystemType, FactionDataType } from '../hooks/types';
-import useWarmapAPI from '../hooks/useWarmapAPI';
+import useFiltering from '../hooks/useFiltering';
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
 
 const GalaxyMap = () => {
-  const { systems, factions, capitals, fetchFactionData, fetchSystemData } =
-    useWarmapAPI();
+  const {
+    displaySystems,
+    factions,
+    capitals,
+    fetchFactionData,
+    fetchSystemData,
+  } = useFiltering();
 
   const [initialDataLoaded, setInitialDataLoaded] = useState<boolean>(false);
 
@@ -31,7 +36,6 @@ const GalaxyMap = () => {
 
     return () => clearInterval(interval);
   }, [
-    systems,
     factions,
     capitals,
     fetchFactionData,
@@ -40,15 +44,15 @@ const GalaxyMap = () => {
   ]);
 
   if (
-    systems &&
-    systems.length > 0 &&
+    displaySystems &&
+    displaySystems.length > 0 &&
     factions &&
     capitals &&
     capitals.length > 0
   ) {
     return (
       <GalaxyMapRender
-        systems={systems}
+        systems={displaySystems}
         factions={factions}
         capitals={capitals}
       />

@@ -1,13 +1,7 @@
-import { useEffect, useState } from 'react';
-import {
-  DisplayStarSystemType,
-  FactionDataType,
-  StarSystemType,
-} from './types';
-import { findFaction, isCapital } from '../helpers';
+import { useState } from 'react';
+import { FactionDataType, StarSystemType } from './types';
 
 const useWarmapAPI = () => {
-  const [systems, setSystems] = useState<DisplayStarSystemType[]>([]);
   const [rawSystems, setRawSystems] = useState<StarSystemType[]>([]);
   const [factions, setFactions] = useState<FactionDataType>({});
   const [capitals, setCapitals] = useState<string[]>([]);
@@ -38,28 +32,6 @@ const useWarmapAPI = () => {
     }
   };
 
-  useEffect(() => {
-    const projectSystems = (
-      rawSystems: StarSystemType[]
-    ): DisplayStarSystemType[] => {
-      return rawSystems.map((value) => {
-        const faction = findFaction(value.owner, factions);
-        const displayName = faction?.prettyName || faction.Name;
-        const projectedSystem: DisplayStarSystemType = {
-          ...value,
-          isCapital: isCapital(value.name, capitals),
-          factionColour: faction && faction.colour ? faction.colour : 'gray',
-          factionName: displayName,
-        };
-
-        return projectedSystem;
-      });
-    };
-
-    const projectedSystems = projectSystems(rawSystems);
-    setSystems(projectedSystems);
-  }, [rawSystems, capitals, factions]);
-
   const fetchSystemData = async () => {
     try {
       const systemData = await fetch(
@@ -73,7 +45,7 @@ const useWarmapAPI = () => {
   };
 
   return {
-    systems,
+    rawSystems,
     factions,
     capitals,
     fetchFactionData,
