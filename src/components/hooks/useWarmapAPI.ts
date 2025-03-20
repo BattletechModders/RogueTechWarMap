@@ -38,27 +38,27 @@ const useWarmapAPI = () => {
     }
   };
 
-  const projectSystems = (
-    rawSystems: StarSystemType[]
-  ): DisplayStarSystemType[] => {
-    return rawSystems.map((value) => {
-      const faction = findFaction(value.owner, factions);
-      const displayName = faction?.prettyName || faction.Name;
-      const projectedSystem: DisplayStarSystemType = {
-        ...value,
-        isCapital: isCapital(value.name, capitals),
-        factionColour: faction && faction.colour ? faction.colour : 'gray',
-        factionName: displayName,
-      };
-
-      return projectedSystem;
-    });
-  };
-
   useEffect(() => {
+    const projectSystems = (
+      rawSystems: StarSystemType[]
+    ): DisplayStarSystemType[] => {
+      return rawSystems.map((value) => {
+        const faction = findFaction(value.owner, factions);
+        const displayName = faction?.prettyName || faction.Name;
+        const projectedSystem: DisplayStarSystemType = {
+          ...value,
+          isCapital: isCapital(value.name, capitals),
+          factionColour: faction && faction.colour ? faction.colour : 'gray',
+          factionName: displayName,
+        };
+
+        return projectedSystem;
+      });
+    };
+
     const projectedSystems = projectSystems(rawSystems);
     setSystems(projectedSystems);
-  }, [rawSystems]);
+  }, [rawSystems, capitals, factions]);
 
   const fetchSystemData = async () => {
     try {
