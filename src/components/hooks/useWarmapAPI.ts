@@ -1,31 +1,14 @@
-import { useState } from 'react';
-
-export interface ControlInfo {
-  Name: string;
-  control: number;
-  ActivePlayers: number;
-}
-
-export interface StarSystemType {
-  name: string;
-  posX: number;
-  posY: number;
-  owner: string;
-  sysUrl?: string;
-  factions: ControlInfo[];
-}
-
-export type FactionType = {
-  colour: string;
-  prettyName: string;
-  id: number;
-  capital: string;
-};
-
-export type FactionDataType = Record<string, FactionType>;
+import { useEffect, useState } from 'react';
+import {
+  DisplayStarSystemType,
+  FactionDataType,
+  StarSystemType,
+} from './types';
+import { findFaction, isCapital } from '../helpers';
 
 const useWarmapAPI = () => {
-  const [systems, setSystems] = useState<StarSystemType[]>([]);
+  const [systems, setSystems] = useState<DisplayStarSystemType[]>([]);
+  const [rawSystems, setRawSystems] = useState<StarSystemType[]>([]);
   const [factions, setFactions] = useState<FactionDataType>({});
   const [capitals, setCapitals] = useState<string[]>([]);
 
@@ -55,13 +38,35 @@ const useWarmapAPI = () => {
     }
   };
 
+  const projectSystems = (
+    rawSystems: StarSystemType[]
+  ): DisplayStarSystemType[] => {
+    return rawSystems.map((value) => {
+      const faction = findFaction(value.owner, factions);
+      const displayName = faction?.prettyName || faction.Name;
+      const projectedSystem: DisplayStarSystemType = {
+        ...value,
+        isCapital: isCapital(value.name, capitals),
+        factionColour: faction && faction.colour ? faction.colour : 'gray',
+        factionName: displayName,
+      };
+
+      return projectedSystem;
+    });
+  };
+
+  useEffect(() => {
+    const projectedSystems = projectSystems(rawSystems);
+    setSystems(projectedSystems);
+  }, [rawSystems]);
+
   const fetchSystemData = async () => {
     try {
       const systemData = await fetch(
         'https://roguewar.org/api/v1/starmap/warmap'
       ).then((res) => res.json());
 
-      setSystems(systemData);
+      setRawSystems(systemData);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     }
