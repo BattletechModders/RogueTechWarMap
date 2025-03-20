@@ -3,7 +3,7 @@ import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
 import useTooltip from '../hooks/useTooltip';
-import galaxyBackground from '/src/assets/galaxyBackground2.svg';
+import galaxyBackground from '/galaxyBackground2.svg';
 import { findFaction } from '../helpers';
 import useWarmapAPI, {
   FactionDataType,
