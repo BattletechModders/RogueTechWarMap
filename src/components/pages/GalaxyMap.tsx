@@ -3,7 +3,7 @@ import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
 import useTooltip from '../hooks/useTooltip';
-import galaxyBackground from '/src/assets/galaxyBackground2.svg';
+import galaxyBackground from '/galaxyBackground2.svg';
 import { findFaction } from '../helpers';
 import useWarmapAPI, {
   FactionDataType,
@@ -11,7 +11,7 @@ import useWarmapAPI, {
 } from '../hooks/useWarmapAPI';
 
 const MIN_SCALE = 0.2;
-const MAX_SCALE = 15;
+const MAX_SCALE = 25;
 
 function isCapital(systemName: string, capitals: string[]): boolean {
   return capitals.includes(systemName);
@@ -181,7 +181,10 @@ const GalaxyMapRender = ({
       const stage = e.target.getStage();
       if (!stage) return;
       const isCircle = e.target.className === 'Circle';
-      if (!isCircle) hideTooltip();
+      const isTooltip = e.target.findAncestor('Label', true);
+      if (!isCircle && !isTooltip) {
+        hideTooltip();
+      }
     }
 
     if (e.evt.touches.length === 2) {
@@ -314,7 +317,7 @@ const GalaxyMapRender = ({
           );
         })}
       </Layer>
-      <Layer listening={false}>
+      <Layer>
         {tooltip.visible && (
           <Label
             x={tooltip.x}
@@ -322,6 +325,12 @@ const GalaxyMapRender = ({
             opacity={0.75}
             scaleX={tooltipScale}
             scaleY={tooltipScale}
+            onTouchStart={(e) => {
+              e.evt.preventDefault();
+              if (tooltip.onTouch) {
+                tooltip.onTouch();
+              }
+            }}
           >
             <Tag
               fill="white"

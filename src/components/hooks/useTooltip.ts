@@ -5,6 +5,7 @@ interface TooltipState {
   text: string;
   x: number;
   y: number;
+  onTouch?: () => void;
 }
 
 const useTooltip = (scaleRef: React.RefObject<number>) => {
@@ -20,7 +21,8 @@ const useTooltip = (scaleRef: React.RefObject<number>) => {
     pointerX: number,
     pointerY: number,
     stageX?: number,
-    stageY?: number
+    stageY?: number,
+    onTouch?: () => void
   ) => {
     const scale = scaleRef.current || 1;
 
@@ -29,6 +31,7 @@ const useTooltip = (scaleRef: React.RefObject<number>) => {
       text,
       x: stageX !== undefined ? (pointerX - stageX) / scale : pointerX,
       y: stageY !== undefined ? (pointerY - stageY) / scale : pointerY,
+      onTouch,
     });
   };
 

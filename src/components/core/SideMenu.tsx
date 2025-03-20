@@ -24,7 +24,7 @@ export function SideMenu() {
     <div id="sideMenu" className="w-40 fixed h-full">
       <Link to="/">
         <div className="sideMenu-header">
-          <img id="RoguewarLogo" src="/src/assets/rtLogo.png" />
+          <img id="RoguewarLogo" src="/rtLogo.png" />
         </div>
       </Link>
       <br />

@@ -16,7 +16,8 @@ interface StarSystemProps {
     x: number,
     y: number,
     stageX?: number,
-    stageY?: number
+    stageY?: number,
+    onTouch?: () => void
   ) => void;
   hideTooltip: () => void;
   tooltip: { visible: boolean; text: string };
@@ -66,9 +67,12 @@ const StarSystem: React.FC<StarSystemProps> = ({
         const controlDetails = formatFactionControl(system.factions, factions);
 
         showTooltip(
-          `${system.name}\n${faction?.prettyName || 'Unknown'}\n(${
-            system.posX
-          }, ${system.posY})\n\nFaction Control:\n${controlDetails}`,
+          `${system.name}\n${
+            faction?.prettyName || 'Unknown'
+          }\n\nFaction Control:\n${controlDetails}`,
+          // `${system.name}\n${faction?.prettyName || 'Unknown'}\n(${
+          //   system.posX
+          // }, ${system.posY})\n\nFaction Control:\n${controlDetails}`,
           pointer.x,
           pointer.y,
           stage.x(),
@@ -97,9 +101,13 @@ const StarSystem: React.FC<StarSystemProps> = ({
           );
 
           showTooltip(
-            `${system.name}\n${faction?.prettyName}\n(${system.posX}, ${system.posY})\n\nFaction Control:\n${controlDetails}`,
+            `${system.name}\n${faction?.prettyName}\n\nFaction Control:\n${controlDetails}\n\n[Tap to open]`,
+            // `${system.name}\n${faction?.prettyName}\n(${system.posX}, ${system.posY})\n\nFaction Control:\n${controlDetails}`,
             pointer.x,
-            pointer.y
+            pointer.y,
+            undefined,
+            undefined,
+            () => openInNewTab(`https://www.roguewar.org${system.sysUrl}`)
           );
         }
       }}
