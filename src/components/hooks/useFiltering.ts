@@ -14,7 +14,7 @@ const useFiltering = () => {
     (rawSystems: StarSystemType[]): DisplayStarSystemType[] => {
       return rawSystems.map((value) => {
         const faction = findFaction(value.owner, factions);
-        const displayName = faction?.prettyName || faction.Name;
+        const displayName = faction?.prettyName ?? 'Unknown Faction';
         const projectedSystem: DisplayStarSystemType = {
           ...value,
           isCapital: isCapital(value.name, capitals),
