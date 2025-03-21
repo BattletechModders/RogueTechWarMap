@@ -60,9 +60,9 @@ const StarSystem: React.FC<StarSystemProps> = ({
     const anim = new Konva.Animation((frame) => {
       if (!frame) return;
 
-      const sine = Math.sin(frame.time * 0.005); // smooth pulse
-      const scale = sine * 0.2 + 1; // 0.8 to 1.2
-      const opacity = sine * 0.3 + 0.7; // 0.4 to 1.0
+      const sine = Math.sin(frame.time * 0.005);
+      const scale = sine * 0.2 + 1;
+      const opacity = sine * 0.3 + 0.7;
 
       node.scale({ x: scale, y: scale });
       node.opacity(opacity);
@@ -101,9 +101,6 @@ const StarSystem: React.FC<StarSystemProps> = ({
           `${system.name}\n${
             faction?.prettyName || 'Unknown'
           }\n\nFaction Control:\n${controlDetails}`,
-          // `${system.name}\n${faction?.prettyName || 'Unknown'}\n(${
-          //   system.posX
-          // }, ${system.posY})\n\nFaction Control:\n${controlDetails}`,
           pointer.x,
           pointer.y,
           stage.x(),
@@ -133,7 +130,6 @@ const StarSystem: React.FC<StarSystemProps> = ({
 
           showTooltip(
             `${system.name}\n${faction?.prettyName}\n\nFaction Control:\n${controlDetails}\n\n[Tap to open]`,
-            // `${system.name}\n${faction?.prettyName}\n(${system.posX}, ${system.posY})\n\nFaction Control:\n${controlDetails}`,
             pointer.x,
             pointer.y,
             undefined,
@@ -141,7 +137,6 @@ const StarSystem: React.FC<StarSystemProps> = ({
             () => {
               window.location.href = `https://www.roguewar.org${system.sysUrl}`;
             }
-            // () => openInNewTab(`https://www.roguewar.org${system.sysUrl}`)
           );
         }
       }}
