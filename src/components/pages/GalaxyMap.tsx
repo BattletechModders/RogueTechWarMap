@@ -3,7 +3,7 @@ import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
 import useTooltip from '../hooks/useTooltip';
-import galaxyBackground from '/galaxyBackground2.svg';
+// import galaxyBackground from './galaxyBackground2.svg';
 import { DisplayStarSystemType, FactionDataType } from '../hooks/types';
 import useFiltering from '../hooks/useFiltering';
 
@@ -87,7 +87,7 @@ const GalaxyMapRender = ({
 
   useEffect(() => {
     const img = new window.Image();
-    img.src = galaxyBackground;
+    img.src = import.meta.env.BASE_URL + 'galaxyBackground2.svg';
     img.onload = () => {
       setBackground(img);
       setBgLoaded(true);
