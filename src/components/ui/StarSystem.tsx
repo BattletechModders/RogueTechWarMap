@@ -1,5 +1,6 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { Circle } from 'react-konva';
+import Konva from 'konva';
 import { findFaction, openInNewTab } from '../helpers';
 import {
   DisplayStarSystemType,
@@ -45,8 +46,38 @@ const StarSystem: React.FC<StarSystemProps> = ({
       .join('\n');
   };
 
+  const hasActivePlayers = system.factions.some(
+    (faction) => faction.ActivePlayers > 0
+  );
+
+  const circleRef = useRef<Konva.Circle>(null);
+
+  useEffect(() => {
+    if (!hasActivePlayers || !circleRef.current) return;
+
+    const node = circleRef.current;
+
+    const anim = new Konva.Animation((frame) => {
+      if (!frame) return;
+
+      const sine = Math.sin(frame.time * 0.005); // smooth pulse
+      const scale = sine * 0.2 + 1; // 0.8 to 1.2
+      const opacity = sine * 0.3 + 0.7; // 0.4 to 1.0
+
+      node.scale({ x: scale, y: scale });
+      node.opacity(opacity);
+    }, node.getLayer());
+
+    anim.start();
+
+    return () => {
+      anim.stop();
+    };
+  }, [hasActivePlayers]);
+
   return (
     <Circle
+      ref={circleRef}
       x={Number(system.posX)}
       y={-Number(system.posY)}
       radius={system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS}
