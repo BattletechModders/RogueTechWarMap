@@ -121,7 +121,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
           if (!pointer) return;
 
           if (tooltip.visible && tooltip.text.includes(system.name)) {
-            openInNewTab(`https://www.roguewar.org${system.sysUrl}`);
+            window.location.href = `https://www.roguewar.org${system.sysUrl}`;
             return;
           }
 
@@ -138,7 +138,10 @@ const StarSystem: React.FC<StarSystemProps> = ({
             pointer.y,
             undefined,
             undefined,
-            () => openInNewTab(`https://www.roguewar.org${system.sysUrl}`)
+            () => {
+              window.location.href = `https://www.roguewar.org${system.sysUrl}`;
+            }
+            // () => openInNewTab(`https://www.roguewar.org${system.sysUrl}`)
           );
         }
       }}
