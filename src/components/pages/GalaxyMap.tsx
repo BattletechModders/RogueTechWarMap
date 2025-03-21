@@ -4,22 +4,20 @@ import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
 import useTooltip from '../hooks/useTooltip';
 import galaxyBackground from '/galaxyBackground2.svg';
-import { findFaction } from '../helpers';
-import useWarmapAPI, {
-  FactionDataType,
-  StarSystemType,
-} from '../hooks/useWarmapAPI';
+import { DisplayStarSystemType, FactionDataType } from '../hooks/types';
+import useFiltering from '../hooks/useFiltering';
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
 
-function isCapital(systemName: string, capitals: string[]): boolean {
-  return capitals.includes(systemName);
-}
-
 const GalaxyMap = () => {
-  const { systems, factions, capitals, fetchFactionData, fetchSystemData } =
-    useWarmapAPI();
+  const {
+    displaySystems,
+    factions,
+    capitals,
+    fetchFactionData,
+    fetchSystemData,
+  } = useFiltering();
 
   const [initialDataLoaded, setInitialDataLoaded] = useState<boolean>(false);
 
@@ -38,7 +36,6 @@ const GalaxyMap = () => {
 
     return () => clearInterval(interval);
   }, [
-    systems,
     factions,
     capitals,
     fetchFactionData,
@@ -47,15 +44,15 @@ const GalaxyMap = () => {
   ]);
 
   if (
-    systems &&
-    systems.length > 0 &&
+    displaySystems &&
+    displaySystems.length > 0 &&
     factions &&
     capitals &&
     capitals.length > 0
   ) {
     return (
       <GalaxyMapRender
-        systems={systems}
+        systems={displaySystems}
         factions={factions}
         capitals={capitals}
       />
@@ -68,9 +65,8 @@ const GalaxyMap = () => {
 const GalaxyMapRender = ({
   systems,
   factions,
-  capitals,
 }: {
-  systems: StarSystemType[];
+  systems: DisplayStarSystemType[];
   factions: FactionDataType;
   capitals: string[];
 }) => {
@@ -301,14 +297,10 @@ const GalaxyMapRender = ({
       </Layer>
       <Layer>
         {systems.map((system, index) => {
-          const faction = findFaction(system.owner, factions);
-
           return (
             <StarSystem
               key={system.name || index}
-              isCapital={isCapital(system.name, capitals)}
               system={system}
-              factionColor={faction?.colour || 'gray'}
               factions={factions}
               showTooltip={showTooltip}
               hideTooltip={hideTooltip}

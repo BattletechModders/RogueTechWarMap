@@ -1,15 +1,17 @@
 import { memo } from 'react';
 import { Circle } from 'react-konva';
 import { findFaction, openInNewTab } from '../helpers';
-import { FactionDataType, StarSystemType } from '../hooks/useWarmapAPI';
+import {
+  DisplayStarSystemType,
+  FactionDataType,
+  StarSystemType,
+} from '../hooks/types';
 
 const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;
 
 interface StarSystemProps {
-  system: StarSystemType;
-  isCapital: boolean;
-  factionColor: string;
+  system: DisplayStarSystemType;
   factions: FactionDataType;
   showTooltip: (
     text: string,
@@ -25,8 +27,6 @@ interface StarSystemProps {
 
 const StarSystem: React.FC<StarSystemProps> = ({
   system,
-  isCapital,
-  factionColor,
   factions,
   showTooltip,
   hideTooltip,
@@ -49,8 +49,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
     <Circle
       x={Number(system.posX)}
       y={-Number(system.posY)}
-      radius={isCapital ? CAPITAL_RADIUS : PLANET_RADIUS}
-      fill={factionColor}
+      radius={system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS}
+      fill={system.factionColour}
       onClick={() => {
         if (system.sysUrl) {
           openInNewTab(`https://www.roguewar.org${system.sysUrl}`);
