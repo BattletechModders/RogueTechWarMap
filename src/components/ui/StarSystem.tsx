@@ -5,6 +5,7 @@ import { findFaction, openInNewTab } from '../helpers';
 import {
   DisplayStarSystemType,
   FactionDataType,
+  Settings,
   StarSystemType,
 } from '../hooks/types';
 
@@ -14,6 +15,7 @@ const PLANET_RADIUS = 1;
 interface StarSystemProps {
   system: DisplayStarSystemType;
   factions: FactionDataType;
+  settings: Settings;
   showTooltip: (
     text: string,
     x: number,
@@ -29,6 +31,7 @@ interface StarSystemProps {
 const StarSystem: React.FC<StarSystemProps> = ({
   system,
   factions,
+  settings,
   showTooltip,
   hideTooltip,
   tooltip,
@@ -53,6 +56,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const circleRef = useRef<Konva.Circle>(null);
 
   useEffect(() => {
+    if (!settings.flashActivePlayes) return;
     if (!hasActivePlayers || !circleRef.current) return;
 
     const node = circleRef.current;
@@ -73,7 +77,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
     return () => {
       anim.stop();
     };
-  }, [hasActivePlayers]);
+  }, [hasActivePlayers, settings]);
 
   return (
     <Circle

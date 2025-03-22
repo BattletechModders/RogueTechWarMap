@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { findFaction, isCapital } from '../helpers';
 import { DisplayStarSystemType, StarSystemType } from './types';
 import useWarmapAPI from './useWarmapAPI';
+import useSettings from './useSettings';
 
 const useFiltering = () => {
   const [displaySystems, setDisplaySystems] = useState<DisplayStarSystemType[]>(
@@ -9,6 +10,8 @@ const useFiltering = () => {
   );
   const { rawSystems, factions, capitals, fetchFactionData, fetchSystemData } =
     useWarmapAPI();
+
+  const { settings, setFlashActive } = useSettings();
 
   const projectSystemData = useCallback(
     (rawSystems: StarSystemType[]): DisplayStarSystemType[] => {
@@ -40,6 +43,8 @@ const useFiltering = () => {
     capitals,
     fetchFactionData,
     fetchSystemData,
+    settings,
+    setFlashActive,
   };
 };
 
