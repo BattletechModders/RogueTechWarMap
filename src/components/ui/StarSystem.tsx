@@ -65,8 +65,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       if (!frame) return;
 
       const sine = Math.sin(frame.time * 0.005);
-      const scale = sine * 0.2 + 1;
-      const opacity = sine * 0.3 + 0.7;
+      const scale = sine * 0.1 + 1;
+      const opacity = sine * 0.15 + 0.7;
 
       node.scale({ x: scale, y: scale });
       node.opacity(opacity);
