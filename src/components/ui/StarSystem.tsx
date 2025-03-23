@@ -1,9 +1,11 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { Circle } from 'react-konva';
+import Konva from 'konva';
 import { findFaction, openInNewTab } from '../helpers';
 import {
   DisplayStarSystemType,
   FactionDataType,
+  Settings,
   StarSystemType,
 } from '../hooks/types';
 
@@ -13,6 +15,7 @@ const PLANET_RADIUS = 1;
 interface StarSystemProps {
   system: DisplayStarSystemType;
   factions: FactionDataType;
+  settings: Settings;
   showTooltip: (
     text: string,
     x: number,
@@ -28,6 +31,7 @@ interface StarSystemProps {
 const StarSystem: React.FC<StarSystemProps> = ({
   system,
   factions,
+  settings,
   showTooltip,
   hideTooltip,
   tooltip,
@@ -45,8 +49,39 @@ const StarSystem: React.FC<StarSystemProps> = ({
       .join('\n');
   };
 
+  const hasActivePlayers = system.factions.some(
+    (faction) => faction.ActivePlayers > 0
+  );
+
+  const circleRef = useRef<Konva.Circle>(null);
+
+  useEffect(() => {
+    if (!settings.flashActivePlayes) return;
+    if (!hasActivePlayers || !circleRef.current) return;
+
+    const node = circleRef.current;
+
+    const anim = new Konva.Animation((frame) => {
+      if (!frame) return;
+
+      const sine = Math.sin(frame.time * 0.005);
+      const scale = sine * 0.1 + 1;
+      const opacity = sine * 0.15 + 0.7;
+
+      node.scale({ x: scale, y: scale });
+      node.opacity(opacity);
+    }, node.getLayer());
+
+    anim.start();
+
+    return () => {
+      anim.stop();
+    };
+  }, [hasActivePlayers, settings]);
+
   return (
     <Circle
+      ref={circleRef}
       x={Number(system.posX)}
       y={-Number(system.posY)}
       radius={system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS}
@@ -70,9 +105,6 @@ const StarSystem: React.FC<StarSystemProps> = ({
           `${system.name}\n${
             faction?.prettyName || 'Unknown'
           }\n\nFaction Control:\n${controlDetails}`,
-          // `${system.name}\n${faction?.prettyName || 'Unknown'}\n(${
-          //   system.posX
-          // }, ${system.posY})\n\nFaction Control:\n${controlDetails}`,
           pointer.x,
           pointer.y,
           stage.x(),
@@ -90,7 +122,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
           if (!pointer) return;
 
           if (tooltip.visible && tooltip.text.includes(system.name)) {
-            openInNewTab(`https://www.roguewar.org${system.sysUrl}`);
+            window.location.href = `https://www.roguewar.org${system.sysUrl}`;
             return;
           }
 
@@ -102,12 +134,13 @@ const StarSystem: React.FC<StarSystemProps> = ({
 
           showTooltip(
             `${system.name}\n${faction?.prettyName}\n\nFaction Control:\n${controlDetails}\n\n[Tap to open]`,
-            // `${system.name}\n${faction?.prettyName}\n(${system.posX}, ${system.posY})\n\nFaction Control:\n${controlDetails}`,
             pointer.x,
             pointer.y,
             undefined,
             undefined,
-            () => openInNewTab(`https://www.roguewar.org${system.sysUrl}`)
+            () => {
+              window.location.href = `https://www.roguewar.org${system.sysUrl}`;
+            }
           );
         }
       }}

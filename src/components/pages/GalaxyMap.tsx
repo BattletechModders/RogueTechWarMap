@@ -3,8 +3,11 @@ import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
 import useTooltip from '../hooks/useTooltip';
-import galaxyBackground from '/galaxyBackground2.svg';
-import { DisplayStarSystemType, FactionDataType } from '../hooks/types';
+import {
+  DisplayStarSystemType,
+  FactionDataType,
+  Settings,
+} from '../hooks/types';
 import useFiltering from '../hooks/useFiltering';
 
 const MIN_SCALE = 0.2;
@@ -17,6 +20,7 @@ const GalaxyMap = () => {
     capitals,
     fetchFactionData,
     fetchSystemData,
+    settings,
   } = useFiltering();
 
   const [initialDataLoaded, setInitialDataLoaded] = useState<boolean>(false);
@@ -54,7 +58,7 @@ const GalaxyMap = () => {
       <GalaxyMapRender
         systems={displaySystems}
         factions={factions}
-        capitals={capitals}
+        settings={settings}
       />
     );
   }
@@ -65,10 +69,11 @@ const GalaxyMap = () => {
 const GalaxyMapRender = ({
   systems,
   factions,
+  settings,
 }: {
   systems: DisplayStarSystemType[];
   factions: FactionDataType;
-  capitals: string[];
+  settings: Settings;
 }) => {
   const scaleRef = useRef(1);
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
@@ -87,7 +92,7 @@ const GalaxyMapRender = ({
 
   useEffect(() => {
     const img = new window.Image();
-    img.src = galaxyBackground;
+    img.src = import.meta.env.BASE_URL + 'galaxyBackground2.svg';
     img.onload = () => {
       setBackground(img);
       setBgLoaded(true);
@@ -302,6 +307,7 @@ const GalaxyMapRender = ({
               key={system.name || index}
               system={system}
               factions={factions}
+              settings={settings}
               showTooltip={showTooltip}
               hideTooltip={hideTooltip}
               tooltip={tooltip}
