@@ -352,7 +352,11 @@ const GalaxyMapRender = ({
             <Text
               text={tooltip.text}
               fontFamily="Calibri"
-              fontSize={18}
+              fontSize={
+                parseFloat(
+                  getComputedStyle(document.documentElement).fontSize
+                ) * 0.85
+              }
               padding={5}
               fill="black"
             />
