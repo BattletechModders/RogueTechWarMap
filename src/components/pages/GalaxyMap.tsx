@@ -92,7 +92,7 @@ const GalaxyMapRender = ({
 
   useEffect(() => {
     const img = new window.Image();
-    img.src = import.meta.env.BASE_URL + 'galaxyBackground2.svg';
+    img.src = import.meta.env.BASE_URL + 'galaxyBackground2.webp';
     img.onload = () => {
       setBackground(img);
       setBgLoaded(true);
@@ -144,7 +144,15 @@ const GalaxyMapRender = ({
     }
   };
 
+  const lastWheelTime = useRef(0);
+  const WHEEL_THROTTLE_MS = 50;
+
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
+    const now = performance.now();
+    if (now - lastWheelTime.current < WHEEL_THROTTLE_MS) return;
+
+    lastWheelTime.current = now;
+
     e.evt.preventDefault();
     const scaleBy = 1.25;
     const stage = stageRef.current;
@@ -279,7 +287,7 @@ const GalaxyMapRender = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <Layer>
+      <Layer cache>
         {bgLoaded && background ? (
           <Image
             image={background}
