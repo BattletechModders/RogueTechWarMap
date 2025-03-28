@@ -351,7 +351,7 @@ const GalaxyMapRender = ({
             />
             <Text
               text={tooltip.text}
-              fontFamily="Calibri"
+              fontFamily="Roboto Mono, monospace"
               fontSize={
                 parseFloat(
                   getComputedStyle(document.documentElement).fontSize
