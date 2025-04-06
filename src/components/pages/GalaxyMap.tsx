@@ -92,7 +92,15 @@ const GalaxyMapRender = ({
 
   useEffect(() => {
     const img = new window.Image();
-    img.src = import.meta.env.BASE_URL + 'galaxyBackground2.webp';
+
+    const isFirefox =
+      typeof navigator !== 'undefined' && /firefox/i.test(navigator.userAgent);
+
+    const imagePath = isFirefox
+      ? 'galaxyBackground2.webp'
+      : 'galaxyBackground2.svg';
+
+    img.src = import.meta.env.BASE_URL + imagePath;
     img.onload = () => {
       setBackground(img);
       setBgLoaded(true);
