@@ -1,24 +1,8 @@
 import { useState } from 'react';
-
-export interface StarSystemType {
-  name: string;
-  posX: number;
-  posY: number;
-  owner: string;
-  sysUrl?: string;
-}
-
-export type FactionType = {
-  colour: string;
-  prettyName: string;
-  id: number;
-  capital: string;
-};
-
-export type FactionDataType = Record<string, FactionType>;
+import { FactionDataType, StarSystemType } from './types';
 
 const useWarmapAPI = () => {
-  const [systems, setSystems] = useState<StarSystemType[]>([]);
+  const [rawSystems, setRawSystems] = useState<StarSystemType[]>([]);
   const [factions, setFactions] = useState<FactionDataType>({});
   const [capitals, setCapitals] = useState<string[]>([]);
 
@@ -54,14 +38,14 @@ const useWarmapAPI = () => {
         'https://roguewar.org/api/v1/starmap/warmap'
       ).then((res) => res.json());
 
-      setSystems(systemData);
+      setRawSystems(systemData);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     }
   };
 
   return {
-    systems,
+    rawSystems,
     factions,
     capitals,
     fetchFactionData,

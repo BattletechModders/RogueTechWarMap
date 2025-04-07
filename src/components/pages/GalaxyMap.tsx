@@ -3,23 +3,25 @@ import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
 import useTooltip from '../hooks/useTooltip';
-import galaxyBackground from '/src/assets/galaxyBackground2.svg';
-import { findFaction } from '../helpers';
-import useWarmapAPI, {
+import {
+  DisplayStarSystemType,
   FactionDataType,
-  StarSystemType,
-} from '../hooks/useWarmapAPI';
+  Settings,
+} from '../hooks/types';
+import useFiltering from '../hooks/useFiltering';
 
 const MIN_SCALE = 0.2;
-const MAX_SCALE = 15;
-
-function isCapital(systemName: string, capitals: string[]): boolean {
-  return capitals.includes(systemName);
-}
+const MAX_SCALE = 25;
 
 const GalaxyMap = () => {
-  const { systems, factions, capitals, fetchFactionData, fetchSystemData } =
-    useWarmapAPI();
+  const {
+    displaySystems,
+    factions,
+    capitals,
+    fetchFactionData,
+    fetchSystemData,
+    settings,
+  } = useFiltering();
 
   const [initialDataLoaded, setInitialDataLoaded] = useState<boolean>(false);
 
@@ -38,7 +40,6 @@ const GalaxyMap = () => {
 
     return () => clearInterval(interval);
   }, [
-    systems,
     factions,
     capitals,
     fetchFactionData,
@@ -47,17 +48,17 @@ const GalaxyMap = () => {
   ]);
 
   if (
-    systems &&
-    systems.length > 0 &&
+    displaySystems &&
+    displaySystems.length > 0 &&
     factions &&
     capitals &&
     capitals.length > 0
   ) {
     return (
       <GalaxyMapRender
-        systems={systems}
+        systems={displaySystems}
         factions={factions}
-        capitals={capitals}
+        settings={settings}
       />
     );
   }
@@ -68,11 +69,11 @@ const GalaxyMap = () => {
 const GalaxyMapRender = ({
   systems,
   factions,
-  capitals,
+  settings,
 }: {
-  systems: StarSystemType[];
+  systems: DisplayStarSystemType[];
   factions: FactionDataType;
-  capitals: string[];
+  settings: Settings;
 }) => {
   const scaleRef = useRef(1);
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
@@ -81,6 +82,23 @@ const GalaxyMapRender = ({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
   });
+
+  const [stageSize, setStageSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setStageSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [isPinching, setIsPinching] = useState(false);
   const lastDistance = useRef(0);
@@ -91,7 +109,15 @@ const GalaxyMapRender = ({
 
   useEffect(() => {
     const img = new window.Image();
-    img.src = galaxyBackground;
+
+    const isFirefox =
+      typeof navigator !== 'undefined' && /firefox/i.test(navigator.userAgent);
+
+    const imagePath = isFirefox
+      ? 'galaxyBackground2.webp'
+      : 'galaxyBackground2.svg';
+
+    img.src = import.meta.env.BASE_URL + imagePath;
     img.onload = () => {
       setBackground(img);
       setBgLoaded(true);
@@ -143,7 +169,15 @@ const GalaxyMapRender = ({
     }
   };
 
+  const lastWheelTime = useRef(0);
+  const WHEEL_THROTTLE_MS = 50;
+
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
+    const now = performance.now();
+    if (now - lastWheelTime.current < WHEEL_THROTTLE_MS) return;
+
+    lastWheelTime.current = now;
+
     e.evt.preventDefault();
     const scaleBy = 1.25;
     const stage = stageRef.current;
@@ -181,7 +215,10 @@ const GalaxyMapRender = ({
       const stage = e.target.getStage();
       if (!stage) return;
       const isCircle = e.target.className === 'Circle';
-      if (!isCircle) hideTooltip();
+      const isTooltip = e.target.findAncestor('Label', true);
+      if (!isCircle && !isTooltip) {
+        hideTooltip();
+      }
     }
 
     if (e.evt.touches.length === 2) {
@@ -256,28 +293,13 @@ const GalaxyMapRender = ({
     }
   };
 
-  const isVisible = (system: StarSystemType) => {
-    // const scale = scaleRef.current;
-    // const viewportWidth = window.innerWidth / scale;
-    // const viewportHeight = window.innerHeight / scale;
-
-    // const halfViewportWidth = viewportWidth / 2;
-    // const halfViewportHeight = viewportHeight / 2;
-
-    // return (
-    //   system.posX > positionRef.current.x - halfViewportWidth &&
-    //   system.posX < positionRef.current.x + halfViewportWidth &&
-    //   system.posY > positionRef.current.y - halfViewportHeight &&
-    //   system.posY < positionRef.current.y + halfViewportHeight
-    //);
-
-    return true;
-  };
+  const isMobile = window.innerWidth < 768;
+  const tooltipScale = isMobile ? 1.5 / scaleRef.current : 2 / scaleRef.current;
 
   return (
     <Stage
-      width={window.innerWidth}
-      height={window.innerHeight}
+      width={stageSize.width}
+      height={stageSize.height}
       draggable={!isPinching}
       scaleX={scaleRef.current}
       scaleY={scaleRef.current}
@@ -290,7 +312,7 @@ const GalaxyMapRender = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <Layer>
+      <Layer cache>
         {bgLoaded && background ? (
           <Image
             image={background}
@@ -312,17 +334,14 @@ const GalaxyMapRender = ({
         )}
       </Layer>
       <Layer>
-        {systems.filter(isVisible).map((system, index) => {
-          const faction = findFaction(system.owner, factions);
-
+        {systems.map((system, index) => {
           return (
             <StarSystem
               key={system.name || index}
-              isCapital={isCapital(system.name, capitals)}
               scale={scaleRef.current}
               system={system}
-              factionColor={faction?.colour || 'gray'}
               factions={factions}
+              settings={settings}
               showTooltip={showTooltip}
               hideTooltip={hideTooltip}
               tooltip={tooltip}
@@ -330,14 +349,20 @@ const GalaxyMapRender = ({
           );
         })}
       </Layer>
-      <Layer listening={false}>
+      <Layer>
         {tooltip.visible && (
           <Label
             x={tooltip.x}
             y={tooltip.y}
             opacity={0.75}
-            scaleX={2 / scaleRef.current}
-            scaleY={2 / scaleRef.current}
+            scaleX={tooltipScale}
+            scaleY={tooltipScale}
+            onTouchStart={(e) => {
+              e.evt.preventDefault();
+              if (tooltip.onTouch) {
+                tooltip.onTouch();
+              }
+            }}
           >
             <Tag
               fill="white"
@@ -352,8 +377,12 @@ const GalaxyMapRender = ({
             />
             <Text
               text={tooltip.text}
-              fontFamily="Calibri"
-              fontSize={18}
+              fontFamily="Roboto Mono, monospace"
+              fontSize={
+                parseFloat(
+                  getComputedStyle(document.documentElement).fontSize
+                ) * 0.85
+              }
               padding={5}
               fill="black"
             />
