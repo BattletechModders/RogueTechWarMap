@@ -15,7 +15,7 @@ const PLANET_RADIUS = 1;
 interface StarSystemProps {
   system: DisplayStarSystemType;
   factions: FactionDataType;
-  scale: number;
+  zoomScaleFactor: number;
   settings: Settings;
   showTooltip: (
     text: string,
@@ -31,7 +31,7 @@ interface StarSystemProps {
 
 const StarSystem: React.FC<StarSystemProps> = ({
   system,
-  scale,
+  zoomScaleFactor,
   factions,
   settings,
   showTooltip,
@@ -39,8 +39,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
   tooltip,
 }) => {
   const radius =
-    (system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS) /
-    (scale < 1 ? scale : 1);
+    (system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS) / zoomScaleFactor;
+
   const formatFactionControl = (
     factions: StarSystemType['factions'],
     allFactions: FactionDataType
