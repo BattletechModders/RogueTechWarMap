@@ -284,6 +284,7 @@ const GalaxyMapRender = ({
         stage.scale({ x: newScale, y: newScale });
         stage.position(newPos);
         requestBatchDraw(stage);
+        setZoomScaleFactor(newScale < 1 ? newScale : 1); // mirror wheel zoom behavior
       });
 
       lastDistance.current = newDistance;
