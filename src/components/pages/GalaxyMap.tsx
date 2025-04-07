@@ -83,6 +83,23 @@ const GalaxyMapRender = ({
     y: window.innerHeight / 2,
   });
 
+  const [stageSize, setStageSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setStageSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [isPinching, setIsPinching] = useState(false);
   const lastDistance = useRef(0);
   const pinchMidpoint = useRef<{ x: number; y: number } | null>(null);
@@ -281,8 +298,8 @@ const GalaxyMapRender = ({
 
   return (
     <Stage
-      width={window.innerWidth}
-      height={window.innerHeight}
+      width={stageSize.width}
+      height={stageSize.height}
       draggable={!isPinching}
       scaleX={scaleRef.current}
       scaleY={scaleRef.current}
