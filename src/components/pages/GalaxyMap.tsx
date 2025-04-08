@@ -88,6 +88,8 @@ const GalaxyMapRender = ({
     height: window.innerHeight,
   });
 
+  const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
+
   useEffect(() => {
     const handleResize = () => {
       setStageSize({
@@ -204,6 +206,7 @@ const GalaxyMapRender = ({
     stage.scale({ x: newScale, y: newScale });
     stage.position(positionRef.current);
     requestBatchDraw(stage);
+    setZoomScaleFactor(scaleRef.current < 1 ? scaleRef.current : 1);
   };
 
   const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
@@ -281,6 +284,7 @@ const GalaxyMapRender = ({
         stage.scale({ x: newScale, y: newScale });
         stage.position(newPos);
         requestBatchDraw(stage);
+        setZoomScaleFactor(newScale < 1 ? newScale : 1); // mirror wheel zoom behavior
       });
 
       lastDistance.current = newDistance;
@@ -338,6 +342,7 @@ const GalaxyMapRender = ({
           return (
             <StarSystem
               key={system.name || index}
+              zoomScaleFactor={zoomScaleFactor}
               system={system}
               factions={factions}
               settings={settings}

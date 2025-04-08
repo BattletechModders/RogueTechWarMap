@@ -15,6 +15,7 @@ const PLANET_RADIUS = 1;
 interface StarSystemProps {
   system: DisplayStarSystemType;
   factions: FactionDataType;
+  zoomScaleFactor: number;
   settings: Settings;
   showTooltip: (
     text: string,
@@ -30,12 +31,16 @@ interface StarSystemProps {
 
 const StarSystem: React.FC<StarSystemProps> = ({
   system,
+  zoomScaleFactor,
   factions,
   settings,
   showTooltip,
   hideTooltip,
   tooltip,
 }) => {
+  const radius =
+    (system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS) / zoomScaleFactor;
+
   const formatFactionControl = (
     factions: StarSystemType['factions'],
     allFactions: FactionDataType
@@ -84,9 +89,9 @@ const StarSystem: React.FC<StarSystemProps> = ({
       ref={circleRef}
       x={Number(system.posX)}
       y={-Number(system.posY)}
-      radius={system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS}
       fill={system.factionColour}
-      onClick={() => {
+      radius={radius}
+      onDblClick={() => {
         if (system.sysUrl) {
           openInNewTab(`https://www.roguewar.org${system.sysUrl}`);
         }
