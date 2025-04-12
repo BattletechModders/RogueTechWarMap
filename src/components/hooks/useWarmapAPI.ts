@@ -5,11 +5,16 @@ const useWarmapAPI = () => {
   const [rawSystems, setRawSystems] = useState<StarSystemType[]>([]);
   const [factions, setFactions] = useState<FactionDataType>({});
   const [capitals, setCapitals] = useState<string[]>([]);
+  let baseUrl = import.meta.env.VITE_API_URL as string;
+
+  if (!baseUrl){
+    baseUrl = 'https://roguewar.org';
+  }
 
   const fetchFactionData = async () => {
     try {
       const factionData = await fetch(
-        'https://roguewar.org/api/v1/factions/warmap'
+        `${baseUrl}/api/v1/factions/warmap`
       ).then((res) => res.json());
 
       factionData['NoFaction'] = {
@@ -35,7 +40,7 @@ const useWarmapAPI = () => {
   const fetchSystemData = async () => {
     try {
       const systemData = await fetch(
-        'https://roguewar.org/api/v1/starmap/warmap'
+        `${baseUrl}/api/v1/starmap/warmap`
       ).then((res) => res.json());
 
       setRawSystems(systemData);
