@@ -10,7 +10,7 @@ import ErrorPage from './components/pages/Error';
 import { BASE_ROUTE } from './components/helpers/RouteHelper.ts';
 // import { ToS } from './components/pages/ToS';
 
-const router = createBrowserRouter([
+const router = createBrowserRouter(
   createRoutesFromElements(
     <>
       <Route path="/" element={<Map />} errorElement={<ErrorPage />} />
@@ -19,7 +19,7 @@ const router = createBrowserRouter([
       {/* <Route path="/map" element={<Map />} /> */}
       {/* <Route path="/tos" element={<ToS />} /> */}
     </>
-  )], {basename: BASE_ROUTE}
+  ), {basename: BASE_ROUTE}
 );
 
 export default function App() {
