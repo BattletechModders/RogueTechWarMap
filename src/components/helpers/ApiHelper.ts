@@ -1,5 +1,5 @@
 
-let baseUrl = import.meta.env.VITE_API_URL as string;
+const baseUrl:string = import.meta.env.VITE_API_URL;
 
 const API_BASE_URL = baseUrl? baseUrl : 'https://roguewar.org';
 
