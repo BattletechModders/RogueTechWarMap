@@ -90,6 +90,49 @@ const GalaxyMapRender = ({
 
   const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
 
+ // ✅ Block Firefox pinch-to-zoom at document level
+ useEffect(() => {
+  const preventZoomTouch = (e: TouchEvent) => {
+    if (e.touches.length > 1) {
+      e.preventDefault();
+    }
+  };
+
+  const preventZoomGesture: EventListener = (e) => {
+    e.preventDefault();
+  };
+
+  const options = { passive: false } as AddEventListenerOptions;
+
+  document.addEventListener('touchmove', preventZoomTouch, options);
+  document.addEventListener('gesturestart', preventZoomGesture, options);
+  document.addEventListener('gesturechange', preventZoomGesture, options);
+  document.addEventListener('gestureend', preventZoomGesture, options);
+
+  return () => {
+    document.removeEventListener('touchmove', preventZoomTouch, options);
+    document.removeEventListener('gesturestart', preventZoomGesture, options);
+    document.removeEventListener('gesturechange', preventZoomGesture, options);
+    document.removeEventListener('gestureend', preventZoomGesture, options);
+  };
+}, []);
+
+
+// ✅ Optional extra locking gesture handling (may help in edge cases)
+useEffect(() => {
+  const lockScale = (e: Event) => e.preventDefault();
+
+  window.addEventListener('gesturestart', lockScale, { passive: false });
+  window.addEventListener('gesturechange', lockScale, { passive: false });
+  window.addEventListener('gestureend', lockScale, { passive: false });
+
+  return () => {
+    window.removeEventListener('gesturestart', lockScale);
+    window.removeEventListener('gesturechange', lockScale);
+    window.removeEventListener('gestureend', lockScale);
+  };
+}, []);
+
   useEffect(() => {
     const handleResize = () => {
       setStageSize({
@@ -250,14 +293,19 @@ const GalaxyMapRender = ({
 
       if (!stage) return;
 
-      const zoomSpeed = newDistance > lastDistance.current ? 1.1 : 0.9;
+      let scaleBy = newDistance / lastDistance.current;
 
-      const scaleBy = (newDistance / lastDistance.current) * zoomSpeed;
+// Prevent jitter and dead zone on Firefox
+if (Math.abs(1 - scaleBy) < 0.02) return;
 
-      const newScale = Math.max(
-        MIN_SCALE,
-        Math.min(MAX_SCALE, scaleRef.current * scaleBy)
-      );
+// Clamp to avoid huge jumps
+scaleBy = Math.max(0.9, Math.min(1.1, scaleBy));
+
+const newScale = Math.max(
+  MIN_SCALE,
+  Math.min(MAX_SCALE, scaleRef.current * scaleBy)
+);
+
 
       const stagePos = stage.getPosition();
       const stageScale = stage.scaleX();
