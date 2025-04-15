@@ -8,6 +8,7 @@ import {
   Settings,
   StarSystemType,
 } from '../hooks/types';
+import { API_BASE_URL } from '../helpers/ApiHelper.ts';
 
 const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;
@@ -93,7 +94,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
       radius={radius}
       onDblClick={() => {
         if (system.sysUrl) {
-          openInNewTab(`https://www.roguewar.org${system.sysUrl}`);
+          openInNewTab(`${API_BASE_URL}${system.sysUrl}`);
         }
       }}
       onMouseEnter={(e) => {
@@ -127,7 +128,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
           if (!pointer) return;
 
           if (tooltip.visible && tooltip.text.includes(system.name)) {
-            window.location.href = `https://www.roguewar.org${system.sysUrl}`;
+            window.location.href = `${API_BASE_URL}${system.sysUrl}`;
             return;
           }
 
@@ -144,7 +145,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
             undefined,
             undefined,
             () => {
-              window.location.href = `https://www.roguewar.org${system.sysUrl}`;
+              window.location.href = `${API_BASE_URL}${system.sysUrl}`;
             }
           );
         }
