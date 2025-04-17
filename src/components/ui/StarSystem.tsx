@@ -91,7 +91,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       y={-Number(system.posY)}
       fill={system.factionColour}
       radius={radius}
-      onDblClick={() => {
+      onClick={(e) => {
+        e.cancelBubble = true;
         if (system.sysUrl) {
           openInNewTab(`https://www.roguewar.org${system.sysUrl}`);
         }
