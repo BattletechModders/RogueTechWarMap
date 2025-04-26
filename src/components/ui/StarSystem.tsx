@@ -92,6 +92,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
       y={-Number(system.posY)}
       fill={system.factionColour}
       radius={radius}
+      hitStrokeWidth={3}
       onClick={(e) => {
         e.cancelBubble = true;
         if (system.sysUrl) {
@@ -109,7 +110,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
         const controlDetails = formatFactionControl(system.factions, factions);
 
         showTooltip(
-          `${system.name}\n${
+          `${system.name}\nCoords: (${system.posX}, ${system.posY})\n${
             faction?.prettyName || 'Unknown'
           }\n\nFaction Control:\n${controlDetails}`,
           pointer.x,
@@ -140,7 +141,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
           );
 
           showTooltip(
-            `${system.name}\n${faction?.prettyName}\n\nFaction Control:\n${controlDetails}\n\n[Tap to open]`,
+            `${system.name}\nCoords: (${system.posX}, ${system.posY})\n${faction?.prettyName}\n\nFaction Control:\n${controlDetails}\n\n[Tap to open]`,
             pointer.x,
             pointer.y,
             undefined,
