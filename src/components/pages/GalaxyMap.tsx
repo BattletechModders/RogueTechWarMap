@@ -350,10 +350,6 @@ const GalaxyMapRender = ({
     }
   };
 
-  const filteredSystems = systems.filter((system) =>
-    system.name.toLowerCase().includes(normalizedSearch)
-  );
-
   const isMobile = window.innerWidth < 768;
   const tooltipScale = isMobile ? 1.5 / scaleRef.current : 2 / scaleRef.current;
 
