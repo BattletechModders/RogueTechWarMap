@@ -90,6 +90,8 @@ const GalaxyMapRender = ({
 
   const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const shouldFilter = normalizedSearch.length >= 2;
 
   // Block Firefox pinch-to-zoom at document level
   useEffect(() => {
@@ -349,7 +351,7 @@ const GalaxyMapRender = ({
   };
 
   const filteredSystems = systems.filter((system) =>
-    system.name.toLowerCase().includes(searchTerm.toLowerCase())
+    system.name.toLowerCase().includes(normalizedSearch)
   );
 
   const isMobile = window.innerWidth < 768;
@@ -425,7 +427,11 @@ const GalaxyMapRender = ({
           )}
         </Layer>
         <Layer>
-          {filteredSystems.map((system, index) => {
+          {systems.map((system, index) => {
+            const isMatch = system.name
+              .toLowerCase()
+              .includes(normalizedSearch);
+            if (!isMatch && searchTerm) return null;
             return (
               <StarSystem
                 key={system.name || index}
@@ -436,6 +442,7 @@ const GalaxyMapRender = ({
                 showTooltip={showTooltip}
                 hideTooltip={hideTooltip}
                 tooltip={tooltip}
+                highlighted={shouldFilter && isMatch}
               />
             );
           })}

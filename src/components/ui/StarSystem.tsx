@@ -28,6 +28,7 @@ interface StarSystemProps {
   ) => void;
   hideTooltip: () => void;
   tooltip: { visible: boolean; text: string };
+  highlighted?: boolean;
 }
 
 const StarSystem: React.FC<StarSystemProps> = ({
@@ -38,9 +39,10 @@ const StarSystem: React.FC<StarSystemProps> = ({
   showTooltip,
   hideTooltip,
   tooltip,
+  highlighted = false,
 }) => {
-  const radius =
-    (system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS) / zoomScaleFactor;
+  const baseRadius = system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS;
+  const radius = (highlighted ? baseRadius * 3 : baseRadius) / zoomScaleFactor;
 
   const formatFactionControl = (
     factions: StarSystemType['factions'],
