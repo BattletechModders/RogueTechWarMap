@@ -29,6 +29,7 @@ interface StarSystemProps {
   hideTooltip: () => void;
   tooltip: { visible: boolean; text: string };
   highlighted?: boolean;
+  opacity?: number;
 }
 
 const StarSystem: React.FC<StarSystemProps> = ({
@@ -40,6 +41,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
   hideTooltip,
   tooltip,
   highlighted = false,
+  opacity = 1,
 }) => {
   const baseRadius = system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS;
   const radius = (highlighted ? baseRadius * 3 : baseRadius) / zoomScaleFactor;
@@ -74,10 +76,10 @@ const StarSystem: React.FC<StarSystemProps> = ({
 
       const sine = Math.sin(frame.time * 0.005);
       const scale = sine * 0.1 + 1;
-      const opacity = sine * 0.15 + 0.7;
+      const pulseOpacity = sine * 0.15 + 0.7;
 
       node.scale({ x: scale, y: scale });
-      node.opacity(opacity);
+      node.opacity(pulseOpacity * opacity);
     }, node.getLayer());
 
     anim.start();
@@ -95,6 +97,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
       fill={system.factionColour}
       radius={radius}
       hitStrokeWidth={3}
+      opacity={opacity}
       onClick={(e) => {
         e.cancelBubble = true;
         if (system.sysUrl) {

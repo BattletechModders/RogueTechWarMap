@@ -427,7 +427,7 @@ const GalaxyMapRender = ({
             const isMatch = system.name
               .toLowerCase()
               .includes(normalizedSearch);
-            if (!isMatch && searchTerm) return null;
+            const opacity = shouldFilter ? (isMatch ? 1 : 0.2) : 1;
             return (
               <StarSystem
                 key={system.name || index}
@@ -439,6 +439,7 @@ const GalaxyMapRender = ({
                 hideTooltip={hideTooltip}
                 tooltip={tooltip}
                 highlighted={shouldFilter && isMatch}
+                opacity={opacity}
               />
             );
           })}
