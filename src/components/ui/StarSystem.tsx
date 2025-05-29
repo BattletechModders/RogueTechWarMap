@@ -71,23 +71,26 @@ const StarSystem: React.FC<StarSystemProps> = ({
 
     const node = circleRef.current;
 
+    const baseOpacity = opacity;
+
     const anim = new Konva.Animation((frame) => {
       if (!frame) return;
 
       const sine = Math.sin(frame.time * 0.005);
       const scale = sine * 0.1 + 1;
-      const pulseOpacity = sine * 0.15 + 0.7;
+      const pulseOverlay = sine * 0.15 + 0.7;
 
       node.scale({ x: scale, y: scale });
-      node.opacity(pulseOpacity * opacity);
+      node.opacity(baseOpacity * pulseOverlay);
     }, node.getLayer());
 
     anim.start();
 
     return () => {
       anim.stop();
+      node.opacity(baseOpacity);
     };
-  }, [hasActivePlayers, settings]);
+  }, [hasActivePlayers, settings, opacity]);
 
   return (
     <Circle
