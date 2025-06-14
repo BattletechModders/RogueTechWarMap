@@ -71,11 +71,11 @@ const BottomFilterPanel = ({
 
       {/* content */}
       {isOpen && (
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           {/* name search */}
           <input
             type="text"
-            placeholder="Search systems..."
+            placeholder="Search system name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -87,11 +87,12 @@ const BottomFilterPanel = ({
               outline: 'none',
               backgroundColor: 'white',
               color: 'black',
+              margin: '0 2rem 1rem',
             }}
           />
 
           {/* faction multi-select */}
-          <div style={{ minWidth: '180px', flex: '0 0 180px' }}>
+          <div style={{ flex: '1 ', margin: '0 2rem 1rem' }}>
             <Select
               isMulti
               options={options}
