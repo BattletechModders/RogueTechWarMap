@@ -14,6 +14,15 @@ import useFiltering from '../hooks/useFiltering';
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
 
+/* helper to flatten faction names */
+const allFactionNames = (factions: FactionDataType) =>
+  Object.values(factions).map(
+    // adjust keys if your shape differs
+    (f: any) => f.prettyName ?? f.name ?? f.Name
+  );
+
+/* ────────────────────────────────────────────────────────────── */
+
 const GalaxyMap = () => {
   const {
     displaySystems,
@@ -79,6 +88,9 @@ const GalaxyMapRender = ({
   const [searchTerm, setSearchTerm] = useState('');
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const shouldFilter = normalizedSearch.length >= 2;
+
+  /* faction filter */
+  const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
 
   const scaleRef = useRef(1);
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
@@ -397,6 +409,14 @@ const GalaxyMapRender = ({
         </Layer>
         <Layer>
           {systems.map((system, index) => {
+            /* resolve owner’s display name the same way allFactionNames() did */
+            const ownerPretty =
+              factions[system.owner]?.prettyName ?? system.owner;
+            const factionMatch =
+              !selectedFactions.length ||
+              selectedFactions.includes(ownerPretty);
+            if (!factionMatch) return null;
+
             const isMatch = system.name
               .toLowerCase()
               .includes(normalizedSearch);
@@ -458,10 +478,13 @@ const GalaxyMapRender = ({
           )}
         </Layer>
       </Stage>
-      {/* ────────── Bottom sliding filter panel ────────── */}
+      {/* bottom sliding filter panel */}
       <BottomFilterPanel
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        factions={allFactionNames(factions)}
+        selectedFactions={selectedFactions}
+        setSelectedFactions={setSelectedFactions}
       />
     </>
   );
