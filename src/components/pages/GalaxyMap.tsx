@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
+import BottomFilterPanel from '../ui/BottomFilterPanel';
 import useTooltip from '../hooks/useTooltip';
 import {
   DisplayStarSystemType,
@@ -75,6 +76,10 @@ const GalaxyMapRender = ({
   factions: FactionDataType;
   settings: Settings;
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const shouldFilter = normalizedSearch.length >= 2;
+
   const scaleRef = useRef(1);
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
   const stageRef = useRef<Konva.Stage | null>(null);
@@ -89,9 +94,6 @@ const GalaxyMapRender = ({
   });
 
   const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const shouldFilter = normalizedSearch.length >= 2;
 
   // Block Firefox pinch-to-zoom at document level
   useEffect(() => {
@@ -355,35 +357,6 @@ const GalaxyMapRender = ({
 
   return (
     <>
-      {/* Search Bar */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 10,
-          right: 10,
-          zIndex: 1000,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          padding: '0.5rem',
-          borderRadius: '8px',
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Search systems..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            padding: '4px 8px',
-            fontSize: '14px',
-            borderRadius: '4px',
-            border: '1px solid #ccc',
-            outline: 'none',
-            color: 'black',
-            backgroundColor: 'white',
-          }}
-        />
-      </div>
-
       {/* Konva Stage */}
 
       <Stage
@@ -485,6 +458,11 @@ const GalaxyMapRender = ({
           )}
         </Layer>
       </Stage>
+      {/* ────────── Bottom sliding filter panel ────────── */}
+      <BottomFilterPanel
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+      />
     </>
   );
 };
