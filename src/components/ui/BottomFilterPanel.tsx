@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Select, { MultiValue } from 'react-select';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
@@ -17,7 +17,17 @@ const BottomFilterPanel = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  /* react-select data helpers */
+  /* ───────────── desktop breakpoint helper ───────────── */
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== 'undefined' && window.innerWidth >= 768
+  );
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  /* react-select helpers */
   const options = factions.map((f) => ({ value: f, label: f }));
   const selectedOpts = options.filter((o) =>
     selectedFactions.includes(o.value)
@@ -26,17 +36,8 @@ const BottomFilterPanel = ({
     vals: MultiValue<{ value: string; label: string }>
   ) => setSelectedFactions(vals.map((v) => v.value));
 
-  const selectStyles = {
-    control: (base: any) => ({ ...base, color: 'black' }),
-    input: (base: any) => ({ ...base, color: 'black' }),
-    singleValue: (base: any) => ({ ...base, color: 'black' }),
-    multiValueLabel: (base: any) => ({ ...base, color: 'black' }),
-    option: (base: any, state: any) => ({
-      ...base,
-      color: 'black',
-      backgroundColor: state.isFocused ? '#e6e6e6' : 'white',
-    }),
-  };
+  const removeFaction = (name: string) =>
+    setSelectedFactions(selectedFactions.filter((f) => f !== name));
 
   return (
     <div
@@ -48,12 +49,13 @@ const BottomFilterPanel = ({
         zIndex: 9999,
         transition: 'transform 0.3s ease-in-out',
         transform: isOpen ? 'translateY(0)' : 'translateY(calc(100% - 32px))',
-        background: 'rgba(0, 0, 0, 0.85)',
+        background: 'rgba(40, 40, 40, 0.85)',
         color: 'white',
         padding: '0.5rem 1rem',
         borderTopLeftRadius: '12px',
         borderTopRightRadius: '12px',
         backdropFilter: 'blur(6px)',
+        minHeight: isOpen ? '220px' : '32px',
       }}
     >
       {/* chevron toggle */}
@@ -69,43 +71,113 @@ const BottomFilterPanel = ({
         {isOpen ? <ChevronDown size={24} /> : <ChevronUp size={24} />}
       </div>
 
-      {/* content */}
+      {/* two-column layout */}
       {isOpen && (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          {/* name search */}
-          <input
-            type="text"
-            placeholder="Search system name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            height: '100%',
+          }}
+        >
+          {/* LEFT column — system search */}
+          <div style={{ flex: 1, paddingRight: '0.75rem' }}>
+            <input
+              type="text"
+              placeholder="Search systems…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: isDesktop ? '50%' : '100%', // ← half width on desktop
+                padding: '6px 10px',
+                fontSize: '16px',
+                borderRadius: '6px',
+                border: '1px solid #ccc',
+                outline: 'none',
+                backgroundColor: 'white',
+                color: 'black',
+                margin: '0 0.25rem 0.5rem', // side + bottom space
+              }}
+            />
+          </div>
+
+          {/* RIGHT column — faction select */}
+          <div
             style={{
               flex: 1,
-              padding: '6px 10px',
-              fontSize: '14px',
-              borderRadius: '6px',
-              border: '1px solid #ccc',
-              outline: 'none',
-              backgroundColor: 'white',
-              color: 'black',
-              margin: '0 2rem 1rem',
+              paddingLeft: '0.75rem',
+              borderLeft: '1px solid #555',
             }}
-          />
-
-          {/* faction multi-select */}
-          <div style={{ flex: '1 ', margin: '0 2rem 1rem' }}>
-            <Select
-              isMulti
-              options={options}
-              value={selectedOpts}
-              onChange={onFactionChange}
-              menuPortalTarget={document.body} /* render above Konva */
-              styles={{
-                ...selectStyles,
-                menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
-              }}
-              menuPlacement="top"
-              placeholder="Filter factions…"
-            />
+          >
+            <div style={{ width: isDesktop ? '50%' : '100%' }}>
+              <Select
+                isMulti
+                options={options}
+                value={selectedOpts}
+                onChange={onFactionChange}
+                menuPortalTarget={document.body}
+                menuPlacement="top"
+                placeholder="Filter factions…"
+                components={{ MultiValue: () => null }}
+                styles={{
+                  /* field text colours */
+                  control: (base) => ({
+                    ...base,
+                    color: 'black',
+                    width: '100%',
+                  }),
+                  input: (base) => ({ ...base, color: 'black' }),
+                  singleValue: (base) => ({ ...base, color: 'black' }),
+                  multiValueLabel: (base) => ({ ...base, color: 'black' }),
+                  option: (base, state) => ({
+                    ...base,
+                    color: 'black',
+                    backgroundColor: state.isFocused ? '#e6e6e6' : 'white',
+                  }),
+                  /* keep menu above Konva */
+                  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                }}
+              />
+              {/* chosen factions shown under the search bar */}
+              {selectedFactions.length > 0 && (
+                <div
+                  style={{
+                    marginTop: '0.5rem',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '4px',
+                  }}
+                >
+                  {selectedFactions.map((f) => (
+                    <span
+                      key={f}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'white',
+                        fontSize: '14px',
+                        background: 'rgba(255,255,255,0.15)',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      {f}
+                      <span
+                        onClick={() => removeFaction(f)}
+                        style={{
+                          marginLeft: '4px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          lineHeight: 1,
+                        }}
+                      >
+                        x
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
