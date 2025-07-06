@@ -44,7 +44,7 @@ const BottomFilterPanel = ({
       style={{
         position: 'fixed',
         bottom: 0,
-        left: 0,
+        left: isDesktop ? '200px' : 0, // <-- respects sidebar on desktop
         right: 0,
         zIndex: 9999,
         transition: 'transform 0.3s ease-in-out',
