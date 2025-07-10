@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Select, { MultiValue } from 'react-select';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
@@ -39,23 +39,55 @@ const BottomFilterPanel = ({
   const removeFaction = (name: string) =>
     setSelectedFactions(selectedFactions.filter((f) => f !== name));
 
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<string>('32px');
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    // Get the current height before the change
+    const startHeight = panel.offsetHeight;
+
+    // Temporarily disable transitions to get new height
+    panel.style.transition = 'none';
+    panel.style.height = 'auto';
+
+    const targetHeight = panel.scrollHeight;
+
+    // Re-enable transitions
+    requestAnimationFrame(() => {
+      panel.style.transition = 'height 0.5s ease';
+      panel.style.height = `${startHeight}px`;
+
+      // Then trigger the new height
+      requestAnimationFrame(() => {
+        const expandedHeight = Math.max(targetHeight, 125);
+        setHeight(`${isOpen ? expandedHeight : 32}px`);
+      });
+    });
+  }, [isOpen, selectedFactions]);
+
   return (
     <div
+      ref={panelRef}
       style={{
+        height,
+        minHeight: '32px',
         position: 'fixed',
         bottom: 0,
-        left: isDesktop ? '200px' : 0, // <-- respects sidebar on desktop
+        left: isDesktop ? '200px' : 0,
         right: 0,
         zIndex: 9999,
-        transition: 'transform 0.3s ease-in-out',
-        transform: isOpen ? 'translateY(0)' : 'translateY(calc(100% - 32px))',
         background: 'rgba(40, 40, 40, 0.85)',
         color: 'white',
         padding: '0.5rem 1rem',
         borderTopLeftRadius: '12px',
         borderTopRightRadius: '12px',
         backdropFilter: 'blur(6px)',
-        minHeight: isOpen ? '220px' : '32px',
+        overflowY: 'hidden',
+        transition: 'height 0.5s ease, opacity 0.3s ease',
+        opacity: isOpen ? 1 : 0.5,
       }}
     >
       {/* chevron toggle */}
