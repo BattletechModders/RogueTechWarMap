@@ -180,7 +180,7 @@ const GalaxyMapRender = ({
 
     const imagePath = isFirefox
       ? 'galaxyBackground2.webp'
-      : 'galaxyBackground2.svg';
+      : 'galaxyBackground3.svg';
 
     img.src = import.meta.env.BASE_URL + imagePath;
     img.onload = () => {
