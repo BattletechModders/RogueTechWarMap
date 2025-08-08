@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Select, { MultiValue } from 'react-select';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronsUp, ChevronsDown } from 'lucide-react';
 
 const BottomFilterPanel = ({
   searchTerm,
@@ -41,6 +41,8 @@ const BottomFilterPanel = ({
 
   const panelRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<string>('32px');
+
+  const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -100,7 +102,7 @@ const BottomFilterPanel = ({
         }}
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? <ChevronDown size={24} /> : <ChevronUp size={24} />}
+        {isOpen ? <ChevronsDown size={24} /> : <ChevronsUp size={24} />}
       </div>
 
       {/* two-column layout */}
@@ -142,34 +144,81 @@ const BottomFilterPanel = ({
             }}
           >
             <div style={{ width: isDesktop ? '50%' : '100%' }}>
-              <Select
-                isMulti
-                options={options}
-                value={selectedOpts}
-                onChange={onFactionChange}
-                menuPortalTarget={document.body}
-                menuPlacement="top"
-                placeholder="Filter factions…"
-                components={{ MultiValue: () => null }}
-                styles={{
-                  /* field text colours */
-                  control: (base) => ({
-                    ...base,
-                    color: 'black',
-                    width: '100%',
-                  }),
-                  input: (base) => ({ ...base, color: 'black' }),
-                  singleValue: (base) => ({ ...base, color: 'black' }),
-                  multiValueLabel: (base) => ({ ...base, color: 'black' }),
-                  option: (base, state) => ({
-                    ...base,
-                    color: 'black',
-                    backgroundColor: state.isFocused ? '#e6e6e6' : 'white',
-                  }),
-                  /* keep menu above Konva */
-                  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                }}
-              />
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <div style={{ flexGrow: 1 }}>
+                  <Select
+                    isMulti
+                    options={options}
+                    value={selectedOpts}
+                    onChange={onFactionChange}
+                    menuPortalTarget={document.body}
+                    menuPlacement="top"
+                    placeholder="Filter factions…"
+                    components={{ MultiValue: () => null }}
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        color: 'black',
+                        width: '100%',
+                      }),
+                      input: (base) => ({ ...base, color: 'black' }),
+                      singleValue: (base) => ({ ...base, color: 'black' }),
+                      multiValueLabel: (base) => ({ ...base, color: 'black' }),
+                      option: (base, state) => ({
+                        ...base,
+                        color: 'black',
+                        backgroundColor: state.isFocused ? '#e6e6e6' : 'white',
+                      }),
+                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    }}
+                  />
+                </div>
+
+                <div
+                  style={{
+                    position: 'relative',
+                    display: 'inline-block',
+                    cursor: 'pointer',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    backgroundColor: '#888',
+                    color: 'white',
+                    fontSize: '12px',
+                    textAlign: 'center',
+                    lineHeight: '18px',
+                  }}
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                >
+                  i
+                  {showTooltip && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '22px',
+                        left: '0',
+                        backgroundColor: '#333',
+                        color: '#fff',
+                        padding: '6px 10px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        whiteSpace: 'normal',
+                        width: 'max-content',
+                        display: 'inline-block',
+                        maxWidth: '220px',
+                        zIndex: 10000,
+                      }}
+                    >
+                      Only factions that currently have systems on the map will
+                      appear here.
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* chosen factions shown under the search bar */}
               {selectedFactions.length > 0 && (
                 <div

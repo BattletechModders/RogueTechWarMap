@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
@@ -15,11 +15,11 @@ const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
 
 /* helper to flatten faction names */
-const allFactionNames = (factions: FactionDataType) =>
-  Object.values(factions).map(
-    // adjust keys if your shape differs
-    (f: any) => f.prettyName ?? f.name ?? f.Name
-  );
+// const allFactionNames = (factions: FactionDataType) =>
+//   Object.values(factions).map(
+//     // adjust keys if your shape differs
+//     (f: any) => f.prettyName ?? f.name ?? f.Name
+//   );
 
 /* ────────────────────────────────────────────────────────────── */
 
@@ -180,7 +180,7 @@ const GalaxyMapRender = ({
 
     const imagePath = isFirefox
       ? 'galaxyBackground2.webp'
-      : 'galaxyBackground3.svg';
+      : 'galaxyBackground2.svg';
 
     img.src = import.meta.env.BASE_URL + imagePath;
     img.onload = () => {
@@ -482,7 +482,15 @@ const GalaxyMapRender = ({
       <BottomFilterPanel
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        factions={allFactionNames(factions)}
+        factions={useMemo(() => {
+          const names = new Set<string>();
+          for (const system of systems) {
+            const owner = system.owner;
+            const pretty = factions[owner]?.prettyName ?? owner;
+            if (pretty) names.add(pretty);
+          }
+          return Array.from(names).sort((a, b) => a.localeCompare(b));
+        }, [systems, factions])}
         selectedFactions={selectedFactions}
         setSelectedFactions={setSelectedFactions}
       />
