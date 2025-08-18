@@ -70,6 +70,23 @@ const BottomFilterPanel = ({
     });
   }, [isOpen, selectedFactions]);
 
+  const tooltipStyle: React.CSSProperties = {
+    position: 'absolute',
+    backgroundColor: '#333',
+    color: '#fff',
+    padding: '6px 10px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    whiteSpace: 'normal',
+    width: 'max-content',
+    display: 'inline-block',
+    maxWidth: isDesktop ? '220px' : '90vw',
+    zIndex: 10000,
+    ...(isDesktop
+      ? { bottom: 22, left: 0 } // desktop: below/right of icon
+      : { bottom: 28, right: 8, left: 'auto', transform: 'none' }), // mobile: centered below icon
+  };
+
   return (
     <div
       ref={panelRef}
@@ -190,28 +207,13 @@ const BottomFilterPanel = ({
                     textAlign: 'center',
                     lineHeight: '18px',
                   }}
-                  onMouseEnter={() => setShowTooltip(true)}
-                  onMouseLeave={() => setShowTooltip(false)}
+                  onMouseEnter={() => isDesktop && setShowTooltip(true)}
+                  onMouseLeave={() => isDesktop && setShowTooltip(false)}
+                  onClick={() => !isDesktop && setShowTooltip((prev) => !prev)}
                 >
                   i
                   {showTooltip && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: '22px',
-                        left: '0',
-                        backgroundColor: '#333',
-                        color: '#fff',
-                        padding: '6px 10px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        whiteSpace: 'normal',
-                        width: 'max-content',
-                        display: 'inline-block',
-                        maxWidth: '220px',
-                        zIndex: 10000,
-                      }}
-                    >
+                    <div style={tooltipStyle}>
                       Only factions that currently have systems on the map will
                       appear here.
                     </div>
