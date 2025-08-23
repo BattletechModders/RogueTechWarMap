@@ -28,6 +28,8 @@ interface StarSystemProps {
   ) => void;
   hideTooltip: () => void;
   tooltip: { visible: boolean; text: string };
+  highlighted?: boolean;
+  opacity?: number;
 }
 
 const StarSystem: React.FC<StarSystemProps> = ({
@@ -38,9 +40,11 @@ const StarSystem: React.FC<StarSystemProps> = ({
   showTooltip,
   hideTooltip,
   tooltip,
+  highlighted = false,
+  opacity = 1,
 }) => {
-  const radius =
-    (system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS) / zoomScaleFactor;
+  const baseRadius = system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS;
+  const radius = (highlighted ? baseRadius * 3 : baseRadius) / zoomScaleFactor;
 
   const formatFactionControl = (
     factions: StarSystemType['factions'],
@@ -67,23 +71,26 @@ const StarSystem: React.FC<StarSystemProps> = ({
 
     const node = circleRef.current;
 
+    const baseOpacity = opacity;
+
     const anim = new Konva.Animation((frame) => {
       if (!frame) return;
 
       const sine = Math.sin(frame.time * 0.005);
       const scale = sine * 0.1 + 1;
-      const opacity = sine * 0.15 + 0.7;
+      const pulseOverlay = sine * 0.15 + 0.7;
 
       node.scale({ x: scale, y: scale });
-      node.opacity(opacity);
+      node.opacity(baseOpacity * pulseOverlay);
     }, node.getLayer());
 
     anim.start();
 
     return () => {
       anim.stop();
+      node.opacity(baseOpacity);
     };
-  }, [hasActivePlayers, settings]);
+  }, [hasActivePlayers, settings, opacity]);
 
   return (
     <Circle
@@ -93,6 +100,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
       fill={system.factionColour}
       radius={radius}
       hitStrokeWidth={3}
+      opacity={opacity}
       onClick={(e) => {
         e.cancelBubble = true;
         if (system.sysUrl) {

@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
+import BottomFilterPanel from '../ui/BottomFilterPanel';
 import useTooltip from '../hooks/useTooltip';
 import {
   DisplayStarSystemType,
@@ -12,6 +13,15 @@ import useFiltering from '../hooks/useFiltering';
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
+
+/* helper to flatten faction names */
+// const allFactionNames = (factions: FactionDataType) =>
+//   Object.values(factions).map(
+//     // adjust keys if your shape differs
+//     (f: any) => f.prettyName ?? f.name ?? f.Name
+//   );
+
+/* ────────────────────────────────────────────────────────────── */
 
 const GalaxyMap = () => {
   const {
@@ -75,6 +85,13 @@ const GalaxyMapRender = ({
   factions: FactionDataType;
   settings: Settings;
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const shouldFilter = normalizedSearch.length >= 2;
+
+  /* faction filter */
+  const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
+
   const scaleRef = useRef(1);
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
   const stageRef = useRef<Konva.Stage | null>(null);
@@ -90,48 +107,51 @@ const GalaxyMapRender = ({
 
   const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
 
- // ✅ Block Firefox pinch-to-zoom at document level
- useEffect(() => {
-  const preventZoomTouch = (e: TouchEvent) => {
-    if (e.touches.length > 1) {
+  // Block Firefox pinch-to-zoom at document level
+  useEffect(() => {
+    const preventZoomTouch = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    const preventZoomGesture: EventListener = (e) => {
       e.preventDefault();
-    }
-  };
+    };
 
-  const preventZoomGesture: EventListener = (e) => {
-    e.preventDefault();
-  };
+    const options = { passive: false } as AddEventListenerOptions;
 
-  const options = { passive: false } as AddEventListenerOptions;
+    document.addEventListener('touchmove', preventZoomTouch, options);
+    document.addEventListener('gesturestart', preventZoomGesture, options);
+    document.addEventListener('gesturechange', preventZoomGesture, options);
+    document.addEventListener('gestureend', preventZoomGesture, options);
 
-  document.addEventListener('touchmove', preventZoomTouch, options);
-  document.addEventListener('gesturestart', preventZoomGesture, options);
-  document.addEventListener('gesturechange', preventZoomGesture, options);
-  document.addEventListener('gestureend', preventZoomGesture, options);
+    return () => {
+      document.removeEventListener('touchmove', preventZoomTouch, options);
+      document.removeEventListener('gesturestart', preventZoomGesture, options);
+      document.removeEventListener(
+        'gesturechange',
+        preventZoomGesture,
+        options
+      );
+      document.removeEventListener('gestureend', preventZoomGesture, options);
+    };
+  }, []);
 
-  return () => {
-    document.removeEventListener('touchmove', preventZoomTouch, options);
-    document.removeEventListener('gesturestart', preventZoomGesture, options);
-    document.removeEventListener('gesturechange', preventZoomGesture, options);
-    document.removeEventListener('gestureend', preventZoomGesture, options);
-  };
-}, []);
+  // extra locking gesture handling for Firefox
+  useEffect(() => {
+    const lockScale = (e: Event) => e.preventDefault();
 
+    window.addEventListener('gesturestart', lockScale, { passive: false });
+    window.addEventListener('gesturechange', lockScale, { passive: false });
+    window.addEventListener('gestureend', lockScale, { passive: false });
 
-// ✅ Optional extra locking gesture handling (may help in edge cases)
-useEffect(() => {
-  const lockScale = (e: Event) => e.preventDefault();
-
-  window.addEventListener('gesturestart', lockScale, { passive: false });
-  window.addEventListener('gesturechange', lockScale, { passive: false });
-  window.addEventListener('gestureend', lockScale, { passive: false });
-
-  return () => {
-    window.removeEventListener('gesturestart', lockScale);
-    window.removeEventListener('gesturechange', lockScale);
-    window.removeEventListener('gestureend', lockScale);
-  };
-}, []);
+    return () => {
+      window.removeEventListener('gesturestart', lockScale);
+      window.removeEventListener('gesturechange', lockScale);
+      window.removeEventListener('gestureend', lockScale);
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -295,17 +315,16 @@ useEffect(() => {
 
       let scaleBy = newDistance / lastDistance.current;
 
-// Prevent jitter and dead zone on Firefox
-if (Math.abs(1 - scaleBy) < 0.02) return;
+      // Prevent jitter and dead zone on Firefox
+      if (Math.abs(1 - scaleBy) < 0.02) return;
 
-// Clamp to avoid huge jumps
-scaleBy = Math.max(0.9, Math.min(1.1, scaleBy));
+      // Clamp to avoid huge jumps
+      scaleBy = Math.max(0.9, Math.min(1.1, scaleBy));
 
-const newScale = Math.max(
-  MIN_SCALE,
-  Math.min(MAX_SCALE, scaleRef.current * scaleBy)
-);
-
+      const newScale = Math.max(
+        MIN_SCALE,
+        Math.min(MAX_SCALE, scaleRef.current * scaleBy)
+      );
 
       const stagePos = stage.getPosition();
       const stageScale = stage.scaleX();
@@ -349,99 +368,133 @@ const newScale = Math.max(
   const tooltipScale = isMobile ? 1.5 / scaleRef.current : 2 / scaleRef.current;
 
   return (
-    <Stage
-      width={stageSize.width}
-      height={stageSize.height}
-      draggable={!isPinching}
-      scaleX={scaleRef.current}
-      scaleY={scaleRef.current}
-      x={positionRef.current.x}
-      y={positionRef.current.y}
-      ref={stageRef}
-      onWheel={handleWheel}
-      onDragMove={handleDragMove}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      <Layer cache>
-        {bgLoaded && background ? (
-          <Image
-            image={background}
-            x={-4800}
-            y={-2700}
-            width={9600}
-            height={5400}
-            opacity={0.2}
-          />
-        ) : (
-          <Text
-            text="Loading Background..."
-            x={window.innerWidth / 2}
-            y={window.innerHeight / 2}
-            fontSize={24}
-            fill="white"
-            align="center"
-          />
-        )}
-      </Layer>
-      <Layer>
-        {systems.map((system, index) => {
-          return (
-            <StarSystem
-              key={system.name || index}
-              zoomScaleFactor={zoomScaleFactor}
-              system={system}
-              factions={factions}
-              settings={settings}
-              showTooltip={showTooltip}
-              hideTooltip={hideTooltip}
-              tooltip={tooltip}
+    <>
+      {/* Konva Stage */}
+
+      <Stage
+        width={stageSize.width}
+        height={stageSize.height}
+        draggable={!isPinching}
+        scaleX={scaleRef.current}
+        scaleY={scaleRef.current}
+        x={positionRef.current.x}
+        y={positionRef.current.y}
+        ref={stageRef}
+        onWheel={handleWheel}
+        onDragMove={handleDragMove}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <Layer cache>
+          {bgLoaded && background ? (
+            <Image
+              image={background}
+              x={-4800}
+              y={-2700}
+              width={9600}
+              height={5400}
+              opacity={0.2}
             />
-          );
-        })}
-      </Layer>
-      <Layer>
-        {tooltip.visible && (
-          <Label
-            x={tooltip.x}
-            y={tooltip.y}
-            opacity={0.75}
-            scaleX={tooltipScale}
-            scaleY={tooltipScale}
-            onTouchStart={(e) => {
-              e.evt.preventDefault();
-              if (tooltip.onTouch) {
-                tooltip.onTouch();
-              }
-            }}
-          >
-            <Tag
-              fill="white"
-              pointerDirection="down"
-              pointerWidth={10}
-              pointerHeight={10}
-              shadowColor="gray"
-              shadowBlur={10}
-              shadowOffset={{ x: 10, y: 10 }}
-              shadowOpacity={0.2}
-              cornerRadius={8}
-            />
+          ) : (
             <Text
-              text={tooltip.text}
-              fontFamily="Roboto Mono, monospace"
-              fontSize={
-                parseFloat(
-                  getComputedStyle(document.documentElement).fontSize
-                ) * 0.85
-              }
-              padding={5}
-              fill="black"
+              text="Loading Background..."
+              x={window.innerWidth / 2}
+              y={window.innerHeight / 2}
+              fontSize={24}
+              fill="white"
+              align="center"
             />
-          </Label>
-        )}
-      </Layer>
-    </Stage>
+          )}
+        </Layer>
+        <Layer>
+          {systems.map((system, index) => {
+            /* resolve owner’s display name the same way allFactionNames() did */
+            const ownerPretty =
+              factions[system.owner]?.prettyName ?? system.owner;
+            const factionMatch =
+              !selectedFactions.length ||
+              selectedFactions.includes(ownerPretty);
+            if (!factionMatch) return null;
+
+            const isMatch = system.name
+              .toLowerCase()
+              .includes(normalizedSearch);
+            const opacity = shouldFilter ? (isMatch ? 1 : 0.2) : 1;
+            return (
+              <StarSystem
+                key={system.name || index}
+                zoomScaleFactor={zoomScaleFactor}
+                system={system}
+                factions={factions}
+                settings={settings}
+                showTooltip={showTooltip}
+                hideTooltip={hideTooltip}
+                tooltip={tooltip}
+                highlighted={shouldFilter && isMatch}
+                opacity={opacity}
+              />
+            );
+          })}
+        </Layer>
+        <Layer>
+          {tooltip.visible && (
+            <Label
+              x={tooltip.x}
+              y={tooltip.y}
+              opacity={0.75}
+              scaleX={tooltipScale}
+              scaleY={tooltipScale}
+              onTouchStart={(e) => {
+                e.evt.preventDefault();
+                if (tooltip.onTouch) {
+                  tooltip.onTouch();
+                }
+              }}
+            >
+              <Tag
+                fill="white"
+                pointerDirection="down"
+                pointerWidth={10}
+                pointerHeight={10}
+                shadowColor="gray"
+                shadowBlur={10}
+                shadowOffset={{ x: 10, y: 10 }}
+                shadowOpacity={0.2}
+                cornerRadius={8}
+              />
+              <Text
+                text={tooltip.text}
+                fontFamily="Roboto Mono, monospace"
+                fontSize={
+                  parseFloat(
+                    getComputedStyle(document.documentElement).fontSize
+                  ) * 0.85
+                }
+                padding={5}
+                fill="black"
+              />
+            </Label>
+          )}
+        </Layer>
+      </Stage>
+      {/* bottom sliding filter panel */}
+      <BottomFilterPanel
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        factions={useMemo(() => {
+          const names = new Set<string>();
+          for (const system of systems) {
+            const owner = system.owner;
+            const pretty = factions[owner]?.prettyName ?? owner;
+            if (pretty) names.add(pretty);
+          }
+          return Array.from(names).sort((a, b) => a.localeCompare(b));
+        }, [systems, factions])}
+        selectedFactions={selectedFactions}
+        setSelectedFactions={setSelectedFactions}
+      />
+    </>
   );
 };
 
