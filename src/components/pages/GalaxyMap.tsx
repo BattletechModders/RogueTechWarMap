@@ -1,4 +1,9 @@
-import { Point, StageSize } from '../GalaxyMap/gm.types';
+import {
+  Point,
+  StageSize,
+  TooltipData,
+  ViewTransform,
+} from '../GalaxyMap/gm.types';
 import { useMemo, useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
@@ -85,12 +90,21 @@ const GalaxyMapRender = ({
   const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
 
   const scaleRef = useRef(1);
-  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
+  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef) as {
+    tooltip: TooltipData;
+    showTooltip: (...args: any[]) => void;
+    hideTooltip: () => void;
+  };
   const stageRef = useRef<Konva.Stage | null>(null);
   const positionRef = useRef<Point>({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
   });
+
+  const view: ViewTransform = {
+    scale: scaleRef.current,
+    position: positionRef.current,
+  };
 
   const [stageSize, setStageSize] = useState<StageSize>({
     width: window.innerWidth,
@@ -357,7 +371,7 @@ const GalaxyMapRender = ({
   };
 
   const isMobile = window.innerWidth < 768;
-  const tooltipScale = isMobile ? 1.5 / scaleRef.current : 2 / scaleRef.current;
+  const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
 
   return (
     <>
@@ -367,10 +381,10 @@ const GalaxyMapRender = ({
         width={stageSize.width}
         height={stageSize.height}
         draggable={!isPinching}
-        scaleX={scaleRef.current}
-        scaleY={scaleRef.current}
-        x={positionRef.current.x}
-        y={positionRef.current.y}
+        scaleX={view.scale}
+        scaleY={view.scale}
+        x={view.position.x}
+        y={view.position.y}
         ref={stageRef}
         onWheel={handleWheel}
         onDragMove={handleDragMove}

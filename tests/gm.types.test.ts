@@ -26,6 +26,7 @@ describe('gm.types', () => {
     expectTypeOf(t.y).toBeNumber();
     expectTypeOf(t.text).toBeString();
     expectTypeOf(t.onTouch).toEqualTypeOf<(() => void) | undefined>();
+    expectTypeOf<NonNullable<TooltipData['onTouch']>>().toBeFunction();
   });
 
   it('ViewTransform includes scale and position as Point', () => {
