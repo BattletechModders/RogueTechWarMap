@@ -1,3 +1,4 @@
+import { Point, StageSize } from '../GalaxyMap/gm.types';
 import { useMemo, useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
@@ -13,15 +14,6 @@ import useFiltering from '../hooks/useFiltering';
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
-
-/* helper to flatten faction names */
-// const allFactionNames = (factions: FactionDataType) =>
-//   Object.values(factions).map(
-//     // adjust keys if your shape differs
-//     (f: any) => f.prettyName ?? f.name ?? f.Name
-//   );
-
-/* ────────────────────────────────────────────────────────────── */
 
 const GalaxyMap = () => {
   const {
@@ -95,12 +87,12 @@ const GalaxyMapRender = ({
   const scaleRef = useRef(1);
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
   const stageRef = useRef<Konva.Stage | null>(null);
-  const positionRef = useRef({
+  const positionRef = useRef<Point>({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
   });
 
-  const [stageSize, setStageSize] = useState({
+  const [stageSize, setStageSize] = useState<StageSize>({
     width: window.innerWidth,
     height: window.innerHeight,
   });
@@ -167,7 +159,7 @@ const GalaxyMapRender = ({
 
   const [isPinching, setIsPinching] = useState(false);
   const lastDistance = useRef(0);
-  const pinchMidpoint = useRef<{ x: number; y: number } | null>(null);
+  const pinchMidpoint = useRef<Point | null>(null);
 
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
   const [bgLoaded, setBgLoaded] = useState(false);
