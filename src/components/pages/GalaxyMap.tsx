@@ -11,11 +11,6 @@ import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
 import BottomFilterPanel from '../ui/BottomFilterPanel';
 import useTooltip from '../hooks/useTooltip';
-import {
-  DisplayStarSystemType,
-  FactionDataType,
-  Settings,
-} from '../hooks/types';
 import useFiltering from '../hooks/useFiltering';
 
 const MIN_SCALE = 0.2;
