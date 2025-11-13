@@ -1,27 +1,20 @@
+import {
+  Point,
+  StageSize,
+  TooltipData,
+  ViewTransform,
+  GalaxyMapRenderProps,
+} from '../GalaxyMap/gm.types';
 import { useMemo, useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
 import BottomFilterPanel from '../ui/BottomFilterPanel';
 import useTooltip from '../hooks/useTooltip';
-import {
-  DisplayStarSystemType,
-  FactionDataType,
-  Settings,
-} from '../hooks/types';
 import useFiltering from '../hooks/useFiltering';
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
-
-/* helper to flatten faction names */
-// const allFactionNames = (factions: FactionDataType) =>
-//   Object.values(factions).map(
-//     // adjust keys if your shape differs
-//     (f: any) => f.prettyName ?? f.name ?? f.Name
-//   );
-
-/* ────────────────────────────────────────────────────────────── */
 
 const GalaxyMap = () => {
   const {
@@ -80,11 +73,7 @@ const GalaxyMapRender = ({
   systems,
   factions,
   settings,
-}: {
-  systems: DisplayStarSystemType[];
-  factions: FactionDataType;
-  settings: Settings;
-}) => {
+}: GalaxyMapRenderProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const shouldFilter = normalizedSearch.length >= 2;
@@ -93,14 +82,23 @@ const GalaxyMapRender = ({
   const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
 
   const scaleRef = useRef(1);
-  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
+  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef) as {
+    tooltip: TooltipData;
+    showTooltip: (...args: any[]) => void;
+    hideTooltip: () => void;
+  };
   const stageRef = useRef<Konva.Stage | null>(null);
-  const positionRef = useRef({
+  const positionRef = useRef<Point>({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
   });
 
-  const [stageSize, setStageSize] = useState({
+  const view: ViewTransform = {
+    scale: scaleRef.current,
+    position: positionRef.current,
+  };
+
+  const [stageSize, setStageSize] = useState<StageSize>({
     width: window.innerWidth,
     height: window.innerHeight,
   });
@@ -167,7 +165,7 @@ const GalaxyMapRender = ({
 
   const [isPinching, setIsPinching] = useState(false);
   const lastDistance = useRef(0);
-  const pinchMidpoint = useRef<{ x: number; y: number } | null>(null);
+  const pinchMidpoint = useRef<Point | null>(null);
 
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
   const [bgLoaded, setBgLoaded] = useState(false);
@@ -365,7 +363,7 @@ const GalaxyMapRender = ({
   };
 
   const isMobile = window.innerWidth < 768;
-  const tooltipScale = isMobile ? 1.5 / scaleRef.current : 2 / scaleRef.current;
+  const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
 
   return (
     <>
@@ -375,10 +373,10 @@ const GalaxyMapRender = ({
         width={stageSize.width}
         height={stageSize.height}
         draggable={!isPinching}
-        scaleX={scaleRef.current}
-        scaleY={scaleRef.current}
-        x={positionRef.current.x}
-        y={positionRef.current.y}
+        scaleX={view.scale}
+        scaleY={view.scale}
+        x={view.position.x}
+        y={view.position.y}
         ref={stageRef}
         onWheel={handleWheel}
         onDragMove={handleDragMove}
