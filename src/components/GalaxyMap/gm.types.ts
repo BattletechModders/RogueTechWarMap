@@ -1,3 +1,9 @@
+import type {
+  DisplayStarSystemType,
+  FactionDataType,
+  Settings,
+} from '../hooks/types';
+
 export type Point = { x: number; y: number };
 
 /** Stage (canvas) size used by React-Konva <Stage> */
@@ -22,3 +28,12 @@ export interface ViewTransform {
   /** Stage position (screen-space) */
   position: Point;
 }
+
+export interface GalaxyMapRenderProps {
+  systems: DisplayStarSystemType[];
+  factions: FactionDataType;
+  settings: Settings;
+}
+
+export type FactionName = string;
+export type FactionNameList = FactionName[];

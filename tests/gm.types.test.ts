@@ -4,7 +4,14 @@ import type {
   StageSize,
   TooltipData,
   ViewTransform,
+  GalaxyMapRenderProps,
 } from '../src/components/GalaxyMap/gm.types';
+
+import type {
+  DisplayStarSystemType,
+  FactionDataType,
+  Settings,
+} from '../src/components/hooks/types';
 
 describe('gm.types', () => {
   it('Point has x/y as numbers', () => {
@@ -33,5 +40,25 @@ describe('gm.types', () => {
     const vt: ViewTransform = { scale: 1, position: { x: 0, y: 0 } };
     expectTypeOf(vt.scale).toBeNumber();
     expectTypeOf(vt.position).toMatchTypeOf<Point>();
+  });
+
+  it('GalaxyMapRenderProps matches expected shapes', () => {
+    // systems is an array of DisplayStarSystemType
+    expectTypeOf<GalaxyMapRenderProps['systems']>().toEqualTypeOf<
+      DisplayStarSystemType[]
+    >();
+
+    // individual element type also matches
+    expectTypeOf<
+      GalaxyMapRenderProps['systems'][number]
+    >().toEqualTypeOf<DisplayStarSystemType>();
+
+    // factions matches FactionDataType
+    expectTypeOf<
+      GalaxyMapRenderProps['factions']
+    >().toEqualTypeOf<FactionDataType>();
+
+    // settings matches Settings
+    expectTypeOf<GalaxyMapRenderProps['settings']>().toEqualTypeOf<Settings>();
   });
 });

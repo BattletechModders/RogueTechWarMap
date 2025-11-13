@@ -3,6 +3,7 @@ import {
   StageSize,
   TooltipData,
   ViewTransform,
+  GalaxyMapRenderProps,
 } from '../GalaxyMap/gm.types';
 import { useMemo, useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
@@ -77,11 +78,7 @@ const GalaxyMapRender = ({
   systems,
   factions,
   settings,
-}: {
-  systems: DisplayStarSystemType[];
-  factions: FactionDataType;
-  settings: Settings;
-}) => {
+}: GalaxyMapRenderProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const shouldFilter = normalizedSearch.length >= 2;
