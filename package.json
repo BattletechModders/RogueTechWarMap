@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@material-tailwind/react": "^2.1.10",
-    "axios": "^1.7.7",
+    "axios": "^1.13.2",
     "konva": "^9.3.18",
     "localforage": "^1.10.0",
     "lucide-react": "^0.515.0",
@@ -24,7 +24,6 @@
     "react-konva": "18",
     "react-router-dom": "^6.26.2",
     "react-select": "^5.10.1",
-    "sort-by": "^1.2.0",
     "swr": "^2.2.5"
   },
   "devDependencies": {
@@ -44,6 +43,9 @@
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",
     "vitest": "^4.0.8"
+  },
+  "resolutions": {
+    "esbuild": "0.27.0"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
