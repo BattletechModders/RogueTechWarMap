@@ -5,6 +5,7 @@ import {
   ViewTransform,
   GalaxyMapRenderProps,
 } from '../GalaxyMap/gm.types';
+import { buildFactionFilterOptions } from '../GalaxyMap/gm.selectors';
 import { useMemo, useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
@@ -480,15 +481,10 @@ const GalaxyMapRender = ({
       <BottomFilterPanel
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        factions={useMemo(() => {
-          const names = new Set<string>();
-          for (const system of systems) {
-            const owner = system.owner;
-            const pretty = factions[owner]?.prettyName ?? owner;
-            if (pretty) names.add(pretty);
-          }
-          return Array.from(names).sort((a, b) => a.localeCompare(b));
-        }, [systems, factions])}
+        factions={useMemo(
+          () => buildFactionFilterOptions(systems, factions),
+          [systems, factions]
+        )}
         selectedFactions={selectedFactions}
         setSelectedFactions={setSelectedFactions}
       />
