@@ -6,6 +6,7 @@ import {
   GalaxyMapRenderProps,
 } from '../GalaxyMap/gm.types';
 import { buildFactionFilterOptions } from '../GalaxyMap/gm.selectors';
+import { getDistance } from '../GalaxyMap/gm.interactions';
 import { useMemo, useEffect, useState, useRef } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
@@ -215,12 +216,6 @@ const GalaxyMapRender = ({
       container.removeEventListener('touchmove', preventDefault);
     };
   }, []);
-
-  const getDistance = (touch1: Touch, touch2: Touch) => {
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
 
   let frameRequested = false;
   const requestBatchDraw = (stage: Konva.Stage) => {
