@@ -2,7 +2,6 @@ import {
   Point,
   StageSize,
   TooltipData,
-  ViewTransform,
   GalaxyMapRenderProps,
 } from '../GalaxyMap/gm.types';
 import { buildFactionFilterOptions } from '../GalaxyMap/gm.selectors';
@@ -14,6 +13,7 @@ import StarSystem from '../ui/StarSystem';
 import BottomFilterPanel from '../ui/BottomFilterPanel';
 import useTooltip from '../hooks/useTooltip';
 import useFiltering from '../hooks/useFiltering';
+import { useGalaxyViewport } from '../hooks/useGalaxyViewport';
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
@@ -76,6 +76,16 @@ const GalaxyMapRender = ({
   factions,
   settings,
 }: GalaxyMapRenderProps) => {
+  const {
+    stageRef,
+    scaleRef,
+    positionRef,
+    view,
+    zoomScaleFactor,
+    requestBatchDraw,
+    setZoomScaleFactor,
+    handlers: { onWheel, onDragMove },
+  } = useGalaxyViewport();
   const [searchTerm, setSearchTerm] = useState('');
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const shouldFilter = normalizedSearch.length >= 2;
@@ -83,29 +93,16 @@ const GalaxyMapRender = ({
   /* faction filter */
   const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
 
-  const scaleRef = useRef(1);
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef) as {
     tooltip: TooltipData;
     showTooltip: (...args: any[]) => void;
     hideTooltip: () => void;
-  };
-  const stageRef = useRef<Konva.Stage | null>(null);
-  const positionRef = useRef<Point>({
-    x: window.innerWidth / 2,
-    y: window.innerHeight / 2,
-  });
-
-  const view: ViewTransform = {
-    scale: scaleRef.current,
-    position: positionRef.current,
   };
 
   const [stageSize, setStageSize] = useState<StageSize>({
     width: window.innerWidth,
     height: window.innerHeight,
   });
-
-  const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
 
   // Block Firefox pinch-to-zoom at document level
   useEffect(() => {
@@ -217,59 +214,6 @@ const GalaxyMapRender = ({
     };
   }, []);
 
-  let frameRequested = false;
-  const requestBatchDraw = (stage: Konva.Stage) => {
-    if (!frameRequested) {
-      frameRequested = true;
-      requestAnimationFrame(() => {
-        stage.batchDraw();
-        frameRequested = false;
-      });
-    }
-  };
-
-  const lastWheelTime = useRef(0);
-  const WHEEL_THROTTLE_MS = 50;
-
-  const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
-    const now = performance.now();
-    if (now - lastWheelTime.current < WHEEL_THROTTLE_MS) return;
-
-    lastWheelTime.current = now;
-
-    e.evt.preventDefault();
-    const scaleBy = 1.25;
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    const pointer = stage.getPointerPosition();
-    if (!pointer) return;
-
-    const oldScale = scaleRef.current;
-    let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
-    newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
-
-    const mousePointTo = {
-      x: (pointer.x - stage.x()) / oldScale,
-      y: (pointer.y - stage.y()) / oldScale,
-    };
-
-    scaleRef.current = newScale;
-    positionRef.current = {
-      x: pointer.x - mousePointTo.x * newScale,
-      y: pointer.y - mousePointTo.y * newScale,
-    };
-
-    stage.scale({ x: newScale, y: newScale });
-    stage.position(positionRef.current);
-    requestBatchDraw(stage);
-    setZoomScaleFactor(scaleRef.current < 1 ? scaleRef.current : 1);
-  };
-
-  const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
-    positionRef.current = { x: e.target.x(), y: e.target.y() };
-  };
-
   const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
     if (e.evt.touches.length === 1) {
       const stage = e.target.getStage();
@@ -374,8 +318,8 @@ const GalaxyMapRender = ({
         x={view.position.x}
         y={view.position.y}
         ref={stageRef}
-        onWheel={handleWheel}
-        onDragMove={handleDragMove}
+        onWheel={onWheel}
+        onDragMove={onDragMove}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
