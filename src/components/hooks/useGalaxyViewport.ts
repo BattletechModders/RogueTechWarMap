@@ -79,8 +79,7 @@ export function useGalaxyViewport({
 
       requestBatchDraw(stage);
 
-      // Keep your existing behavior: factor only below 1
-      setZoomScaleFactor(newScale < 1 ? newScale : 1);
+      setZoomScaleFactor(newScale);
     },
     [maxScale, minScale, requestBatchDraw, wheelThrottleMs]
   );
