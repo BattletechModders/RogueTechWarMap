@@ -6,6 +6,7 @@ import {
   DisplayStarSystemType,
   FactionDataType,
   Settings,
+  StarSystemState,
   StarSystemType,
 } from '../hooks/types';
 import { API_BASE_URL } from '../helpers/ApiHelper.ts';
@@ -62,6 +63,29 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const hasActivePlayers = system.factions.some(
     (faction) => faction.ActivePlayers > 0
   );
+  const damageLevelText =
+    system.damageLevel !== undefined &&
+    system.damageLevel !== null &&
+    `${system.damageLevel}`.trim() !== ''
+      ? `${system.damageLevel}`
+      : 'Unknown';
+
+  const formatSystemState = (state?: StarSystemState) => {
+    if (!state) return 'None';
+
+    const stateLabels: Array<[keyof StarSystemState, string]> = [
+      ['isInsurrect', 'Insurrection'],
+      ['hasPirateRaid', 'Pirate Raid'],
+      ['hasCaptureEvent', 'Capture Event'],
+      ['hasHoldTheLineEvent', 'Hold The Line Event'],
+    ];
+
+    const activeStates = stateLabels
+      .filter(([key]) => state[key])
+      .map(([, label]) => label);
+
+    return activeStates.length ? activeStates.join('\n') : 'None';
+  };
 
   const circleRef = useRef<Konva.Circle>(null);
 
@@ -116,11 +140,12 @@ const StarSystem: React.FC<StarSystemProps> = ({
 
         const faction = findFaction(system.owner, factions);
         const controlDetails = formatFactionControl(system.factions, factions);
+        const stateDetails = formatSystemState(system.state);
 
         showTooltip(
           `${system.name}\nCoords: (${system.posX}, ${system.posY})\n${
             faction?.prettyName || 'Unknown'
-          }\n\nFaction Control:\n${controlDetails}`,
+          }\n\nFaction Control:\n${controlDetails}\n\nDamage Level: ${damageLevelText}\n\nSystem State:\n${stateDetails}`,
           pointer.x,
           pointer.y,
           stage.x(),
@@ -147,9 +172,12 @@ const StarSystem: React.FC<StarSystemProps> = ({
             system.factions,
             factions
           );
+          const stateDetails = formatSystemState(system.state);
 
           showTooltip(
-            `${system.name}\nCoords: (${system.posX}, ${system.posY})\n${faction?.prettyName}\n\nFaction Control:\n${controlDetails}\n\n[Tap to open]`,
+            `${system.name}\nCoords: (${system.posX}, ${system.posY})\n${
+              faction?.prettyName || 'Unknown'
+            }\n\nFaction Control:\n${controlDetails}\n\nDamage Level: ${damageLevelText}\n\nSystem State:\n${stateDetails}\n\n[Tap to open]`,
             pointer.x,
             pointer.y,
             undefined,
