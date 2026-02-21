@@ -224,6 +224,21 @@ const GalaxyMapRender = ({
 
   const isMobile = window.innerWidth < 768;
   const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
+  const effectiveTooltipScale = view.scale * tooltipScale;
+  const tooltipViewportWidth = stageSize.width * (isMobile ? 0.92 : 0.5);
+  const tooltipTextWidth = tooltipViewportWidth / effectiveTooltipScale;
+  const tooltipMarginWorld = (isMobile ? 8 : 16) / view.scale;
+  const viewportLeftWorld = -view.position.x / view.scale;
+  const viewportRightWorld = viewportLeftWorld + stageSize.width / view.scale;
+  const tooltipWidthWorld = tooltipTextWidth * tooltipScale;
+  const tooltipHalfWidthWorld = tooltipWidthWorld / 2;
+  const clampedTooltipX = Math.min(
+    Math.max(
+      tooltip.x,
+      viewportLeftWorld + tooltipHalfWidthWorld + tooltipMarginWorld
+    ),
+    viewportRightWorld - tooltipHalfWidthWorld - tooltipMarginWorld
+  );
 
   return (
     <>
@@ -298,7 +313,7 @@ const GalaxyMapRender = ({
         <Layer>
           {tooltip.visible && (
             <Label
-              x={tooltip.x}
+              x={clampedTooltipX}
               y={tooltip.y}
               opacity={0.75}
               scaleX={tooltipScale}
@@ -329,6 +344,8 @@ const GalaxyMapRender = ({
                     getComputedStyle(document.documentElement).fontSize
                   ) * 0.85
                 }
+                width={tooltipTextWidth}
+                wrap="word"
                 padding={5}
                 fill="black"
               />
