@@ -47,17 +47,17 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const baseRadius = system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS;
   const radius = (highlighted ? baseRadius * 3 : baseRadius) / zoomScaleFactor;
 
-  const formatFactionControl = (
-    factions: StarSystemType['factions'],
+  const formatFactionControlCompact = (
+    systemFactions: StarSystemType['factions'],
     allFactions: FactionDataType
   ) => {
-    return factions
+    return systemFactions
       .map((faction) => {
         const factionData = findFaction(faction.Name, allFactions);
         const displayName = factionData?.prettyName || faction.Name;
-        return `${displayName}: ${faction.control}%\n (${faction.ActivePlayers} players)`;
+        return `${displayName}: ${faction.control}% (${faction.ActivePlayers} players)`;
       })
-      .join('\n');
+      .join(' | ');
   };
 
   const hasActivePlayers = system.factions.some(
@@ -84,7 +84,31 @@ const StarSystem: React.FC<StarSystemProps> = ({
       .filter(([key]) => state[key])
       .map(([, label]) => label);
 
-    return activeStates.length ? activeStates.join('\n') : 'None';
+    return activeStates.length ? activeStates.join(', ') : 'None';
+  };
+
+  const buildTooltipText = (includeTapHint = false) => {
+    const ownerName = findFaction(system.owner, factions)?.prettyName || 'Unknown';
+    const controlSummary = formatFactionControlCompact(system.factions, factions);
+    const stateDetails = formatSystemState(system.state);
+
+    const lines = [
+      system.name,
+      `(${system.posX}, ${system.posY})`,
+      `Owner: ${ownerName}`,
+      `Control: ${controlSummary}`,
+      `Damage: ${damageLevelText}`,
+    ];
+
+    if (stateDetails !== 'None') {
+      lines.push(`State: ${stateDetails}`);
+    }
+
+    if (includeTapHint) {
+      lines.push('[Tap to open]');
+    }
+
+    return lines.join('\n');
   };
 
   const circleRef = useRef<Konva.Circle>(null);
@@ -138,19 +162,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
         const pointer = stage.getPointerPosition();
         if (!pointer) return;
 
-        const faction = findFaction(system.owner, factions);
-        const controlDetails = formatFactionControl(system.factions, factions);
-        const stateDetails = formatSystemState(system.state);
-
-        showTooltip(
-          `${system.name}\nCoords: (${system.posX}, ${system.posY})\n${
-            faction?.prettyName || 'Unknown'
-          }\n\nFaction Control:\n${controlDetails}\n\nDamage Level: ${damageLevelText}\n\nSystem State:\n${stateDetails}`,
-          pointer.x,
-          pointer.y,
-          stage.x(),
-          stage.y()
-        );
+        showTooltip(buildTooltipText(), pointer.x, pointer.y, stage.x(), stage.y());
       }}
       onMouseLeave={hideTooltip}
       onTouchStart={(e) => {
@@ -167,17 +179,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
             return;
           }
 
-          const faction = findFaction(system.owner, factions);
-          const controlDetails = formatFactionControl(
-            system.factions,
-            factions
-          );
-          const stateDetails = formatSystemState(system.state);
-
           showTooltip(
-            `${system.name}\nCoords: (${system.posX}, ${system.posY})\n${
-              faction?.prettyName || 'Unknown'
-            }\n\nFaction Control:\n${controlDetails}\n\nDamage Level: ${damageLevelText}\n\nSystem State:\n${stateDetails}\n\n[Tap to open]`,
+            buildTooltipText(true),
             pointer.x,
             pointer.y,
             undefined,
