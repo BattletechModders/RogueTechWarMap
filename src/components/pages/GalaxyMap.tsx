@@ -224,39 +224,25 @@ const GalaxyMapRender = ({
 
   const isMobile = window.innerWidth < 768;
   const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
-  const effectiveTooltipScale = view.scale * tooltipScale;
-  const tooltipPadding = 5;
-  const tooltipPointerInset = 16;
-  const tooltipMarginPx = isMobile ? 8 : 16;
-  const tooltipViewportWidth = stageSize.width * (isMobile ? 0.92 : 0.5);
-  const tooltipTextWidth = tooltipViewportWidth / effectiveTooltipScale;
-  const tooltipBoxWidth = tooltipTextWidth + tooltipPadding * 2;
-  const tooltipBoxWidthPx = tooltipBoxWidth * effectiveTooltipScale;
-  const tooltipTargetXScreen = tooltip.x * view.scale + view.position.x;
-  const clampedTooltipTipXScreen = Math.min(
-    Math.max(tooltipTargetXScreen, tooltipMarginPx),
-    stageSize.width - tooltipMarginPx
-  );
-  const pointerLowerBoundPx = Math.max(
-    tooltipPointerInset * effectiveTooltipScale,
-    clampedTooltipTipXScreen +
-      tooltipBoxWidthPx -
-      (stageSize.width - tooltipMarginPx)
-  );
-  const pointerUpperBoundPx = Math.min(
-    tooltipBoxWidthPx - tooltipPointerInset * effectiveTooltipScale,
-    clampedTooltipTipXScreen - tooltipMarginPx
-  );
-  const tooltipPointerXPx = Math.min(
-    Math.max(tooltipBoxWidthPx / 2, pointerLowerBoundPx),
-    pointerUpperBoundPx
-  );
-  const tooltipPointerX = Math.max(
-    tooltipPointerInset,
-    Math.min(tooltipPointerXPx / effectiveTooltipScale, tooltipBoxWidth - tooltipPointerInset)
-  );
-  const clampedTooltipTipXWorld =
-    (clampedTooltipTipXScreen - view.position.x) / view.scale;
+  const tooltipFontSize =
+    parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.85;
+  const mobileTooltipData = useMemo(() => {
+    const trimmed = tooltip.text?.trim();
+    if (!trimmed) {
+      return { title: '', subtitle: '', details: [] as string[] };
+    }
+
+    const lines = trimmed
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line && line !== '[Tap to open]');
+
+    const title = lines[0] ?? '';
+    const subtitle = lines[1]?.startsWith('(') ? lines[1] : '';
+    const details = lines.slice(subtitle ? 2 : 1);
+
+    return { title, subtitle, details };
+  }, [tooltip.text]);
 
   return (
     <>
@@ -329,49 +315,109 @@ const GalaxyMapRender = ({
           })}
         </Layer>
         <Layer>
-          {tooltip.visible && (
-            <Label
-              x={clampedTooltipTipXWorld}
-              y={tooltip.y}
-              opacity={0.75}
-              scaleX={tooltipScale}
-              scaleY={tooltipScale}
-              onTouchStart={(e) => {
-                e.evt.preventDefault();
-                if (tooltip.onTouch) {
-                  tooltip.onTouch();
-                }
-              }}
-            >
-              <Tag
-                fill="white"
-                pointerDirection="down"
-                pointerX={tooltipPointerX}
-                pointerWidth={10}
-                pointerHeight={10}
-                shadowColor="gray"
-                shadowBlur={10}
-                shadowOffset={{ x: 10, y: 10 }}
-                shadowOpacity={0.2}
-                cornerRadius={8}
-              />
-              <Text
-                text={tooltip.text}
-                fontFamily="Roboto Mono, monospace"
-                fontSize={
-                  parseFloat(
-                    getComputedStyle(document.documentElement).fontSize
-                  ) * 0.85
-                }
-                width={tooltipTextWidth}
-                wrap="word"
-                padding={5}
-                fill="black"
-              />
-            </Label>
+          {tooltip.visible && !isMobile && (
+              <Label
+                x={tooltip.x}
+                y={tooltip.y}
+                opacity={0.75}
+                scaleX={tooltipScale}
+                scaleY={tooltipScale}
+                onTouchStart={(e) => {
+                  e.evt.preventDefault();
+                  tooltip.onTouch?.();
+                }}
+              >
+                <Tag
+                  fill="white"
+                  pointerDirection="down"
+                  pointerWidth={10}
+                  pointerHeight={10}
+                  shadowColor="gray"
+                  shadowBlur={10}
+                  shadowOffset={{ x: 10, y: 10 }}
+                  shadowOpacity={0.2}
+                  cornerRadius={8}
+                />
+                <Text
+                  text={tooltip.text}
+                  fontFamily="Roboto Mono, monospace"
+                  fontSize={tooltipFontSize}
+                  padding={5}
+                  fill="black"
+                />
+              </Label>
           )}
         </Layer>
       </Stage>
+      {isMobile && tooltip.visible && (
+        <div
+          style={{
+            position: 'fixed',
+            left: '12px',
+            right: '12px',
+            bottom: 'calc(84px + env(safe-area-inset-bottom))',
+            maxHeight: '45vh',
+            overflowY: 'auto',
+            background: 'rgba(255, 255, 255, 0.94)',
+            color: '#111',
+            borderRadius: '14px',
+            padding: '12px 14px',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.28)',
+            zIndex: 30,
+            fontFamily: 'Roboto Mono, monospace',
+          }}
+        >
+          <div style={{ fontSize: '1.05rem', fontWeight: 700 }}>
+            {mobileTooltipData.title}
+          </div>
+          {mobileTooltipData.subtitle && (
+            <div style={{ marginTop: '2px', opacity: 0.8 }}>
+              {mobileTooltipData.subtitle}
+            </div>
+          )}
+          <div style={{ marginTop: '8px', display: 'grid', rowGap: '4px' }}>
+            {mobileTooltipData.details.map((detail, index) => (
+              <div key={`${detail}-${index}`}>{detail}</div>
+            ))}
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              marginTop: '12px',
+            }}
+          >
+            {tooltip.onTouch && (
+              <button
+                type="button"
+                onClick={() => tooltip.onTouch?.()}
+                style={{
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  background: '#111',
+                  color: '#fff',
+                }}
+              >
+                Open System
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={hideTooltip}
+              style={{
+                border: '1px solid #999',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                background: 'transparent',
+                color: '#111',
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       {/* bottom sliding filter panel */}
       <BottomFilterPanel
         searchTerm={searchTerm}
