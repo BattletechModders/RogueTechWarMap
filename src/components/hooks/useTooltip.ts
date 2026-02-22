@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { TooltipControlItem } from '../GalaxyMap/gm.types';
 
 interface TooltipState {
   visible: boolean;
@@ -6,6 +7,7 @@ interface TooltipState {
   x: number;
   y: number;
   onTouch?: () => void;
+  controlItems?: TooltipControlItem[];
 }
 
 const useTooltip = (scaleRef: React.RefObject<number>) => {
@@ -22,7 +24,8 @@ const useTooltip = (scaleRef: React.RefObject<number>) => {
     pointerY: number,
     stageX?: number,
     stageY?: number,
-    onTouch?: () => void
+    onTouch?: () => void,
+    controlItems?: TooltipControlItem[]
   ) => {
     const scale = scaleRef.current || 1;
 
@@ -32,6 +35,7 @@ const useTooltip = (scaleRef: React.RefObject<number>) => {
       x: stageX !== undefined ? (pointerX - stageX) / scale : pointerX,
       y: stageY !== undefined ? (pointerY - stageY) / scale : pointerY,
       onTouch,
+      controlItems,
     });
   };
 

@@ -19,6 +19,13 @@ export interface TooltipData {
   y: number;
   text: string;
   onTouch?: () => void;
+  controlItems?: TooltipControlItem[];
+}
+
+export interface TooltipControlItem {
+  name: string;
+  control: number;
+  players: number;
 }
 
 /** View transform pieces GalaxyMap manages internally */

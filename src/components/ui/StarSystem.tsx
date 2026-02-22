@@ -10,6 +10,7 @@ import {
   StarSystemType,
 } from '../hooks/types';
 import { API_BASE_URL } from '../helpers/ApiHelper.ts';
+import type { TooltipControlItem } from '../GalaxyMap/gm.types';
 
 const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;
@@ -25,7 +26,8 @@ interface StarSystemProps {
     y: number,
     stageX?: number,
     stageY?: number,
-    onTouch?: () => void
+    onTouch?: () => void,
+    controlItems?: TooltipControlItem[]
   ) => void;
   hideTooltip: () => void;
   tooltip: { visible: boolean; text: string };
@@ -47,17 +49,24 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const baseRadius = system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS;
   const radius = (highlighted ? baseRadius * 3 : baseRadius) / zoomScaleFactor;
 
-  const formatFactionControlCompact = (
+  const buildControlItems = (
     systemFactions: StarSystemType['factions'],
     allFactions: FactionDataType
-  ) => {
-    return systemFactions
+  ): TooltipControlItem[] => {
+    return [...systemFactions]
+      .sort((a, b) => b.control - a.control)
       .map((faction) => {
         const factionData = findFaction(faction.Name, allFactions);
-        const displayName = factionData?.prettyName || faction.Name;
-        return `${displayName}: ${faction.control}% (${faction.ActivePlayers} players)`;
-      })
-      .join(' | ');
+        return {
+          name: factionData?.prettyName || faction.Name,
+          control: faction.control,
+          players: faction.ActivePlayers,
+        };
+      });
+  };
+
+  const formatControlLine = (item: TooltipControlItem) => {
+    return `${item.name} ${item.control}% · P${item.players}`;
   };
 
   const hasActivePlayers = system.factions.some(
@@ -89,14 +98,18 @@ const StarSystem: React.FC<StarSystemProps> = ({
 
   const buildTooltipText = (includeTapHint = false) => {
     const ownerName = findFaction(system.owner, factions)?.prettyName || 'Unknown';
-    const controlSummary = formatFactionControlCompact(system.factions, factions);
+    const controlItems = buildControlItems(system.factions, factions);
+    const topControl = controlItems.slice(0, 3);
+    const remainingControlCount = Math.max(0, controlItems.length - topControl.length);
     const stateDetails = formatSystemState(system.state);
 
     const lines = [
       system.name,
       `(${system.posX}, ${system.posY})`,
       `Owner: ${ownerName}`,
-      `Control: ${controlSummary}`,
+      'Control:',
+      ...topControl.map(formatControlLine),
+      ...(remainingControlCount > 0 ? [`+${remainingControlCount} more`] : []),
       `Damage: ${damageLevelText}`,
     ];
 
@@ -108,7 +121,10 @@ const StarSystem: React.FC<StarSystemProps> = ({
       lines.push('[Tap to open]');
     }
 
-    return lines.join('\n');
+    return {
+      text: lines.join('\n'),
+      controlItems,
+    };
   };
 
   const circleRef = useRef<Konva.Circle>(null);
@@ -162,7 +178,16 @@ const StarSystem: React.FC<StarSystemProps> = ({
         const pointer = stage.getPointerPosition();
         if (!pointer) return;
 
-        showTooltip(buildTooltipText(), pointer.x, pointer.y, stage.x(), stage.y());
+        const tooltipData = buildTooltipText();
+        showTooltip(
+          tooltipData.text,
+          pointer.x,
+          pointer.y,
+          stage.x(),
+          stage.y(),
+          undefined,
+          tooltipData.controlItems
+        );
       }}
       onMouseLeave={hideTooltip}
       onTouchStart={(e) => {
@@ -179,15 +204,18 @@ const StarSystem: React.FC<StarSystemProps> = ({
             return;
           }
 
+          const tooltipData = buildTooltipText(true);
+
           showTooltip(
-            buildTooltipText(true),
+            tooltipData.text,
             pointer.x,
             pointer.y,
             undefined,
             undefined,
             () => {
               window.location.href = `${API_BASE_URL}${system.sysUrl}`;
-            }
+            },
+            tooltipData.controlItems
           );
         }
       }}
