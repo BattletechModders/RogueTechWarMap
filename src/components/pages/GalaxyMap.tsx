@@ -225,20 +225,38 @@ const GalaxyMapRender = ({
   const isMobile = window.innerWidth < 768;
   const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
   const effectiveTooltipScale = view.scale * tooltipScale;
+  const tooltipPadding = 5;
+  const tooltipPointerInset = 16;
+  const tooltipMarginPx = isMobile ? 8 : 16;
   const tooltipViewportWidth = stageSize.width * (isMobile ? 0.92 : 0.5);
   const tooltipTextWidth = tooltipViewportWidth / effectiveTooltipScale;
-  const tooltipMarginWorld = (isMobile ? 8 : 16) / view.scale;
-  const viewportLeftWorld = -view.position.x / view.scale;
-  const viewportRightWorld = viewportLeftWorld + stageSize.width / view.scale;
-  const tooltipWidthWorld = tooltipTextWidth * tooltipScale;
-  const tooltipHalfWidthWorld = tooltipWidthWorld / 2;
-  const clampedTooltipX = Math.min(
-    Math.max(
-      tooltip.x,
-      viewportLeftWorld + tooltipHalfWidthWorld + tooltipMarginWorld
-    ),
-    viewportRightWorld - tooltipHalfWidthWorld - tooltipMarginWorld
+  const tooltipBoxWidth = tooltipTextWidth + tooltipPadding * 2;
+  const tooltipBoxWidthPx = tooltipBoxWidth * effectiveTooltipScale;
+  const tooltipTargetXScreen = tooltip.x * view.scale + view.position.x;
+  const clampedTooltipTipXScreen = Math.min(
+    Math.max(tooltipTargetXScreen, tooltipMarginPx),
+    stageSize.width - tooltipMarginPx
   );
+  const pointerLowerBoundPx = Math.max(
+    tooltipPointerInset * effectiveTooltipScale,
+    clampedTooltipTipXScreen +
+      tooltipBoxWidthPx -
+      (stageSize.width - tooltipMarginPx)
+  );
+  const pointerUpperBoundPx = Math.min(
+    tooltipBoxWidthPx - tooltipPointerInset * effectiveTooltipScale,
+    clampedTooltipTipXScreen - tooltipMarginPx
+  );
+  const tooltipPointerXPx = Math.min(
+    Math.max(tooltipBoxWidthPx / 2, pointerLowerBoundPx),
+    pointerUpperBoundPx
+  );
+  const tooltipPointerX = Math.max(
+    tooltipPointerInset,
+    Math.min(tooltipPointerXPx / effectiveTooltipScale, tooltipBoxWidth - tooltipPointerInset)
+  );
+  const clampedTooltipTipXWorld =
+    (clampedTooltipTipXScreen - view.position.x) / view.scale;
 
   return (
     <>
@@ -313,7 +331,7 @@ const GalaxyMapRender = ({
         <Layer>
           {tooltip.visible && (
             <Label
-              x={clampedTooltipX}
+              x={clampedTooltipTipXWorld}
               y={tooltip.y}
               opacity={0.75}
               scaleX={tooltipScale}
@@ -328,6 +346,7 @@ const GalaxyMapRender = ({
               <Tag
                 fill="white"
                 pointerDirection="down"
+                pointerX={tooltipPointerX}
                 pointerWidth={10}
                 pointerHeight={10}
                 shadowColor="gray"
