@@ -4,7 +4,7 @@ import {
   GalaxyMapRenderProps,
 } from '../GalaxyMap/gm.types';
 import { buildFactionFilterOptions } from '../GalaxyMap/gm.selectors';
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Image, Text, Group, Rect, Line } from 'react-konva';
 import Konva from 'konva';
 import StarSystem from '../ui/StarSystem';
@@ -98,6 +98,8 @@ const GalaxyMapRender = ({
     showTooltip: (...args: any[]) => void;
     hideTooltip: () => void;
   };
+  const tooltipVisibleRef = useRef(false);
+  const touchedSystemNameRef = useRef<string | null>(null);
 
   const {
     isPinching,
@@ -297,6 +299,13 @@ const GalaxyMapRender = ({
     }
   }, [tooltip.visible, tooltip.text]);
 
+  useEffect(() => {
+    tooltipVisibleRef.current = tooltip.visible;
+    if (!tooltip.visible) {
+      touchedSystemNameRef.current = null;
+    }
+  }, [tooltip.visible]);
+
   const mobileTooltipData = useMemo(() => {
     const trimmed = tooltip.text?.trim();
     if (!trimmed) {
@@ -407,7 +416,8 @@ const GalaxyMapRender = ({
                 settings={settings}
                 showTooltip={showTooltip}
                 hideTooltip={hideTooltip}
-                tooltip={tooltip}
+                tooltipVisibleRef={tooltipVisibleRef}
+                touchedSystemNameRef={touchedSystemNameRef}
                 highlighted={shouldFilter && isMatch}
                 opacity={opacity}
               />

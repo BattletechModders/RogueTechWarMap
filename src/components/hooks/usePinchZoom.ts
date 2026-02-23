@@ -30,6 +30,12 @@ export function usePinchZoom({
 }: UsePinchZoomArgs) {
   const [isPinching, setIsPinching] = useState(false);
   const lastDistance = useRef(0);
+  const frameRequestId = useRef<number | null>(null);
+  const frameQueued = useRef(false);
+  const latestPinchSample = useRef<{
+    touch1: { clientX: number; clientY: number };
+    touch2: { clientX: number; clientY: number };
+  } | null>(null);
 
   const onTouchStart = useCallback(
     (e: Konva.KonvaEventObject<TouchEvent>) => {
@@ -56,40 +62,59 @@ export function usePinchZoom({
       e.evt.preventDefault();
 
       const [touch1, touch2] = e.evt.touches;
-      const newDistance = getDistance(touch1, touch2);
-      if (!lastDistance.current) return;
-
-      const stage = stageRef.current;
-      if (!stage) return;
-
-      let scaleBy = newDistance / lastDistance.current;
-
-      // Prevent jitter and dead zone on Firefox
-      if (Math.abs(1 - scaleBy) < 0.02) return;
-
-      // Clamp to avoid huge jumps
-      scaleBy = Math.max(0.9, Math.min(1.1, scaleBy));
-
-      const oldScale = scaleRef.current ?? 1;
-      const newScale = Math.max(
-        minScale,
-        Math.min(maxScale, oldScale * scaleBy)
-      );
-
-      const stagePos = stage.getPosition();
-      const stageScale = stage.scaleX();
-
-      const pinchCenter = {
-        x: (touch1.clientX + touch2.clientX) / 2,
-        y: (touch1.clientY + touch2.clientY) / 2,
+      latestPinchSample.current = {
+        touch1: { clientX: touch1.clientX, clientY: touch1.clientY },
+        touch2: { clientX: touch2.clientX, clientY: touch2.clientY },
       };
 
-      const worldPos = {
-        x: (pinchCenter.x - stagePos.x) / stageScale,
-        y: (pinchCenter.y - stagePos.y) / stageScale,
-      };
+      if (frameQueued.current) return;
+      frameQueued.current = true;
 
-      requestAnimationFrame(() => {
+      frameRequestId.current = requestAnimationFrame(() => {
+        frameQueued.current = false;
+
+        const sample = latestPinchSample.current;
+        if (!sample) return;
+
+        const newDistance = Math.hypot(
+          sample.touch2.clientX - sample.touch1.clientX,
+          sample.touch2.clientY - sample.touch1.clientY
+        );
+        if (!lastDistance.current) {
+          lastDistance.current = newDistance;
+          return;
+        }
+
+        const stage = stageRef.current;
+        if (!stage) return;
+
+        let scaleBy = newDistance / lastDistance.current;
+
+        // Prevent jitter and dead zone on Firefox
+        if (Math.abs(1 - scaleBy) < 0.02) return;
+
+        // Clamp to avoid huge jumps
+        scaleBy = Math.max(0.9, Math.min(1.1, scaleBy));
+
+        const oldScale = scaleRef.current ?? 1;
+        const newScale = Math.max(
+          minScale,
+          Math.min(maxScale, oldScale * scaleBy)
+        );
+
+        const stagePos = stage.getPosition();
+        const stageScale = stage.scaleX();
+
+        const pinchCenter = {
+          x: (sample.touch1.clientX + sample.touch2.clientX) / 2,
+          y: (sample.touch1.clientY + sample.touch2.clientY) / 2,
+        };
+
+        const worldPos = {
+          x: (pinchCenter.x - stagePos.x) / stageScale,
+          y: (pinchCenter.y - stagePos.y) / stageScale,
+        };
+
         const newPos = {
           x: pinchCenter.x - worldPos.x * newScale,
           y: pinchCenter.y - worldPos.y * newScale,
@@ -102,10 +127,9 @@ export function usePinchZoom({
         stage.position(newPos);
 
         requestBatchDraw(stage);
-        setZoomScaleFactor(newScale);
-      });
 
-      lastDistance.current = newDistance;
+        lastDistance.current = newDistance;
+      });
     },
     [
       isPinching,
@@ -120,7 +144,16 @@ export function usePinchZoom({
   );
 
   const onTouchEnd = useCallback((e: Konva.KonvaEventObject<TouchEvent>) => {
-    if (e.evt.touches.length < 2) setIsPinching(false);
+    if (e.evt.touches.length < 2) {
+      setIsPinching(false);
+      setZoomScaleFactor(scaleRef.current);
+      latestPinchSample.current = null;
+      if (frameRequestId.current !== null) {
+        cancelAnimationFrame(frameRequestId.current);
+        frameRequestId.current = null;
+      }
+      frameQueued.current = false;
+    }
   }, []);
 
   return {

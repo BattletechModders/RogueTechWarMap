@@ -30,7 +30,8 @@ interface StarSystemProps {
     controlItems?: TooltipControlItem[]
   ) => void;
   hideTooltip: () => void;
-  tooltip: { visible: boolean; text: string };
+  tooltipVisibleRef: React.MutableRefObject<boolean>;
+  touchedSystemNameRef: React.MutableRefObject<string | null>;
   highlighted?: boolean;
   opacity?: number;
 }
@@ -42,7 +43,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
   settings,
   showTooltip,
   hideTooltip,
-  tooltip,
+  tooltipVisibleRef,
+  touchedSystemNameRef,
   highlighted = false,
   opacity = 1,
 }) => {
@@ -199,7 +201,10 @@ const StarSystem: React.FC<StarSystemProps> = ({
           const pointer = stage.getRelativePointerPosition();
           if (!pointer) return;
 
-          if (tooltip.visible && tooltip.text.includes(system.name)) {
+          if (
+            tooltipVisibleRef.current &&
+            touchedSystemNameRef.current === system.name
+          ) {
             window.location.href = `${API_BASE_URL}${system.sysUrl}`;
             return;
           }
@@ -217,6 +222,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
             },
             tooltipData.controlItems
           );
+          touchedSystemNameRef.current = system.name;
         }
       }}
     />
