@@ -1,6 +1,5 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo } from 'react';
 import { Circle } from 'react-konva';
-import Konva from 'konva';
 import { findFaction, openInNewTab } from '../helpers';
 import {
   DisplayStarSystemType,
@@ -49,7 +48,6 @@ const StarSystem: React.FC<StarSystemProps> = ({
   opacity = 1,
 }) => {
   const baseRadius = system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS;
-  const radius = (highlighted ? baseRadius * 3 : baseRadius) / zoomScaleFactor;
 
   const buildControlItems = (
     systemFactions: StarSystemType['factions'],
@@ -74,6 +72,25 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const hasActivePlayers = system.factions.some(
     (faction) => faction.ActivePlayers > 0
   );
+  const showActivePlayerIndicator =
+    settings.flashActivePlayes && hasActivePlayers;
+  const activePlayerRadiusMultiplier = showActivePlayerIndicator ? 1.25 : 1;
+  const radius =
+    ((highlighted ? baseRadius * 3 : baseRadius) * activePlayerRadiusMultiplier) /
+    zoomScaleFactor;
+  const centerX = Number(system.posX);
+  const centerY = -Number(system.posY);
+  const circleOpacity = showActivePlayerIndicator
+    ? Math.min(1, opacity + 0.25)
+    : opacity;
+  const haloRadius = radius * 1.9;
+  const haloOpacity = Math.min(0.34, circleOpacity * 0.4);
+  const rimOpacity = Math.min(0.4, circleOpacity * 0.4);
+  const shineRadius = radius * 0.45;
+  const shineOpacity = Math.min(0.42, circleOpacity * 0.45);
+  const shineOffset = radius * 0.35;
+  const shineCenterColor = `rgba(255,255,255,${shineOpacity})`;
+  const shineEdgeColor = 'rgba(255,255,255,0)';
   const damageLevelText =
     system.damageLevel !== undefined &&
     system.damageLevel !== null &&
@@ -129,103 +146,109 @@ const StarSystem: React.FC<StarSystemProps> = ({
     };
   };
 
-  const circleRef = useRef<Konva.Circle>(null);
-
-  useEffect(() => {
-    if (!settings.flashActivePlayes) return;
-    if (!hasActivePlayers || !circleRef.current) return;
-
-    const node = circleRef.current;
-
-    const baseOpacity = opacity;
-
-    const anim = new Konva.Animation((frame) => {
-      if (!frame) return;
-
-      const sine = Math.sin(frame.time * 0.005);
-      const scale = sine * 0.1 + 1;
-      const pulseOverlay = sine * 0.15 + 0.7;
-
-      node.scale({ x: scale, y: scale });
-      node.opacity(baseOpacity * pulseOverlay);
-    }, node.getLayer());
-
-    anim.start();
-
-    return () => {
-      anim.stop();
-      node.opacity(baseOpacity);
-    };
-  }, [hasActivePlayers, settings, opacity]);
-
   return (
-    <Circle
-      ref={circleRef}
-      x={Number(system.posX)}
-      y={-Number(system.posY)}
-      fill={system.factionColour}
-      radius={radius}
-      hitStrokeWidth={3}
-      opacity={opacity}
-      onClick={(e) => {
-        e.cancelBubble = true;
-        if (system.sysUrl) {
-          openInNewTab(`${API_BASE_URL}${system.sysUrl}`);
-        }
-      }}
-      onMouseEnter={(e) => {
-        const stage = e.target.getStage();
-        if (!stage) return;
-
-        const pointer = stage.getPointerPosition();
-        if (!pointer) return;
-
-        const tooltipData = buildTooltipText();
-        showTooltip(
-          tooltipData.text,
-          pointer.x,
-          pointer.y,
-          stage.x(),
-          stage.y(),
-          undefined,
-          tooltipData.controlItems
-        );
-      }}
-      onMouseLeave={hideTooltip}
-      onTouchStart={(e) => {
-        if (e.evt.touches.length === 1) {
-          e.evt.preventDefault();
+    <>
+      {showActivePlayerIndicator && (
+        <Circle
+          x={centerX}
+          y={centerY}
+          fill={system.factionColour}
+          radius={haloRadius}
+          opacity={haloOpacity}
+          listening={false}
+        />
+      )}
+      {showActivePlayerIndicator && (
+        <Circle
+          x={centerX}
+          y={centerY}
+          radius={radius}
+          stroke="#ffffff"
+          strokeWidth={Math.max(0.2, radius * 0.14)}
+          opacity={rimOpacity}
+          listening={false}
+        />
+      )}
+      <Circle
+        x={centerX}
+        y={centerY}
+        fill={system.factionColour}
+        radius={radius}
+        hitStrokeWidth={3}
+        opacity={circleOpacity}
+        onClick={(e) => {
+          e.cancelBubble = true;
+          if (system.sysUrl) {
+            openInNewTab(`${API_BASE_URL}${system.sysUrl}`);
+          }
+        }}
+        onMouseEnter={(e) => {
           const stage = e.target.getStage();
           if (!stage) return;
 
-          const pointer = stage.getRelativePointerPosition();
+          const pointer = stage.getPointerPosition();
           if (!pointer) return;
 
-          if (
-            tooltipVisibleRef.current &&
-            touchedSystemNameRef.current === system.name
-          ) {
-            window.location.href = `${API_BASE_URL}${system.sysUrl}`;
-            return;
-          }
-
-          const tooltipData = buildTooltipText(true);
-
+          const tooltipData = buildTooltipText();
           showTooltip(
             tooltipData.text,
             pointer.x,
             pointer.y,
+            stage.x(),
+            stage.y(),
             undefined,
-            undefined,
-            () => {
-              window.location.href = `${API_BASE_URL}${system.sysUrl}`;
-            },
             tooltipData.controlItems
           );
-          touchedSystemNameRef.current = system.name;
-        }
-      }}
-    />
+        }}
+        onMouseLeave={hideTooltip}
+        onTouchStart={(e) => {
+          if (e.evt.touches.length === 1) {
+            e.evt.preventDefault();
+            const stage = e.target.getStage();
+            if (!stage) return;
+
+            const pointer = stage.getRelativePointerPosition();
+            if (!pointer) return;
+
+            if (
+              tooltipVisibleRef.current &&
+              touchedSystemNameRef.current === system.name
+            ) {
+              window.location.href = `${API_BASE_URL}${system.sysUrl}`;
+              return;
+            }
+
+            const tooltipData = buildTooltipText(true);
+
+            showTooltip(
+              tooltipData.text,
+              pointer.x,
+              pointer.y,
+              undefined,
+              undefined,
+              () => {
+                window.location.href = `${API_BASE_URL}${system.sysUrl}`;
+              },
+              tooltipData.controlItems
+            );
+            touchedSystemNameRef.current = system.name;
+          }
+        }}
+      />
+      {showActivePlayerIndicator && (
+        <Circle
+          x={centerX - shineOffset}
+          y={centerY - shineOffset}
+          radius={shineRadius}
+          fillRadialGradientStartPoint={{ x: 0, y: 0 }}
+          fillRadialGradientStartRadius={0}
+          fillRadialGradientEndPoint={{ x: 0, y: 0 }}
+          fillRadialGradientEndRadius={shineRadius}
+          fillRadialGradientColorStops={[0, shineCenterColor, 1, shineEdgeColor]}
+          listening={false}
+        />
+      )}
+    </>
   );
 };
 
