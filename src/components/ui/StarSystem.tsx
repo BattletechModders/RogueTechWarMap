@@ -1,5 +1,6 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { Circle } from 'react-konva';
+import Konva from 'konva';
 import { findFaction, openInNewTab } from '../helpers';
 import {
   DisplayStarSystemType,
@@ -72,6 +73,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const hasActivePlayers = system.factions.some(
     (faction) => faction.ActivePlayers > 0
   );
+  const isInsurrect = !!system.state?.isInsurrect;
   const showActivePlayerIndicator =
     settings.flashActivePlayes && hasActivePlayers;
   const activePlayerRadiusMultiplier = showActivePlayerIndicator ? 1.25 : 1;
@@ -91,6 +93,64 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const shineOffset = radius * 0.35;
   const shineCenterColor = `rgba(255,255,255,${shineOpacity})`;
   const shineEdgeColor = 'rgba(255,255,255,0)';
+  const insurrectGlowRadius = radius * 3.3;
+  const insurrectGlowOpacity = Math.min(0.22, circleOpacity * 0.26);
+  const insurrectPulseRadius = radius * 2.1;
+  const insurrectPulseRef = useRef<Konva.Circle>(null);
+  const systemCircleRef = useRef<Konva.Circle>(null);
+
+  useEffect(() => {
+    if (!isInsurrect || !insurrectPulseRef.current) return;
+
+    const node = insurrectPulseRef.current;
+    const baseOpacity = Math.min(0.22, circleOpacity * 0.25);
+
+    const animation = new Konva.Animation((frame) => {
+      if (!frame) return;
+      const wave = (Math.sin(frame.time * 0.004) + 1) / 2;
+      const scale = 0.86 + wave * 0.72;
+      const pulseOpacity = Math.min(0.5, baseOpacity + wave * 0.24);
+
+      node.scale({ x: scale, y: scale });
+      node.opacity(pulseOpacity);
+    }, node.getLayer());
+
+    animation.start();
+
+    return () => {
+      animation.stop();
+      node.scale({ x: 1, y: 1 });
+      node.opacity(baseOpacity);
+    };
+  }, [isInsurrect, circleOpacity]);
+
+  useEffect(() => {
+    if (!isInsurrect || !systemCircleRef.current) return;
+
+    const node = systemCircleRef.current;
+    const baseOpacity = circleOpacity;
+
+    const animation = new Konva.Animation((frame) => {
+      if (!frame) return;
+      const wave = Math.sin(frame.time * 0.0045);
+      const scale = 1 + wave * 0.2;
+      const pulsedOpacity = Math.max(
+        0.3,
+        Math.min(1, baseOpacity + wave * 0.24)
+      );
+
+      node.scale({ x: scale, y: scale });
+      node.opacity(pulsedOpacity);
+    }, node.getLayer());
+
+    animation.start();
+
+    return () => {
+      animation.stop();
+      node.scale({ x: 1, y: 1 });
+      node.opacity(baseOpacity);
+    };
+  }, [isInsurrect, circleOpacity]);
   const damageLevelText =
     system.damageLevel !== undefined &&
     system.damageLevel !== null &&
@@ -148,6 +208,45 @@ const StarSystem: React.FC<StarSystemProps> = ({
 
   return (
     <>
+      {isInsurrect && (
+        <Circle
+          x={centerX}
+          y={centerY}
+          radius={insurrectGlowRadius}
+          fillRadialGradientStartPoint={{ x: 0, y: 0 }}
+          fillRadialGradientStartRadius={0}
+          fillRadialGradientEndPoint={{ x: 0, y: 0 }}
+          fillRadialGradientEndRadius={insurrectGlowRadius}
+          fillRadialGradientColorStops={[
+            0,
+            `rgba(168,85,247,${Math.min(0.32, insurrectGlowOpacity + 0.06)})`,
+            0.6,
+            `rgba(168,85,247,${insurrectGlowOpacity})`,
+            1,
+            'rgba(168,85,247,0)',
+          ]}
+          listening={false}
+        />
+      )}
+      {isInsurrect && (
+        <Circle
+          ref={insurrectPulseRef}
+          x={centerX}
+          y={centerY}
+          radius={insurrectPulseRadius}
+          fillRadialGradientStartPoint={{ x: 0, y: 0 }}
+          fillRadialGradientStartRadius={0}
+          fillRadialGradientEndPoint={{ x: 0, y: 0 }}
+          fillRadialGradientEndRadius={insurrectPulseRadius}
+          fillRadialGradientColorStops={[
+            0,
+            'rgba(192,132,252,0.34)',
+            1,
+            'rgba(192,132,252,0)',
+          ]}
+          listening={false}
+        />
+      )}
       {showActivePlayerIndicator && (
         <Circle
           x={centerX}
@@ -170,6 +269,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
         />
       )}
       <Circle
+        ref={systemCircleRef}
         x={centerX}
         y={centerY}
         fill={system.factionColour}
