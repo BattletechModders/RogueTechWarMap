@@ -83,7 +83,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const circleOpacity = showActivePlayerIndicator
     ? Math.min(1, opacity + 0.25)
     : opacity;
-  const haloRadius = radius * 1.9;
+  const haloRadius = radius * 2.5;
   const haloOpacity = Math.min(0.34, circleOpacity * 0.4);
   const rimOpacity = Math.min(0.4, circleOpacity * 0.4);
   const shineRadius = radius * 0.45;
