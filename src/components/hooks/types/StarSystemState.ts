@@ -1,6 +1,6 @@
-export interface StarSystemState {
+export type StarSystemState = {
   isInsurrect?: boolean;
   hasPirateRaid?: boolean;
   hasCaptureEvent?: boolean;
   hasHoldTheLineEvent?: boolean;
-}
+};
