@@ -93,9 +93,9 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const shineOffset = radius * 0.35;
   const shineCenterColor = `rgba(255,255,255,${shineOpacity})`;
   const shineEdgeColor = 'rgba(255,255,255,0)';
-  const insurrectGlowRadius = radius * 3.3;
-  const insurrectGlowOpacity = Math.min(0.22, circleOpacity * 0.26);
-  const insurrectPulseRadius = radius * 2.1;
+  const insurrectGlowRadius = radius * 4.125;
+  const insurrectGlowOpacity = Math.min(0.275, circleOpacity * 0.325);
+  const insurrectPulseRadius = radius * 2.625;
   const insurrectPulseRef = useRef<Konva.Circle>(null);
   const systemCircleRef = useRef<Konva.Circle>(null);
 
