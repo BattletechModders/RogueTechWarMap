@@ -19,6 +19,28 @@ const DEV_INSURRECTION_SYSTEMS = [
   'New Stevens',
   'Saffel',
 ];
+const DEV_PIRATE_RAID_SYSTEMS = [
+  'Conwy',
+  'Algol',
+  'Algot',
+  'Almach',
+  'Alrescha',
+  'Buchlau',
+  'Demeter',
+  'Foochow',
+  'Halloran',
+  'Hunan',
+  'Kansu',
+  'Menkar',
+  'New Aragon',
+  'New Hessen',
+  'Ningpo',
+  'Pleione',
+  'Poznan',
+  'Slocum',
+  'Tianamon',
+  'Yangtze',
+];
 
 type StateOverrideMap = Record<string, StarSystemState>;
 
@@ -117,6 +139,23 @@ const buildNamedInsurrectionOverrides = (
   return overrides;
 };
 
+const buildNamedPirateRaidOverrides = (
+  systems: StarSystemType[]
+): StateOverrideMap => {
+  const systemNameLookup = new Map(
+    systems.map((system) => [system.name.toLowerCase(), system.name])
+  );
+  const overrides: StateOverrideMap = {};
+
+  DEV_PIRATE_RAID_SYSTEMS.forEach((targetName) => {
+    const canonicalName = systemNameLookup.get(targetName.toLowerCase());
+    if (!canonicalName) return;
+    overrides[canonicalName] = { hasPirateRaid: true };
+  });
+
+  return overrides;
+};
+
 export const applyDevStateInjection = (
   systems: StarSystemType[]
 ): StarSystemType[] => {
@@ -137,6 +176,7 @@ export const applyDevStateInjection = (
     'sample';
   const customOverrides = readOverridesFromStorage();
   const namedInsurrectionOverrides = buildNamedInsurrectionOverrides(systems);
+  const namedPirateRaidOverrides = buildNamedPirateRaidOverrides(systems);
 
   const presetOverrides =
     preset === 'dense'
@@ -145,6 +185,7 @@ export const applyDevStateInjection = (
   const overrides = {
     ...presetOverrides,
     ...namedInsurrectionOverrides,
+    ...namedPirateRaidOverrides,
     ...customOverrides,
   };
 
