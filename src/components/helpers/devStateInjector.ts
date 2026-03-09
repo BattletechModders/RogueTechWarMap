@@ -41,6 +41,7 @@ const DEV_PIRATE_RAID_SYSTEMS = [
   'Tianamon',
   'Yangtze',
 ];
+const DEV_HOLD_THE_LINE_SYSTEMS = ['Alnadal'];
 
 type StateOverrideMap = Record<string, StarSystemState>;
 
@@ -156,6 +157,23 @@ const buildNamedPirateRaidOverrides = (
   return overrides;
 };
 
+const buildNamedHoldTheLineOverrides = (
+  systems: StarSystemType[]
+): StateOverrideMap => {
+  const systemNameLookup = new Map(
+    systems.map((system) => [system.name.toLowerCase(), system.name])
+  );
+  const overrides: StateOverrideMap = {};
+
+  DEV_HOLD_THE_LINE_SYSTEMS.forEach((targetName) => {
+    const canonicalName = systemNameLookup.get(targetName.toLowerCase());
+    if (!canonicalName) return;
+    overrides[canonicalName] = { hasHoldTheLineEvent: true };
+  });
+
+  return overrides;
+};
+
 export const applyDevStateInjection = (
   systems: StarSystemType[]
 ): StarSystemType[] => {
@@ -177,6 +195,7 @@ export const applyDevStateInjection = (
   const customOverrides = readOverridesFromStorage();
   const namedInsurrectionOverrides = buildNamedInsurrectionOverrides(systems);
   const namedPirateRaidOverrides = buildNamedPirateRaidOverrides(systems);
+  const namedHoldTheLineOverrides = buildNamedHoldTheLineOverrides(systems);
 
   const presetOverrides =
     preset === 'dense'
@@ -186,6 +205,7 @@ export const applyDevStateInjection = (
     ...presetOverrides,
     ...namedInsurrectionOverrides,
     ...namedPirateRaidOverrides,
+    ...namedHoldTheLineOverrides,
     ...customOverrides,
   };
 

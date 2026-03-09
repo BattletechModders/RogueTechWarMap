@@ -186,7 +186,6 @@ const GalaxyMapRender = ({
 
     const isFirefox =
       typeof navigator !== 'undefined' && /firefox/i.test(navigator.userAgent);
-
     const imagePath = isFirefox
       ? 'galaxyBackground2.webp'
       : 'galaxyBackground2.svg';
@@ -252,15 +251,25 @@ const GalaxyMapRender = ({
     if (match) {
       const [, label, value] = match;
       return [
-        { text: `${label} `, fontStyle: 'bold' as const, fontSize: desktopBodyFontSize },
-        { text: value, fontStyle: 'normal' as const, fontSize: desktopBodyFontSize },
+        {
+          text: `${label} `,
+          fontStyle: 'bold' as const,
+          fontSize: desktopBodyFontSize,
+        },
+        {
+          text: value,
+          fontStyle: 'normal' as const,
+          fontSize: desktopBodyFontSize,
+        },
       ];
     }
 
     return [
       {
         text: line,
-        fontStyle: /^(Control|State):/.test(line) ? ('bold' as const) : ('normal' as const),
+        fontStyle: /^(Control|State):/.test(line)
+          ? ('bold' as const)
+          : ('normal' as const),
         fontSize: desktopBodyFontSize,
       },
     ];
@@ -289,7 +298,8 @@ const GalaxyMapRender = ({
 
     const contentWidth = widths.length ? Math.max(...widths) : 0;
     const boxWidth = contentWidth + desktopTooltipPadding * 2;
-    const boxHeight = lines.length * desktopLineHeight + desktopTooltipPadding * 2;
+    const boxHeight =
+      lines.length * desktopLineHeight + desktopTooltipPadding * 2;
     return { lines, boxWidth, boxHeight };
   }, [desktopTooltipLines, tooltipFontSize, desktopLineHeight]);
 
@@ -426,88 +436,91 @@ const GalaxyMapRender = ({
         </Layer>
         <Layer>
           {tooltip.visible && !isMobile && (
-              <Group
-                x={tooltip.x}
-                y={tooltip.y}
-                opacity={0.75}
-                scaleX={tooltipScale}
-                scaleY={tooltipScale}
-              >
-                <Rect
-                  x={-desktopTooltipLayout.boxWidth / 2}
-                  y={-(desktopTooltipLayout.boxHeight + desktopPointerHeight)}
-                  width={desktopTooltipLayout.boxWidth}
-                  height={desktopTooltipLayout.boxHeight}
-                  fill="white"
-                  cornerRadius={8}
-                  shadowColor="gray"
-                  shadowBlur={10}
-                  shadowOffset={{ x: 10, y: 10 }}
-                  shadowOpacity={0.2}
-                />
-                <Line
-                  points={[
-                    -desktopPointerWidth / 2,
-                    -desktopPointerHeight,
-                    0,
-                    0,
-                    desktopPointerWidth / 2,
-                    -desktopPointerHeight,
-                  ]}
-                  fill="white"
-                  closed
-                />
-                {desktopTooltipLayout.lines.map((line, index) => (
-                  (() => {
-                    const segments = getDesktopLineSegments(line, index);
-                    return (
-                      <Group
-                        key={`${line}-${index}`}
-                        x={-desktopTooltipLayout.boxWidth / 2 + desktopTooltipPadding}
-                        y={
-                          -(
-                            desktopTooltipLayout.boxHeight +
-                            desktopPointerHeight -
-                            desktopTooltipPadding -
-                            index * desktopLineHeight
-                          )
-                        }
-                        listening={false}
-                      >
-                        {segments.map((segment, segmentIndex) => {
-                          const segmentOffset = segments
-                            .slice(0, segmentIndex)
-                            .reduce((sum, previousSegment) => {
-                              const measure = new Konva.Text({
-                                text: previousSegment.text,
-                                fontFamily: 'Roboto Mono, monospace',
-                                fontSize: previousSegment.fontSize,
-                                fontStyle: previousSegment.fontStyle,
-                              });
-                              const width = measure.width();
-                              measure.destroy();
-                              return sum + width;
-                            }, 0);
+            <Group
+              x={tooltip.x}
+              y={tooltip.y}
+              opacity={0.75}
+              scaleX={tooltipScale}
+              scaleY={tooltipScale}
+            >
+              <Rect
+                x={-desktopTooltipLayout.boxWidth / 2}
+                y={-(desktopTooltipLayout.boxHeight + desktopPointerHeight)}
+                width={desktopTooltipLayout.boxWidth}
+                height={desktopTooltipLayout.boxHeight}
+                fill="white"
+                cornerRadius={8}
+                shadowColor="gray"
+                shadowBlur={10}
+                shadowOffset={{ x: 10, y: 10 }}
+                shadowOpacity={0.2}
+              />
+              <Line
+                points={[
+                  -desktopPointerWidth / 2,
+                  -desktopPointerHeight,
+                  0,
+                  0,
+                  desktopPointerWidth / 2,
+                  -desktopPointerHeight,
+                ]}
+                fill="white"
+                closed
+              />
+              {desktopTooltipLayout.lines.map((line, index) =>
+                (() => {
+                  const segments = getDesktopLineSegments(line, index);
+                  return (
+                    <Group
+                      key={`${line}-${index}`}
+                      x={
+                        -desktopTooltipLayout.boxWidth / 2 +
+                        desktopTooltipPadding
+                      }
+                      y={
+                        -(
+                          desktopTooltipLayout.boxHeight +
+                          desktopPointerHeight -
+                          desktopTooltipPadding -
+                          index * desktopLineHeight
+                        )
+                      }
+                      listening={false}
+                    >
+                      {segments.map((segment, segmentIndex) => {
+                        const segmentOffset = segments
+                          .slice(0, segmentIndex)
+                          .reduce((sum, previousSegment) => {
+                            const measure = new Konva.Text({
+                              text: previousSegment.text,
+                              fontFamily: 'Roboto Mono, monospace',
+                              fontSize: previousSegment.fontSize,
+                              fontStyle: previousSegment.fontStyle,
+                            });
+                            const width = measure.width();
+                            measure.destroy();
+                            return sum + width;
+                          }, 0);
 
-                          return (
-                            <Text
-                              key={`${segment.text}-${segmentIndex}`}
-                              x={segmentOffset}
-                              y={0}
-                              text={segment.text}
-                              fontFamily="Roboto Mono, monospace"
-                              fontSize={segment.fontSize}
-                              fontStyle={segment.fontStyle}
-                              fill="black"
-                              listening={false}
-                            />
-                          );
-                        })}
-                      </Group>
-                    );
-                  })()
-                ))}
-              </Group>
+                        return (
+                          <Text
+                            key={`${segment.text}-${segmentIndex}`}
+                            x={segmentOffset}
+                            y={0}
+                            text={segment.text}
+                            fontFamily="Roboto Mono, monospace"
+                            fontSize={segment.fontSize}
+                            fontStyle={segment.fontStyle}
+                            fill="black"
+                            listening={false}
+                          />
+                        );
+                      })}
+                    </Group>
+                  );
+                })()
+              )}
+            </Group>
           )}
         </Layer>
       </Stage>
@@ -544,7 +557,9 @@ const GalaxyMapRender = ({
           </div>
           {controlItems.length > 0 && (
             <div style={{ marginTop: '10px' }}>
-              <div style={{ fontWeight: 700, marginBottom: '4px' }}>Control</div>
+              <div style={{ fontWeight: 700, marginBottom: '4px' }}>
+                Control
+              </div>
               <div style={{ display: 'grid', rowGap: '2px' }}>
                 {visibleControlItems.map((item) => (
                   <div
@@ -565,7 +580,9 @@ const GalaxyMapRender = ({
                     marginTop: '4px',
                   }}
                 >
-                  {showAllControl ? 'Show less' : `Show all (${hiddenControlCount} more)`}
+                  {showAllControl
+                    ? 'Show less'
+                    : `Show all (${hiddenControlCount} more)`}
                 </button>
               )}
             </div>
