@@ -4,6 +4,7 @@ import Konva from 'konva';
 import { findFaction, openInNewTab } from '../helpers';
 import pirateIconUrl from '../../assets/joli-rouge-icon.svg';
 import holdTheLineIconUrl from '../../assets/shield.svg';
+import captureEventIconUrl from '../../assets/crosshairs.svg';
 import {
   DisplayStarSystemType,
   FactionDataType,
@@ -20,6 +21,8 @@ let pirateIconImageCache: HTMLImageElement | null = null;
 let pirateIconImagePromise: Promise<HTMLImageElement> | null = null;
 let holdTheLineIconImageCache: HTMLImageElement | null = null;
 let holdTheLineIconImagePromise: Promise<HTMLImageElement> | null = null;
+let captureEventIconImageCache: HTMLImageElement | null = null;
+let captureEventIconImagePromise: Promise<HTMLImageElement> | null = null;
 
 const loadPirateIconImage = (): Promise<HTMLImageElement> => {
   if (pirateIconImageCache) return Promise.resolve(pirateIconImageCache);
@@ -57,6 +60,25 @@ const loadHoldTheLineIconImage = (): Promise<HTMLImageElement> => {
   });
 
   return holdTheLineIconImagePromise;
+};
+
+const loadCaptureEventIconImage = (): Promise<HTMLImageElement> => {
+  if (captureEventIconImageCache) return Promise.resolve(captureEventIconImageCache);
+  if (captureEventIconImagePromise) return captureEventIconImagePromise;
+
+  captureEventIconImagePromise = new Promise((resolve, reject) => {
+    const image = new window.Image();
+    image.src = captureEventIconUrl;
+    image.onload = () => {
+      captureEventIconImageCache = image;
+      resolve(image);
+    };
+    image.onerror = () => {
+      reject(new Error('Failed to load capture event icon.'));
+    };
+  });
+
+  return captureEventIconImagePromise;
 };
 
 interface StarSystemProps {
@@ -111,7 +133,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
   };
 
   const formatControlLine = (item: TooltipControlItem) => {
-    return `${item.name} ${item.control}% · P${item.players}`;
+    return `${item.name} ${item.control}% · ${item.players}`;
   };
 
   const hasActivePlayers = system.factions.some(
@@ -120,8 +142,9 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const isInsurrect = !!system.state?.isInsurrect;
   const hasPirateRaid = !!system.state?.hasPirateRaid;
   const hasHoldTheLineEvent = !!system.state?.hasHoldTheLineEvent;
-  const isInsurrectionLike = isInsurrect || hasHoldTheLineEvent;
-  const shouldPulseSize = hasPirateRaid || hasHoldTheLineEvent;
+  const hasCaptureEvent = !!system.state?.hasCaptureEvent;
+  const isInsurrectionLike = isInsurrect || hasHoldTheLineEvent || hasCaptureEvent;
+  const shouldPulseSize = hasPirateRaid || hasHoldTheLineEvent || hasCaptureEvent;
   const showActivePlayerIndicator =
     settings.flashActivePlayes && hasActivePlayers;
   const activePlayerRadiusMultiplier = showActivePlayerIndicator ? 1.25 : 1;
@@ -147,10 +170,14 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const insurrectPulseRadius = hasHoldTheLineEvent
     ? radius * 3.25
     : radius * 2.625;
-  const insurrectGlowColor = hasHoldTheLineEvent
+  const insurrectGlowColor = hasCaptureEvent
+    ? [255, 115, 0]
+    : hasHoldTheLineEvent
     ? [0, 200, 255]
     : [168, 85, 247];
-  const insurrectPulseColor = hasHoldTheLineEvent
+  const insurrectPulseColor = hasCaptureEvent
+    ? [255, 115, 0]
+    : hasHoldTheLineEvent
     ? [0, 200, 255]
     : [192, 132, 252];
   const makeRgba = (color: number[], alpha: number) =>
@@ -160,10 +187,14 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const systemCircleRef = useRef<Konva.Circle>(null);
   const pirateIconRef = useRef<Konva.Image>(null);
   const holdTheLineIconRef = useRef<Konva.Image>(null);
+  const captureEventIconRef = useRef<Konva.Image>(null);
   const [pirateIconImage, setPirateIconImage] = useState<HTMLImageElement | null>(
     null
   );
   const [holdTheLineIconImage, setHoldTheLineIconImage] = useState<
+    HTMLImageElement | null
+  >(null);
+  const [captureEventIconImage, setCaptureEventIconImage] = useState<
     HTMLImageElement | null
   >(null);
   const pirateIconSize = radius * 2.4;
@@ -211,6 +242,27 @@ const StarSystem: React.FC<StarSystemProps> = ({
   }, [hasHoldTheLineEvent]);
 
   useEffect(() => {
+    if (!hasCaptureEvent) return;
+    if (captureEventIconImageCache) {
+      setCaptureEventIconImage(captureEventIconImageCache);
+      return;
+    }
+
+    let cancelled = false;
+    loadCaptureEventIconImage()
+      .then((image) => {
+        if (!cancelled) setCaptureEventIconImage(image);
+      })
+      .catch(() => {
+        if (!cancelled) setCaptureEventIconImage(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasCaptureEvent]);
+
+  useEffect(() => {
     if (
       !isInsurrectionLike ||
       !insurrectGlowRef.current ||
@@ -249,6 +301,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
     const systemNode = systemCircleRef.current;
     const pirateIconNode = pirateIconRef.current;
     const holdTheLineIconNode = holdTheLineIconRef.current;
+    const captureEventIconNode = captureEventIconRef.current;
 
     const animation = new Konva.Animation((frame) => {
       if (!frame) return;
@@ -258,6 +311,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       systemNode.scale({ x: scale, y: scale });
       if (pirateIconNode) pirateIconNode.scale({ x: scale, y: scale });
       if (holdTheLineIconNode) holdTheLineIconNode.scale({ x: scale, y: scale });
+      if (captureEventIconNode)
+        captureEventIconNode.scale({ x: scale, y: scale });
     }, systemNode.getLayer());
 
     animation.start();
@@ -267,8 +322,9 @@ const StarSystem: React.FC<StarSystemProps> = ({
       systemNode.scale({ x: 1, y: 1 });
       if (pirateIconNode) pirateIconNode.scale({ x: 1, y: 1 });
       if (holdTheLineIconNode) holdTheLineIconNode.scale({ x: 1, y: 1 });
+      if (captureEventIconNode) captureEventIconNode.scale({ x: 1, y: 1 });
     };
-  }, [shouldPulseSize, pirateIconImage, holdTheLineIconImage]);
+  }, [shouldPulseSize, pirateIconImage, holdTheLineIconImage, captureEventIconImage]);
 
   const damageLevelText =
     system.damageLevel !== undefined &&
@@ -486,6 +542,22 @@ const StarSystem: React.FC<StarSystemProps> = ({
           offsetX={pirateIconSize / 2}
           offsetY={pirateIconSize / 2}
           shadowColor="#00C8FF"
+          shadowBlur={radius * 1.1}
+          shadowOpacity={0.45}
+          listening={false}
+        />
+      )}
+      {hasCaptureEvent && captureEventIconImage && (
+        <KonvaImage
+          ref={captureEventIconRef}
+          image={captureEventIconImage}
+          x={centerX}
+          y={centerY}
+          width={pirateIconSize}
+          height={pirateIconSize}
+          offsetX={pirateIconSize / 2}
+          offsetY={pirateIconSize / 2}
+          shadowColor="#FF7300"
           shadowBlur={radius * 1.1}
           shadowOpacity={0.45}
           listening={false}

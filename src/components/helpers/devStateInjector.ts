@@ -42,6 +42,7 @@ const DEV_PIRATE_RAID_SYSTEMS = [
   'Yangtze',
 ];
 const DEV_HOLD_THE_LINE_SYSTEMS = ['Alnadal'];
+const DEV_CAPTURE_EVENT_SYSTEMS = ['Rowe'];
 
 type StateOverrideMap = Record<string, StarSystemState>;
 
@@ -174,6 +175,23 @@ const buildNamedHoldTheLineOverrides = (
   return overrides;
 };
 
+const buildNamedCaptureEventOverrides = (
+  systems: StarSystemType[]
+): StateOverrideMap => {
+  const systemNameLookup = new Map(
+    systems.map((system) => [system.name.toLowerCase(), system.name])
+  );
+  const overrides: StateOverrideMap = {};
+
+  DEV_CAPTURE_EVENT_SYSTEMS.forEach((targetName) => {
+    const canonicalName = systemNameLookup.get(targetName.toLowerCase());
+    if (!canonicalName) return;
+    overrides[canonicalName] = { hasCaptureEvent: true };
+  });
+
+  return overrides;
+};
+
 export const applyDevStateInjection = (
   systems: StarSystemType[]
 ): StarSystemType[] => {
@@ -196,6 +214,7 @@ export const applyDevStateInjection = (
   const namedInsurrectionOverrides = buildNamedInsurrectionOverrides(systems);
   const namedPirateRaidOverrides = buildNamedPirateRaidOverrides(systems);
   const namedHoldTheLineOverrides = buildNamedHoldTheLineOverrides(systems);
+  const namedCaptureEventOverrides = buildNamedCaptureEventOverrides(systems);
 
   const presetOverrides =
     preset === 'dense'
@@ -206,6 +225,7 @@ export const applyDevStateInjection = (
     ...namedInsurrectionOverrides,
     ...namedPirateRaidOverrides,
     ...namedHoldTheLineOverrides,
+    ...namedCaptureEventOverrides,
     ...customOverrides,
   };
 
