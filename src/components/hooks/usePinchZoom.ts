@@ -8,7 +8,7 @@ type UsePinchZoomArgs = {
   scaleRef: React.MutableRefObject<number>;
   positionRef: React.MutableRefObject<Point>;
 
-  // from useGalaxyViewport (temporarily exposed)
+  // Shared from useGalaxyViewport so this hook can force a batched Konva redraw after math updates.
   requestBatchDraw: (stage: Konva.Stage) => void;
   setZoomScaleFactor: React.Dispatch<React.SetStateAction<number>>;
 
@@ -39,14 +39,14 @@ export function usePinchZoom({
 
   const onTouchStart = useCallback(
     (e: Konva.KonvaEventObject<TouchEvent>) => {
-      // Single touch: hide tooltip if tapped background (same behavior as your current code)
+      // Hide tooltip when a single-touch tap lands on background, matching existing click behavior.
       if (e.evt.touches.length === 1) {
         const isCircle = e.target.className === 'Circle';
         const isTooltip = e.target.findAncestor('Label', true);
         if (!isCircle && !isTooltip) hideTooltip?.();
       }
 
-      // Two-finger pinch start
+      // Two fingers means a pinch gesture is starting; record baseline distance for scaling delta.
       if (e.evt.touches.length === 2) {
         setIsPinching(true);
         lastDistance.current = getDistance(e.evt.touches[0], e.evt.touches[1]);
@@ -90,10 +90,10 @@ export function usePinchZoom({
 
         let scaleBy = newDistance / lastDistance.current;
 
-        // Prevent jitter and dead zone on Firefox
+        // Ignore tiny scale deltas to avoid jitter and accidental no-op zoom updates.
         if (Math.abs(1 - scaleBy) < 0.02) return;
 
-        // Clamp to avoid huge jumps
+        // Clamp per-frame scale change so one frame cannot cause an abrupt zoom jump.
         scaleBy = Math.max(0.9, Math.min(1.1, scaleBy));
 
         const oldScale = scaleRef.current ?? 1;

@@ -16,13 +16,7 @@ function ErrorPageContent() {
   if (isRouteErrorResponse(error)) {
     return (
       <div id="error-page">
-        {/* <h1>Oops! {error.status}</h1>
-        <p>{error.statusText}</p>
-        {error.data?.message && (
-          <p>
-            <i>{error.data.message}</i>
-          </p>
-        )} */}
+        {/* For route-level errors, show a concise helper message with a home fallback. */}
         If you came to this page from a link, please contact Rogue War on the
         Discord Server
         <Link to={'/'}>

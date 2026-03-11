@@ -17,7 +17,7 @@ const BottomFilterPanel = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  /* ───────────── desktop breakpoint helper ───────────── */
+  /* Desktop/mobile layout mode is driven by viewport width and updated on resize. */
   const [isDesktop, setIsDesktop] = useState(
     typeof window !== 'undefined' && window.innerWidth >= 768
   );
@@ -27,7 +27,7 @@ const BottomFilterPanel = ({
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  /* react-select helpers */
+  /* Build react-select option/value pairs from faction names for stable controlled input state. */
   const options = factions.map((f) => ({ value: f, label: f }));
   const selectedOpts = options.filter((o) =>
     selectedFactions.includes(o.value)
@@ -48,21 +48,22 @@ const BottomFilterPanel = ({
     const panel = panelRef.current;
     if (!panel) return;
 
-    // Get the current height before the change
+    // Measure the current height so height animation starts from an exact frame.
     const startHeight = panel.offsetHeight;
 
-    // Temporarily disable transitions to get new height
+    // Disable transitions temporarily so we can snapshot the target height without an
+    // intermediate animated jump.
     panel.style.transition = 'none';
     panel.style.height = 'auto';
 
     const targetHeight = panel.scrollHeight;
 
-    // Re-enable transitions
+    // Re-enable transition and restore the measured start height before animating.
     requestAnimationFrame(() => {
       panel.style.transition = 'height 0.5s ease';
       panel.style.height = `${startHeight}px`;
 
-      // Then trigger the new height
+      // Apply the final target height in the next frame to trigger a clean transition.
       requestAnimationFrame(() => {
         const expandedHeight = Math.max(targetHeight, 125);
         setHeight(`${isOpen ? expandedHeight : 32}px`);
@@ -83,8 +84,8 @@ const BottomFilterPanel = ({
     maxWidth: isDesktop ? '220px' : '90vw',
     zIndex: 10000,
     ...(isDesktop
-      ? { bottom: 22, left: 0 } // desktop: below/right of icon
-      : { bottom: 28, right: 8, left: 'auto', transform: 'none' }), // mobile: centered below icon
+      ? { bottom: 22, left: 0 } // Desktop tooltip aligns under the help icon.
+      : { bottom: 28, right: 8, left: 'auto', transform: 'none' }), // Mobile tooltip floats centered under the icon.
   };
 
   return (
@@ -109,7 +110,7 @@ const BottomFilterPanel = ({
         opacity: isOpen ? 1 : 0.5,
       }}
     >
-      {/* chevron toggle */}
+      {/* Header trigger lets users expand/collapse the bottom filter panel. */}
       <div
         style={{
           display: 'flex',
@@ -122,7 +123,7 @@ const BottomFilterPanel = ({
         {isOpen ? <ChevronsDown size={24} /> : <ChevronsUp size={24} />}
       </div>
 
-      {/* two-column layout */}
+      {/* Open state uses two columns: left = search, right = faction filters. */}
       {isOpen && (
         <div
           style={{
@@ -131,7 +132,7 @@ const BottomFilterPanel = ({
             height: '100%',
           }}
         >
-          {/* LEFT column — system search */}
+           {/* Left column: system search field */}
           <div style={{ flex: 1, paddingRight: '0.75rem' }}>
             <input
               type="text"
@@ -139,7 +140,7 @@ const BottomFilterPanel = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
-                width: isDesktop ? '50%' : '100%', // ← half width on desktop
+                width: isDesktop ? '50%' : '100%', // Desktop keeps a compact search field width.
                 padding: '6px 10px',
                 fontSize: '16px',
                 borderRadius: '6px',
@@ -147,12 +148,12 @@ const BottomFilterPanel = ({
                 outline: 'none',
                 backgroundColor: 'white',
                 color: 'black',
-                margin: '0 0.25rem 0.5rem', // side + bottom space
+                margin: '0 0.25rem 0.5rem', // Add spacing so pills and controls are not crowded.
               }}
             />
           </div>
 
-          {/* RIGHT column — faction select */}
+           {/* Right column: faction selector controls */}
           <div
             style={{
               flex: 1,
@@ -221,7 +222,7 @@ const BottomFilterPanel = ({
                 </div>
               </div>
 
-              {/* chosen factions shown under the search bar */}
+               {/* Selected factions appear as removable chips for quick feedback and edits. */}
               {selectedFactions.length > 0 && (
                 <div
                   style={{

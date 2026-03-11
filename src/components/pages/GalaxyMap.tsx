@@ -90,7 +90,7 @@ const GalaxyMapRender = ({
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const shouldFilter = normalizedSearch.length >= 2;
 
-  /* faction filter */
+  /* Empty means "all factions"; when populated, only matching owners are rendered. */
   const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
 
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef) as {
@@ -120,7 +120,7 @@ const GalaxyMapRender = ({
     height: window.innerHeight,
   });
 
-  // Block Firefox pinch-to-zoom at document level
+  // Block native Firefox pinch zoom at the document level so the custom map handler stays in control.
   useEffect(() => {
     const preventZoomTouch = (e: TouchEvent) => {
       if (e.touches.length > 1) {
@@ -151,7 +151,7 @@ const GalaxyMapRender = ({
     };
   }, []);
 
-  // extra locking gesture handling for Firefox
+  // Keep an additional window-level gesture lock for Firefox variants that skip document events.
   useEffect(() => {
     const lockScale = (e: Event) => e.preventDefault();
 
@@ -365,7 +365,7 @@ const GalaxyMapRender = ({
 
   return (
     <>
-      {/* Konva Stage */}
+      {/* Render interactive map stage and layers using React-Konva. */}
 
       <Stage
         width={stageSize.width}
@@ -405,7 +405,7 @@ const GalaxyMapRender = ({
         </Layer>
         <Layer>
           {systems.map((system, index) => {
-            /* resolve owner’s display name the same way allFactionNames() did */
+            /* Resolve owner display name via faction metadata for consistent filter matching and labels. */
             const ownerPretty =
               factions[system.owner]?.prettyName ?? system.owner;
             const factionMatch =
@@ -625,7 +625,7 @@ const GalaxyMapRender = ({
           </div>
         </div>
       )}
-      {/* bottom sliding filter panel */}
+      {/* Render slide-up filters that control search and faction matching. */}
       <BottomFilterPanel
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
