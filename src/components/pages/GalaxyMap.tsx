@@ -1,6 +1,5 @@
 import {
   StageSize,
-  TooltipData,
   GalaxyMapRenderProps,
 } from '../GalaxyMap/gm.types';
 import { buildFactionFilterOptions } from '../GalaxyMap/gm.selectors';
@@ -17,6 +16,25 @@ import { usePinchZoom } from '../hooks/usePinchZoom';
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
 
+const getViewportSize = () => {
+  if (typeof window === 'undefined') {
+    return { width: 0, height: 0 };
+  }
+
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  };
+};
+
+const getTooltipFontSize = () => {
+  if (typeof document === 'undefined') {
+    return 16 * 0.85;
+  }
+
+  return parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.85;
+};
+
 const GalaxyMap = () => {
   const {
     displaySystems,
@@ -27,29 +45,24 @@ const GalaxyMap = () => {
     settings,
   } = useFiltering();
 
-  const [initialDataLoaded, setInitialDataLoaded] = useState<boolean>(false);
+  const fetchFactionDataRef = useRef(fetchFactionData);
+  const fetchSystemDataRef = useRef(fetchSystemData);
 
   useEffect(() => {
-    if (!initialDataLoaded) {
-      console.log('Loading data...');
-      fetchFactionData();
-      fetchSystemData();
-      setInitialDataLoaded(true);
-    }
+    fetchFactionDataRef.current = fetchFactionData;
+    fetchSystemDataRef.current = fetchSystemData;
+  }, [fetchFactionData, fetchSystemData]);
+
+  useEffect(() => {
+    fetchFactionDataRef.current();
+    fetchSystemDataRef.current();
 
     const interval = setInterval(() => {
-      console.log('API Data Refreshing at', new Date().toLocaleTimeString());
-      fetchSystemData();
+      fetchSystemDataRef.current();
     }, 300_000);
 
     return () => clearInterval(interval);
-  }, [
-    factions,
-    capitals,
-    fetchFactionData,
-    fetchSystemData,
-    initialDataLoaded,
-  ]);
+  }, []);
 
   if (
     displaySystems &&
@@ -93,11 +106,7 @@ const GalaxyMapRender = ({
   /* Empty means "all factions"; when populated, only matching owners are rendered. */
   const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
 
-  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef) as {
-    tooltip: TooltipData;
-    showTooltip: (...args: any[]) => void;
-    hideTooltip: () => void;
-  };
+  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
   const tooltipVisibleRef = useRef(false);
   const touchedSystemNameRef = useRef<string | null>(null);
 
@@ -115,13 +124,14 @@ const GalaxyMapRender = ({
     maxScale: MAX_SCALE,
   });
 
-  const [stageSize, setStageSize] = useState<StageSize>({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
+  const [stageSize, setStageSize] = useState<StageSize>(getViewportSize());
 
   // Block native Firefox pinch zoom at the document level so the custom map handler stays in control.
   useEffect(() => {
+    if (typeof document === 'undefined') {
+      return undefined;
+    }
+
     const preventZoomTouch = (e: TouchEvent) => {
       if (e.touches.length > 1) {
         e.preventDefault();
@@ -153,6 +163,10 @@ const GalaxyMapRender = ({
 
   // Keep an additional window-level gesture lock for Firefox variants that skip document events.
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return undefined;
+    }
+
     const lockScale = (e: Event) => e.preventDefault();
 
     window.addEventListener('gesturestart', lockScale, { passive: false });
@@ -167,6 +181,10 @@ const GalaxyMapRender = ({
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
     const handleResize = () => {
       setStageSize({
         width: window.innerWidth,
@@ -180,8 +198,13 @@ const GalaxyMapRender = ({
 
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
   const [bgLoaded, setBgLoaded] = useState(false);
+  const [bgLoadError, setBgLoadError] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
     const img = new window.Image();
 
     const isFirefox =
@@ -195,11 +218,17 @@ const GalaxyMapRender = ({
       setBackground(img);
       setBgLoaded(true);
     };
+
+    img.onerror = () => {
+      setBgLoadError(true);
+      setBgLoaded(true);
+    };
   }, []);
 
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
+    if (typeof stage.container !== 'function') return;
 
     const container = stage.container();
     const preventDefault = (e: Event) => {
@@ -225,10 +254,9 @@ const GalaxyMapRender = ({
     };
   }, []);
 
-  const isMobile = window.innerWidth < 768;
+  const isMobile = stageSize.width > 0 && stageSize.width < 768;
   const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
-  const tooltipFontSize =
-    parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.85;
+  const tooltipFontSize = getTooltipFontSize();
   const desktopTooltipPadding = 6;
   const desktopPointerHeight = 10;
   const desktopPointerWidth = 12;
@@ -383,7 +411,7 @@ const GalaxyMapRender = ({
         onTouchEnd={onTouchEnd}
       >
         <Layer cache>
-          {bgLoaded && background ? (
+          {bgLoaded && background && !bgLoadError ? (
             <Image
               image={background}
               x={-4800}
@@ -394,9 +422,9 @@ const GalaxyMapRender = ({
             />
           ) : (
             <Text
-              text="Loading Background..."
-              x={window.innerWidth / 2}
-              y={window.innerHeight / 2}
+              text={bgLoadError ? 'Background unavailable' : 'Loading Background...'}
+              x={stageSize.width / 2}
+              y={stageSize.height / 2}
               fontSize={24}
               fill="white"
               align="center"
@@ -404,7 +432,7 @@ const GalaxyMapRender = ({
           )}
         </Layer>
         <Layer>
-          {systems.map((system, index) => {
+          {systems.map((system) => {
             /* Resolve owner display name via faction metadata for consistent filter matching and labels. */
             const ownerPretty =
               factions[system.owner]?.prettyName ?? system.owner;
@@ -419,7 +447,7 @@ const GalaxyMapRender = ({
             const opacity = shouldFilter ? (isMatch ? 1 : 0.2) : 1;
             return (
               <StarSystem
-                key={system.name || index}
+                key={`${system.name}-${system.posX}-${system.posY}-${system.owner}`}
                 zoomScaleFactor={zoomScaleFactor < 1 ? zoomScaleFactor : 1}
                 system={system}
                 factions={factions}
