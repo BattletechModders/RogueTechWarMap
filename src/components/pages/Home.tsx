@@ -35,7 +35,7 @@ export function HomeCard({
 
   return (
     <Card
-      className={`mt-6 w-96 h-56 border-2 ${borderColor} p-5 rounded-lg ml-14 inline-block h-96 relative grow-0`}
+      className={`mt-6 w-96 border-2 ${borderColor} p-5 rounded-lg ml-14 inline-block h-96 relative grow-0`}
     >
       <CardHeader className={`relative font-bold ${textColor}`}>
         {heading}
