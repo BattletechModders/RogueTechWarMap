@@ -8,7 +8,7 @@ const useFiltering = () => {
   const [displaySystems, setDisplaySystems] = useState<DisplayStarSystemType[]>(
     []
   );
-  const { rawSystems, factions, capitals, fetchFactionData, fetchSystemData } =
+  const { rawSystems, factions, capitals, fetchFactionData, fetchSystemData, isLoading, error } =
     useWarmapAPI();
 
   const { settings, setFlashActive } = useSettings();
@@ -45,6 +45,8 @@ const useFiltering = () => {
     fetchSystemData,
     settings,
     setFlashActive,
+    isLoading,
+    error,
   };
 };
 

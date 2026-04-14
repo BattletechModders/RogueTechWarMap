@@ -6,13 +6,16 @@ const useWarmapAPI = () => {
   const [rawSystems, setRawSystems] = useState<StarSystemType[]>([]);
   const [factions, setFactions] = useState<FactionDataType>({});
   const [capitals, setCapitals] = useState<string[]>([]);
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchFactionData = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      const factionData = await fetch(
-        `${API_BASE_URL}/api/v1/factions/warmap`
-      ).then((res) => res.json());
+      const res = await fetch(`${API_BASE_URL}/api/v1/factions/warmap`);
+      if (!res.ok) throw new Error(`Faction API returned ${res.status}`);
+      const factionData = await res.json();
 
       factionData['NoFaction'] = {
         colour: 'gray',
@@ -29,20 +32,23 @@ const useWarmapAPI = () => {
       });
 
       setCapitals(capitals);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch faction data');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchSystemData = async () => {
+    setError(null);
     try {
-      const systemData = await fetch(
-        `${API_BASE_URL}/api/v1/starmap/warmap`
-      ).then((res) => res.json());
+      const res = await fetch(`${API_BASE_URL}/api/v1/starmap/warmap`);
+      if (!res.ok) throw new Error(`System API returned ${res.status}`);
+      const systemData = await res.json();
 
       setRawSystems(systemData);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch system data');
     }
   };
 
@@ -52,6 +58,8 @@ const useWarmapAPI = () => {
     capitals,
     fetchFactionData,
     fetchSystemData,
+    isLoading,
+    error,
   };
 };
 
