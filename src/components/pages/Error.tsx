@@ -1,4 +1,4 @@
-import { HiHome } from 'react-icons/hi';
+import { Home } from 'lucide-react';
 import { useRouteError, isRouteErrorResponse, Link } from 'react-router-dom';
 import PageTemplate from '../core/PageTemplate';
 
@@ -27,7 +27,7 @@ function ErrorPageContent() {
         Discord Server
         <Link to={'/'}>
           <div className="flex">
-            <HiHome className="inline-block w-6 h-6 mr-2 -mt-2" />
+            <Home className="inline-block w-6 h-6 mr-2 -mt-2" />
             Click here to return Home
           </div>
         </Link>
