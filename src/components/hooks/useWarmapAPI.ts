@@ -14,6 +14,14 @@ const useWarmapAPI = () => {
         `${API_BASE_URL}/api/v1/factions/warmap`
       ).then((res) => res.json());
 
+      if (
+        !factionData ||
+        typeof factionData !== 'object' ||
+        Array.isArray(factionData)
+      ) {
+        throw new Error('Faction API returned unexpected data shape');
+      }
+
       factionData['NoFaction'] = {
         colour: 'gray',
         prettyName: 'Unaffiliated',
@@ -39,6 +47,10 @@ const useWarmapAPI = () => {
       const systemData = await fetch(
         `${API_BASE_URL}/api/v1/starmap/warmap`
       ).then((res) => res.json());
+
+      if (!Array.isArray(systemData)) {
+        throw new Error('System API returned unexpected data shape');
+      }
 
       setRawSystems(systemData);
     } catch (error) {
