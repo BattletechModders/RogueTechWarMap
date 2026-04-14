@@ -13,7 +13,7 @@ enum CardStyle {
   Info = '-info',
 }
 
-export interface HomeCardInterface {
+export interface HomeCardProps {
   style: CardStyle;
   heading: string;
   buttonLabel: string;
@@ -26,7 +26,7 @@ export function HomeCard({
   buttonLabel,
   buttonUri,
   children,
-}: React.PropsWithChildren<HomeCardInterface>) {
+}: React.PropsWithChildren<HomeCardProps>) {
   const borderColor =
     style === CardStyle.Primary ? 'border-primary' : 'border-info';
   const buttonColor =

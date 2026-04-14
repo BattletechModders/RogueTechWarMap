@@ -2,13 +2,13 @@ import { IconType } from 'react-icons';
 import { FaHome, FaList, FaMap } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
-interface MenuItemInterface {
+interface MenuItemProps {
   icon: IconType;
   path: string;
   label: string;
 }
 
-function MenuItem(props: MenuItemInterface) {
+function MenuItem(props: MenuItemProps) {
   return (
     <li className="items-center text-xl text-white font-bold mb-2 rounded hover:bg-gray-500 hover:shadow py-2">
       <Link to={props.path}>

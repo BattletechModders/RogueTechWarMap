@@ -1,6 +1,6 @@
 import PageTemplate from '../core/PageTemplate';
 
-interface tosBlockInterface {
+interface TosBlockProps {
   heading2?: string;
   heading3?: string;
 }
@@ -9,7 +9,7 @@ function TosBlock({
   children,
   heading2,
   heading3,
-}: React.PropsWithChildren<tosBlockInterface>) {
+}: React.PropsWithChildren<TosBlockProps>) {
   return (
     <>
       {heading2 && (
@@ -26,13 +26,13 @@ function TosBlock({
     </>
   );
 }
-interface bulletPointInterface {
+interface BulletPointProps {
   isNested?: boolean;
 }
 export function BulletPoint({
   children,
   isNested,
-}: React.PropsWithChildren<bulletPointInterface>) {
+}: React.PropsWithChildren<BulletPointProps>) {
   return (
     <li className={`${isNested ? 'nested-list  ml-12' : 'list-disc ml-4'}`}>
       {children}
