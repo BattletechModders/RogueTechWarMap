@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Select, { MultiValue } from 'react-select';
 import { ChevronsUp, ChevronsDown } from 'lucide-react';
+import { DESKTOP_BREAKPOINT } from '../constants';
 
 const BottomFilterPanel = ({
   searchTerm,
@@ -19,10 +20,10 @@ const BottomFilterPanel = ({
 
   /* ───────────── desktop breakpoint helper ───────────── */
   const [isDesktop, setIsDesktop] = useState(
-    typeof window !== 'undefined' && window.innerWidth >= 768
+    typeof window !== 'undefined' && window.innerWidth >= DESKTOP_BREAKPOINT
   );
   useEffect(() => {
-    const onResize = () => setIsDesktop(window.innerWidth >= 768);
+    const onResize = () => setIsDesktop(window.innerWidth >= DESKTOP_BREAKPOINT);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);

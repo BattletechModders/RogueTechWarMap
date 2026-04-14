@@ -12,6 +12,13 @@ import StarSystem from '../ui/StarSystem';
 import BottomFilterPanel from '../ui/BottomFilterPanel';
 import useTooltip from '../hooks/useTooltip';
 import useFiltering from '../hooks/useFiltering';
+import {
+  DESKTOP_BREAKPOINT,
+  BG_IMAGE_X,
+  BG_IMAGE_Y,
+  BG_IMAGE_WIDTH,
+  BG_IMAGE_HEIGHT,
+} from '../constants';
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
@@ -362,7 +369,7 @@ const GalaxyMapRender = ({
     }
   };
 
-  const isMobile = window.innerWidth < 768;
+  const isMobile = window.innerWidth < DESKTOP_BREAKPOINT;
   const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
 
   return (
@@ -388,10 +395,10 @@ const GalaxyMapRender = ({
           {bgLoaded && background ? (
             <Image
               image={background}
-              x={-4800}
-              y={-2700}
-              width={9600}
-              height={5400}
+              x={BG_IMAGE_X}
+              y={BG_IMAGE_Y}
+              width={BG_IMAGE_WIDTH}
+              height={BG_IMAGE_HEIGHT}
               opacity={0.2}
             />
           ) : (
