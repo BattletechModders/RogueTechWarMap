@@ -1,7 +1,5 @@
 import {
   Point,
-  StageSize,
-  TooltipData,
   ViewTransform,
   GalaxyMapRenderProps,
 } from '../GalaxyMap/gm.types';
@@ -10,11 +8,18 @@ import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
 import BottomFilterPanel from '../ui/BottomFilterPanel';
-import useTooltip from '../hooks/useTooltip';
+import useTooltip, { type UseTooltipReturn } from '../hooks/useTooltip';
 import useFiltering from '../hooks/useFiltering';
-
-const MIN_SCALE = 0.2;
-const MAX_SCALE = 25;
+import usePreventBrowserZoom from '../hooks/usePreventBrowserZoom';
+import useZoomPan from '../hooks/useZoomPan';
+import usePinchZoom from '../hooks/usePinchZoom';
+import {
+  DESKTOP_BREAKPOINT,
+  BG_IMAGE_X,
+  BG_IMAGE_Y,
+  BG_IMAGE_WIDTH,
+  BG_IMAGE_HEIGHT,
+} from '../constants';
 
 const GalaxyMap = () => {
   const {
@@ -24,20 +29,20 @@ const GalaxyMap = () => {
     fetchFactionData,
     fetchSystemData,
     settings,
+    isLoading,
+    error,
   } = useFiltering();
 
   const [initialDataLoaded, setInitialDataLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     if (!initialDataLoaded) {
-      console.log('Loading data...');
       fetchFactionData();
       fetchSystemData();
       setInitialDataLoaded(true);
     }
 
     const interval = setInterval(() => {
-      console.log('API Data Refreshing at', new Date().toLocaleTimeString());
       fetchSystemData();
     }, 300_000);
 
@@ -50,23 +55,91 @@ const GalaxyMap = () => {
     initialDataLoaded,
   ]);
 
-  if (
-    displaySystems &&
-    displaySystems.length > 0 &&
-    factions &&
-    capitals &&
-    capitals.length > 0
-  ) {
+  if (error) {
     return (
-      <GalaxyMapRender
-        systems={displaySystems}
-        factions={factions}
-        settings={settings}
-      />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          backgroundColor: '#1a1a2e',
+          color: '#e0e0e0',
+          fontFamily: 'system-ui, sans-serif',
+          textAlign: 'center',
+          padding: '2rem',
+        }}
+      >
+        <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+          Failed to load map data
+        </h1>
+        <p style={{ marginBottom: '1.5rem', opacity: 0.8 }}>{error}</p>
+        <button
+          onClick={() => {
+            fetchFactionData();
+            fetchSystemData();
+          }}
+          style={{
+            padding: '0.5rem 1.5rem',
+            backgroundColor: '#4a90d9',
+            color: 'white',
+            border: 'none',
+            borderRadius: '0.375rem',
+            cursor: 'pointer',
+            fontSize: '1rem',
+          }}
+        >
+          Retry
+        </button>
+      </div>
     );
   }
 
-  return null;
+  if (
+    isLoading ||
+    !displaySystems ||
+    displaySystems.length === 0 ||
+    !factions ||
+    !capitals ||
+    capitals.length === 0
+  ) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          backgroundColor: '#1a1a2e',
+          color: '#e0e0e0',
+          fontFamily: 'system-ui, sans-serif',
+        }}
+      >
+        <div
+          style={{
+            width: '3rem',
+            height: '3rem',
+            border: '3px solid rgba(255,255,255,0.2)',
+            borderTopColor: '#4a90d9',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }}
+        />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p style={{ marginTop: '1rem', opacity: 0.8 }}>Loading map data...</p>
+      </div>
+    );
+  }
+
+  return (
+    <GalaxyMapRender
+      systems={displaySystems}
+      factions={factions}
+      settings={settings}
+    />
+  );
 };
 
 const GalaxyMapRender = ({
@@ -82,90 +155,29 @@ const GalaxyMapRender = ({
   const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
 
   const scaleRef = useRef(1);
-  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef) as {
-    tooltip: TooltipData;
-    showTooltip: (...args: any[]) => void;
-    hideTooltip: () => void;
-  };
+  const { tooltip, showTooltip, hideTooltip }: UseTooltipReturn = useTooltip(scaleRef);
   const stageRef = useRef<Konva.Stage | null>(null);
   const positionRef = useRef<Point>({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
   });
 
+  const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
+
+  const { stageSize } = usePreventBrowserZoom(stageRef);
+  const { handleWheel, handleDragMove } = useZoomPan(
+    stageRef,
+    scaleRef,
+    positionRef,
+    setZoomScaleFactor
+  );
+  const { isPinching, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePinchZoom(stageRef, scaleRef, positionRef, hideTooltip, setZoomScaleFactor);
+
   const view: ViewTransform = {
     scale: scaleRef.current,
     position: positionRef.current,
   };
-
-  const [stageSize, setStageSize] = useState<StageSize>({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
-
-  const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
-
-  // Block Firefox pinch-to-zoom at document level
-  useEffect(() => {
-    const preventZoomTouch = (e: TouchEvent) => {
-      if (e.touches.length > 1) {
-        e.preventDefault();
-      }
-    };
-
-    const preventZoomGesture: EventListener = (e) => {
-      e.preventDefault();
-    };
-
-    const options = { passive: false } as AddEventListenerOptions;
-
-    document.addEventListener('touchmove', preventZoomTouch, options);
-    document.addEventListener('gesturestart', preventZoomGesture, options);
-    document.addEventListener('gesturechange', preventZoomGesture, options);
-    document.addEventListener('gestureend', preventZoomGesture, options);
-
-    return () => {
-      document.removeEventListener('touchmove', preventZoomTouch, options);
-      document.removeEventListener('gesturestart', preventZoomGesture, options);
-      document.removeEventListener(
-        'gesturechange',
-        preventZoomGesture,
-        options
-      );
-      document.removeEventListener('gestureend', preventZoomGesture, options);
-    };
-  }, []);
-
-  // extra locking gesture handling for Firefox
-  useEffect(() => {
-    const lockScale = (e: Event) => e.preventDefault();
-
-    window.addEventListener('gesturestart', lockScale, { passive: false });
-    window.addEventListener('gesturechange', lockScale, { passive: false });
-    window.addEventListener('gestureend', lockScale, { passive: false });
-
-    return () => {
-      window.removeEventListener('gesturestart', lockScale);
-      window.removeEventListener('gesturechange', lockScale);
-      window.removeEventListener('gestureend', lockScale);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setStageSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const [isPinching, setIsPinching] = useState(false);
-  const lastDistance = useRef(0);
-  const pinchMidpoint = useRef<Point | null>(null);
 
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
   const [bgLoaded, setBgLoaded] = useState(false);
@@ -187,188 +199,11 @@ const GalaxyMapRender = ({
     };
   }, []);
 
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    const container = stage.container();
-    const preventDefault = (e: Event) => {
-      if (e.cancelable) e.preventDefault();
-    };
-
-    container.addEventListener('gesturestart', preventDefault, {
-      passive: false,
-    });
-    container.addEventListener('gesturechange', preventDefault, {
-      passive: false,
-    });
-    container.addEventListener('gestureend', preventDefault, {
-      passive: false,
-    });
-    container.addEventListener('touchmove', preventDefault, { passive: false });
-
-    return () => {
-      container.removeEventListener('gesturestart', preventDefault);
-      container.removeEventListener('gesturechange', preventDefault);
-      container.removeEventListener('gestureend', preventDefault);
-      container.removeEventListener('touchmove', preventDefault);
-    };
-  }, []);
-
-  const getDistance = (touch1: Touch, touch2: Touch) => {
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
-
-  let frameRequested = false;
-  const requestBatchDraw = (stage: Konva.Stage) => {
-    if (!frameRequested) {
-      frameRequested = true;
-      requestAnimationFrame(() => {
-        stage.batchDraw();
-        frameRequested = false;
-      });
-    }
-  };
-
-  const lastWheelTime = useRef(0);
-  const WHEEL_THROTTLE_MS = 50;
-
-  const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
-    const now = performance.now();
-    if (now - lastWheelTime.current < WHEEL_THROTTLE_MS) return;
-
-    lastWheelTime.current = now;
-
-    e.evt.preventDefault();
-    const scaleBy = 1.25;
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    const pointer = stage.getPointerPosition();
-    if (!pointer) return;
-
-    const oldScale = scaleRef.current;
-    let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
-    newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
-
-    const mousePointTo = {
-      x: (pointer.x - stage.x()) / oldScale,
-      y: (pointer.y - stage.y()) / oldScale,
-    };
-
-    scaleRef.current = newScale;
-    positionRef.current = {
-      x: pointer.x - mousePointTo.x * newScale,
-      y: pointer.y - mousePointTo.y * newScale,
-    };
-
-    stage.scale({ x: newScale, y: newScale });
-    stage.position(positionRef.current);
-    requestBatchDraw(stage);
-    setZoomScaleFactor(scaleRef.current < 1 ? scaleRef.current : 1);
-  };
-
-  const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
-    positionRef.current = { x: e.target.x(), y: e.target.y() };
-  };
-
-  const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    if (e.evt.touches.length === 1) {
-      const stage = e.target.getStage();
-      if (!stage) return;
-      const isCircle = e.target.className === 'Circle';
-      const isTooltip = e.target.findAncestor('Label', true);
-      if (!isCircle && !isTooltip) {
-        hideTooltip();
-      }
-    }
-
-    if (e.evt.touches.length === 2) {
-      setIsPinching(true);
-      lastDistance.current = getDistance(e.evt.touches[0], e.evt.touches[1]);
-
-      pinchMidpoint.current = {
-        x: (e.evt.touches[0].clientX + e.evt.touches[1].clientX) / 2,
-        y: (e.evt.touches[0].clientY + e.evt.touches[1].clientY) / 2,
-      };
-    }
-  };
-
-  const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    if (e.evt.touches.length === 2 && isPinching) {
-      e.evt.preventDefault();
-
-      if (!pinchMidpoint.current) return;
-
-      const [touch1, touch2] = e.evt.touches;
-      const newDistance = getDistance(touch1, touch2);
-
-      if (!lastDistance.current) return;
-
-      const stage = stageRef.current;
-
-      if (!stage) return;
-
-      let scaleBy = newDistance / lastDistance.current;
-
-      // Prevent jitter and dead zone on Firefox
-      if (Math.abs(1 - scaleBy) < 0.02) return;
-
-      // Clamp to avoid huge jumps
-      scaleBy = Math.max(0.9, Math.min(1.1, scaleBy));
-
-      const newScale = Math.max(
-        MIN_SCALE,
-        Math.min(MAX_SCALE, scaleRef.current * scaleBy)
-      );
-
-      const stagePos = stage.getPosition();
-      const stageScale = stage.scaleX();
-
-      const pinchCenter = {
-        x: (touch1.clientX + touch2.clientX) / 2,
-        y: (touch1.clientY + touch2.clientY) / 2,
-      };
-
-      const worldPos = {
-        x: (pinchCenter.x - stagePos.x) / stageScale,
-        y: (pinchCenter.y - stagePos.y) / stageScale,
-      };
-
-      requestAnimationFrame(() => {
-        const newPos = {
-          x: pinchCenter.x - worldPos.x * newScale,
-          y: pinchCenter.y - worldPos.y * newScale,
-        };
-
-        scaleRef.current = newScale;
-        positionRef.current = newPos;
-
-        stage.scale({ x: newScale, y: newScale });
-        stage.position(newPos);
-        requestBatchDraw(stage);
-        setZoomScaleFactor(newScale < 1 ? newScale : 1); // mirror wheel zoom behavior
-      });
-
-      lastDistance.current = newDistance;
-    }
-  };
-
-  const handleTouchEnd = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    if (e.evt.touches.length < 2) {
-      setIsPinching(false);
-    }
-  };
-
-  const isMobile = window.innerWidth < 768;
+  const isMobile = window.innerWidth < DESKTOP_BREAKPOINT;
   const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
 
   return (
     <>
-      {/* Konva Stage */}
-
       <Stage
         width={stageSize.width}
         height={stageSize.height}
@@ -388,10 +223,10 @@ const GalaxyMapRender = ({
           {bgLoaded && background ? (
             <Image
               image={background}
-              x={-4800}
-              y={-2700}
-              width={9600}
-              height={5400}
+              x={BG_IMAGE_X}
+              y={BG_IMAGE_Y}
+              width={BG_IMAGE_WIDTH}
+              height={BG_IMAGE_HEIGHT}
               opacity={0.2}
             />
           ) : (
@@ -407,7 +242,6 @@ const GalaxyMapRender = ({
         </Layer>
         <Layer>
           {systems.map((system, index) => {
-            /* resolve owner’s display name the same way allFactionNames() did */
             const ownerPretty =
               factions[system.owner]?.prettyName ?? system.owner;
             const factionMatch =
@@ -476,7 +310,6 @@ const GalaxyMapRender = ({
           )}
         </Layer>
       </Stage>
-      {/* bottom sliding filter panel */}
       <BottomFilterPanel
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}

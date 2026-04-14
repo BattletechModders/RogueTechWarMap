@@ -8,10 +8,10 @@ const useFiltering = () => {
   const [displaySystems, setDisplaySystems] = useState<DisplayStarSystemType[]>(
     []
   );
-  const { rawSystems, factions, capitals, fetchFactionData, fetchSystemData } =
+  const { rawSystems, factions, capitals, fetchFactionData, fetchSystemData, isLoading, error } =
     useWarmapAPI();
 
-  const { settings, setFlashActive } = useSettings();
+  const { settings } = useSettings();
 
   const projectSystemData = useCallback(
     (rawSystems: StarSystemType[]): DisplayStarSystemType[] => {
@@ -38,13 +38,13 @@ const useFiltering = () => {
 
   return {
     displaySystems,
-    projectSystemData,
     factions,
     capitals,
     fetchFactionData,
     fetchSystemData,
     settings,
-    setFlashActive,
+    isLoading,
+    error,
   };
 };
 
