@@ -1,6 +1,5 @@
 import {
   Point,
-  StageSize,
   TooltipData,
   ViewTransform,
   GalaxyMapRenderProps,
@@ -12,9 +11,9 @@ import StarSystem from '../ui/StarSystem';
 import BottomFilterPanel from '../ui/BottomFilterPanel';
 import useTooltip from '../hooks/useTooltip';
 import useFiltering from '../hooks/useFiltering';
-
-const MIN_SCALE = 0.2;
-const MAX_SCALE = 25;
+import usePreventBrowserZoom from '../hooks/usePreventBrowserZoom';
+import useZoomPan from '../hooks/useZoomPan';
+import usePinchZoom from '../hooks/usePinchZoom';
 
 const GalaxyMap = () => {
   const {
@@ -93,79 +92,22 @@ const GalaxyMapRender = ({
     y: window.innerHeight / 2,
   });
 
+  const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
+
+  const { stageSize } = usePreventBrowserZoom(stageRef);
+  const { handleWheel, handleDragMove } = useZoomPan(
+    stageRef,
+    scaleRef,
+    positionRef,
+    setZoomScaleFactor
+  );
+  const { isPinching, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePinchZoom(stageRef, scaleRef, positionRef, hideTooltip, setZoomScaleFactor);
+
   const view: ViewTransform = {
     scale: scaleRef.current,
     position: positionRef.current,
   };
-
-  const [stageSize, setStageSize] = useState<StageSize>({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
-
-  const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
-
-  // Block Firefox pinch-to-zoom at document level
-  useEffect(() => {
-    const preventZoomTouch = (e: TouchEvent) => {
-      if (e.touches.length > 1) {
-        e.preventDefault();
-      }
-    };
-
-    const preventZoomGesture: EventListener = (e) => {
-      e.preventDefault();
-    };
-
-    const options = { passive: false } as AddEventListenerOptions;
-
-    document.addEventListener('touchmove', preventZoomTouch, options);
-    document.addEventListener('gesturestart', preventZoomGesture, options);
-    document.addEventListener('gesturechange', preventZoomGesture, options);
-    document.addEventListener('gestureend', preventZoomGesture, options);
-
-    return () => {
-      document.removeEventListener('touchmove', preventZoomTouch, options);
-      document.removeEventListener('gesturestart', preventZoomGesture, options);
-      document.removeEventListener(
-        'gesturechange',
-        preventZoomGesture,
-        options
-      );
-      document.removeEventListener('gestureend', preventZoomGesture, options);
-    };
-  }, []);
-
-  // extra locking gesture handling for Firefox
-  useEffect(() => {
-    const lockScale = (e: Event) => e.preventDefault();
-
-    window.addEventListener('gesturestart', lockScale, { passive: false });
-    window.addEventListener('gesturechange', lockScale, { passive: false });
-    window.addEventListener('gestureend', lockScale, { passive: false });
-
-    return () => {
-      window.removeEventListener('gesturestart', lockScale);
-      window.removeEventListener('gesturechange', lockScale);
-      window.removeEventListener('gestureend', lockScale);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setStageSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const [isPinching, setIsPinching] = useState(false);
-  const lastDistance = useRef(0);
-  const pinchMidpoint = useRef<Point | null>(null);
 
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
   const [bgLoaded, setBgLoaded] = useState(false);
@@ -186,181 +128,6 @@ const GalaxyMapRender = ({
       setBgLoaded(true);
     };
   }, []);
-
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    const container = stage.container();
-    const preventDefault = (e: Event) => {
-      if (e.cancelable) e.preventDefault();
-    };
-
-    container.addEventListener('gesturestart', preventDefault, {
-      passive: false,
-    });
-    container.addEventListener('gesturechange', preventDefault, {
-      passive: false,
-    });
-    container.addEventListener('gestureend', preventDefault, {
-      passive: false,
-    });
-    container.addEventListener('touchmove', preventDefault, { passive: false });
-
-    return () => {
-      container.removeEventListener('gesturestart', preventDefault);
-      container.removeEventListener('gesturechange', preventDefault);
-      container.removeEventListener('gestureend', preventDefault);
-      container.removeEventListener('touchmove', preventDefault);
-    };
-  }, []);
-
-  const getDistance = (touch1: Touch, touch2: Touch) => {
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
-
-  let frameRequested = false;
-  const requestBatchDraw = (stage: Konva.Stage) => {
-    if (!frameRequested) {
-      frameRequested = true;
-      requestAnimationFrame(() => {
-        stage.batchDraw();
-        frameRequested = false;
-      });
-    }
-  };
-
-  const lastWheelTime = useRef(0);
-  const WHEEL_THROTTLE_MS = 50;
-
-  const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
-    const now = performance.now();
-    if (now - lastWheelTime.current < WHEEL_THROTTLE_MS) return;
-
-    lastWheelTime.current = now;
-
-    e.evt.preventDefault();
-    const scaleBy = 1.25;
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    const pointer = stage.getPointerPosition();
-    if (!pointer) return;
-
-    const oldScale = scaleRef.current;
-    let newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
-    newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
-
-    const mousePointTo = {
-      x: (pointer.x - stage.x()) / oldScale,
-      y: (pointer.y - stage.y()) / oldScale,
-    };
-
-    scaleRef.current = newScale;
-    positionRef.current = {
-      x: pointer.x - mousePointTo.x * newScale,
-      y: pointer.y - mousePointTo.y * newScale,
-    };
-
-    stage.scale({ x: newScale, y: newScale });
-    stage.position(positionRef.current);
-    requestBatchDraw(stage);
-    setZoomScaleFactor(scaleRef.current < 1 ? scaleRef.current : 1);
-  };
-
-  const handleDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
-    positionRef.current = { x: e.target.x(), y: e.target.y() };
-  };
-
-  const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    if (e.evt.touches.length === 1) {
-      const stage = e.target.getStage();
-      if (!stage) return;
-      const isCircle = e.target.className === 'Circle';
-      const isTooltip = e.target.findAncestor('Label', true);
-      if (!isCircle && !isTooltip) {
-        hideTooltip();
-      }
-    }
-
-    if (e.evt.touches.length === 2) {
-      setIsPinching(true);
-      lastDistance.current = getDistance(e.evt.touches[0], e.evt.touches[1]);
-
-      pinchMidpoint.current = {
-        x: (e.evt.touches[0].clientX + e.evt.touches[1].clientX) / 2,
-        y: (e.evt.touches[0].clientY + e.evt.touches[1].clientY) / 2,
-      };
-    }
-  };
-
-  const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    if (e.evt.touches.length === 2 && isPinching) {
-      e.evt.preventDefault();
-
-      if (!pinchMidpoint.current) return;
-
-      const [touch1, touch2] = e.evt.touches;
-      const newDistance = getDistance(touch1, touch2);
-
-      if (!lastDistance.current) return;
-
-      const stage = stageRef.current;
-
-      if (!stage) return;
-
-      let scaleBy = newDistance / lastDistance.current;
-
-      // Prevent jitter and dead zone on Firefox
-      if (Math.abs(1 - scaleBy) < 0.02) return;
-
-      // Clamp to avoid huge jumps
-      scaleBy = Math.max(0.9, Math.min(1.1, scaleBy));
-
-      const newScale = Math.max(
-        MIN_SCALE,
-        Math.min(MAX_SCALE, scaleRef.current * scaleBy)
-      );
-
-      const stagePos = stage.getPosition();
-      const stageScale = stage.scaleX();
-
-      const pinchCenter = {
-        x: (touch1.clientX + touch2.clientX) / 2,
-        y: (touch1.clientY + touch2.clientY) / 2,
-      };
-
-      const worldPos = {
-        x: (pinchCenter.x - stagePos.x) / stageScale,
-        y: (pinchCenter.y - stagePos.y) / stageScale,
-      };
-
-      requestAnimationFrame(() => {
-        const newPos = {
-          x: pinchCenter.x - worldPos.x * newScale,
-          y: pinchCenter.y - worldPos.y * newScale,
-        };
-
-        scaleRef.current = newScale;
-        positionRef.current = newPos;
-
-        stage.scale({ x: newScale, y: newScale });
-        stage.position(newPos);
-        requestBatchDraw(stage);
-        setZoomScaleFactor(newScale < 1 ? newScale : 1); // mirror wheel zoom behavior
-      });
-
-      lastDistance.current = newDistance;
-    }
-  };
-
-  const handleTouchEnd = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    if (e.evt.touches.length < 2) {
-      setIsPinching(false);
-    }
-  };
 
   const isMobile = window.innerWidth < 768;
   const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
@@ -407,7 +174,7 @@ const GalaxyMapRender = ({
         </Layer>
         <Layer>
           {systems.map((system, index) => {
-            /* resolve owner’s display name the same way allFactionNames() did */
+            /* resolve owner's display name the same way allFactionNames() did */
             const ownerPretty =
               factions[system.owner]?.prettyName ?? system.owner;
             const factionMatch =
