@@ -11,7 +11,7 @@ const useFiltering = () => {
   const { rawSystems, factions, capitals, fetchFactionData, fetchSystemData } =
     useWarmapAPI();
 
-  const { settings, setFlashActive } = useSettings();
+  const { settings } = useSettings();
 
   const projectSystemData = useCallback(
     (rawSystems: StarSystemType[]): DisplayStarSystemType[] => {
@@ -38,13 +38,11 @@ const useFiltering = () => {
 
   return {
     displaySystems,
-    projectSystemData,
     factions,
     capitals,
     fetchFactionData,
     fetchSystemData,
     settings,
-    setFlashActive,
   };
 };
 
