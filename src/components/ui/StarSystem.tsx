@@ -66,7 +66,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const circleRef = useRef<Konva.Circle>(null);
 
   useEffect(() => {
-    if (!settings.flashActivePlayes) return;
+    if (!settings.flashActivePlayers) return;
     if (!hasActivePlayers || !circleRef.current) return;
 
     const node = circleRef.current;
