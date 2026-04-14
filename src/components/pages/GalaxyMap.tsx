@@ -30,14 +30,12 @@ const GalaxyMap = () => {
 
   useEffect(() => {
     if (!initialDataLoaded) {
-      console.log('Loading data...');
       fetchFactionData();
       fetchSystemData();
       setInitialDataLoaded(true);
     }
 
     const interval = setInterval(() => {
-      console.log('API Data Refreshing at', new Date().toLocaleTimeString());
       fetchSystemData();
     }, 300_000);
 

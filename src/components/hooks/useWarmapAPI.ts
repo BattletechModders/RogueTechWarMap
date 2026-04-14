@@ -29,8 +29,8 @@ const useWarmapAPI = () => {
       });
 
       setCapitals(capitals);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
+    } catch {
+      // Error handling deferred to Phase 2 (H4)
     }
   };
 
@@ -41,8 +41,8 @@ const useWarmapAPI = () => {
       ).then((res) => res.json());
 
       setRawSystems(systemData);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
+    } catch {
+      // Error handling deferred to Phase 2 (H4)
     }
   };
 
