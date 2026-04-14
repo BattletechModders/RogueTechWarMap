@@ -1,7 +1,6 @@
 import {
   Point,
   StageSize,
-  TooltipData,
   ViewTransform,
   GalaxyMapRenderProps,
 } from '../GalaxyMap/gm.types';
@@ -10,7 +9,7 @@ import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
 import BottomFilterPanel from '../ui/BottomFilterPanel';
-import useTooltip from '../hooks/useTooltip';
+import useTooltip, { type UseTooltipReturn } from '../hooks/useTooltip';
 import useFiltering from '../hooks/useFiltering';
 
 const MIN_SCALE = 0.2;
@@ -82,11 +81,7 @@ const GalaxyMapRender = ({
   const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
 
   const scaleRef = useRef(1);
-  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef) as {
-    tooltip: TooltipData;
-    showTooltip: (...args: any[]) => void;
-    hideTooltip: () => void;
-  };
+  const { tooltip, showTooltip, hideTooltip }: UseTooltipReturn = useTooltip(scaleRef);
   const stageRef = useRef<Konva.Stage | null>(null);
   const positionRef = useRef<Point>({
     x: window.innerWidth / 2,
