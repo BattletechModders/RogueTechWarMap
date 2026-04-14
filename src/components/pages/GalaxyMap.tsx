@@ -1,6 +1,5 @@
 import {
   Point,
-  TooltipData,
   ViewTransform,
   GalaxyMapRenderProps,
 } from '../GalaxyMap/gm.types';
@@ -9,11 +8,18 @@ import Konva from 'konva';
 import { Stage, Layer, Image, Text, Label, Tag } from 'react-konva';
 import StarSystem from '../ui/StarSystem';
 import BottomFilterPanel from '../ui/BottomFilterPanel';
-import useTooltip from '../hooks/useTooltip';
+import useTooltip, { type UseTooltipReturn } from '../hooks/useTooltip';
 import useFiltering from '../hooks/useFiltering';
 import usePreventBrowserZoom from '../hooks/usePreventBrowserZoom';
 import useZoomPan from '../hooks/useZoomPan';
 import usePinchZoom from '../hooks/usePinchZoom';
+import {
+  DESKTOP_BREAKPOINT,
+  BG_IMAGE_X,
+  BG_IMAGE_Y,
+  BG_IMAGE_WIDTH,
+  BG_IMAGE_HEIGHT,
+} from '../constants';
 
 const GalaxyMap = () => {
   const {
@@ -23,20 +29,20 @@ const GalaxyMap = () => {
     fetchFactionData,
     fetchSystemData,
     settings,
+    isLoading,
+    error,
   } = useFiltering();
 
   const [initialDataLoaded, setInitialDataLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     if (!initialDataLoaded) {
-      console.log('Loading data...');
       fetchFactionData();
       fetchSystemData();
       setInitialDataLoaded(true);
     }
 
     const interval = setInterval(() => {
-      console.log('API Data Refreshing at', new Date().toLocaleTimeString());
       fetchSystemData();
     }, 300_000);
 
@@ -49,23 +55,91 @@ const GalaxyMap = () => {
     initialDataLoaded,
   ]);
 
-  if (
-    displaySystems &&
-    displaySystems.length > 0 &&
-    factions &&
-    capitals &&
-    capitals.length > 0
-  ) {
+  if (error) {
     return (
-      <GalaxyMapRender
-        systems={displaySystems}
-        factions={factions}
-        settings={settings}
-      />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          backgroundColor: '#1a1a2e',
+          color: '#e0e0e0',
+          fontFamily: 'system-ui, sans-serif',
+          textAlign: 'center',
+          padding: '2rem',
+        }}
+      >
+        <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+          Failed to load map data
+        </h1>
+        <p style={{ marginBottom: '1.5rem', opacity: 0.8 }}>{error}</p>
+        <button
+          onClick={() => {
+            fetchFactionData();
+            fetchSystemData();
+          }}
+          style={{
+            padding: '0.5rem 1.5rem',
+            backgroundColor: '#4a90d9',
+            color: 'white',
+            border: 'none',
+            borderRadius: '0.375rem',
+            cursor: 'pointer',
+            fontSize: '1rem',
+          }}
+        >
+          Retry
+        </button>
+      </div>
     );
   }
 
-  return null;
+  if (
+    isLoading ||
+    !displaySystems ||
+    displaySystems.length === 0 ||
+    !factions ||
+    !capitals ||
+    capitals.length === 0
+  ) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          backgroundColor: '#1a1a2e',
+          color: '#e0e0e0',
+          fontFamily: 'system-ui, sans-serif',
+        }}
+      >
+        <div
+          style={{
+            width: '3rem',
+            height: '3rem',
+            border: '3px solid rgba(255,255,255,0.2)',
+            borderTopColor: '#4a90d9',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }}
+        />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p style={{ marginTop: '1rem', opacity: 0.8 }}>Loading map data...</p>
+      </div>
+    );
+  }
+
+  return (
+    <GalaxyMapRender
+      systems={displaySystems}
+      factions={factions}
+      settings={settings}
+    />
+  );
 };
 
 const GalaxyMapRender = ({
@@ -81,11 +155,7 @@ const GalaxyMapRender = ({
   const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
 
   const scaleRef = useRef(1);
-  const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef) as {
-    tooltip: TooltipData;
-    showTooltip: (...args: any[]) => void;
-    hideTooltip: () => void;
-  };
+  const { tooltip, showTooltip, hideTooltip }: UseTooltipReturn = useTooltip(scaleRef);
   const stageRef = useRef<Konva.Stage | null>(null);
   const positionRef = useRef<Point>({
     x: window.innerWidth / 2,
@@ -129,13 +199,11 @@ const GalaxyMapRender = ({
     };
   }, []);
 
-  const isMobile = window.innerWidth < 768;
+  const isMobile = window.innerWidth < DESKTOP_BREAKPOINT;
   const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
 
   return (
     <>
-      {/* Konva Stage */}
-
       <Stage
         width={stageSize.width}
         height={stageSize.height}
@@ -155,10 +223,10 @@ const GalaxyMapRender = ({
           {bgLoaded && background ? (
             <Image
               image={background}
-              x={-4800}
-              y={-2700}
-              width={9600}
-              height={5400}
+              x={BG_IMAGE_X}
+              y={BG_IMAGE_Y}
+              width={BG_IMAGE_WIDTH}
+              height={BG_IMAGE_HEIGHT}
               opacity={0.2}
             />
           ) : (
@@ -174,7 +242,6 @@ const GalaxyMapRender = ({
         </Layer>
         <Layer>
           {systems.map((system, index) => {
-            /* resolve owner's display name the same way allFactionNames() did */
             const ownerPretty =
               factions[system.owner]?.prettyName ?? system.owner;
             const factionMatch =
@@ -243,7 +310,6 @@ const GalaxyMapRender = ({
           )}
         </Layer>
       </Stage>
-      {/* bottom sliding filter panel */}
       <BottomFilterPanel
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}

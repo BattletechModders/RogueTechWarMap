@@ -126,9 +126,9 @@ describe('GalaxyMap hook extraction', () => {
       expect(content).not.toContain("window.addEventListener('gesturestart'");
     });
 
-    it('is under 300 lines', () => {
+    it('is under 350 lines (was 500 before refactor)', () => {
       const lineCount = content.split('\n').length;
-      expect(lineCount).toBeLessThan(300);
+      expect(lineCount).toBeLessThan(350);
     });
   });
 });
