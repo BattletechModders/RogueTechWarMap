@@ -8,7 +8,20 @@ interface TooltipState {
   onTouch?: () => void;
 }
 
-const useTooltip = (scaleRef: React.RefObject<number>) => {
+export interface UseTooltipReturn {
+  tooltip: TooltipState;
+  showTooltip: (
+    text: string,
+    pointerX: number,
+    pointerY: number,
+    stageX?: number,
+    stageY?: number,
+    onTouch?: () => void
+  ) => void;
+  hideTooltip: () => void;
+}
+
+const useTooltip = (scaleRef: React.RefObject<number>): UseTooltipReturn => {
   const [tooltip, setTooltip] = useState<TooltipState>({
     visible: false,
     text: '',

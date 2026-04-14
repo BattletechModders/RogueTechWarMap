@@ -9,6 +9,7 @@ import {
   StarSystemType,
 } from '../hooks/types';
 import { API_BASE_URL } from '../helpers/ApiHelper.ts';
+import { FLASH_ANIMATION_SPEED } from '../constants';
 
 const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;
@@ -66,7 +67,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const circleRef = useRef<Konva.Circle>(null);
 
   useEffect(() => {
-    if (!settings.flashActivePlayes) return;
+    if (!settings.flashActivePlayers) return;
     if (!hasActivePlayers || !circleRef.current) return;
 
     const node = circleRef.current;
@@ -76,7 +77,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
     const anim = new Konva.Animation((frame) => {
       if (!frame) return;
 
-      const sine = Math.sin(frame.time * 0.005);
+      const sine = Math.sin(frame.time * FLASH_ANIMATION_SPEED);
       const scale = sine * 0.1 + 1;
       const pulseOverlay = sine * 0.15 + 0.7;
 
