@@ -3,15 +3,18 @@ import type {
   Point,
   StageSize,
   TooltipData,
+  TooltipControlItem,
   ViewTransform,
   GalaxyMapRenderProps,
-} from '../src/components/GalaxyMap/gm.types';
+  FactionName,
+  FactionNameList,
+} from './gm.types';
 
 import type {
   DisplayStarSystemType,
   FactionDataType,
   Settings,
-} from '../src/components/hooks/types';
+} from '../hooks/types';
 
 describe('gm.types', () => {
   it('Point has x/y as numbers', () => {
@@ -26,7 +29,7 @@ describe('gm.types', () => {
     expectTypeOf(s.height).toBeNumber();
   });
 
-  it('TooltipData has required fields and optional onTouch', () => {
+  it('TooltipData has required fields and optional onTouch / controlItems', () => {
     const t: TooltipData = { visible: true, x: 10, y: 20, text: 'hello' };
     expectTypeOf(t.visible).toBeBoolean();
     expectTypeOf(t.x).toBeNumber();
@@ -34,6 +37,14 @@ describe('gm.types', () => {
     expectTypeOf(t.text).toBeString();
     expectTypeOf(t.onTouch).toEqualTypeOf<(() => void) | undefined>();
     expectTypeOf<NonNullable<TooltipData['onTouch']>>().toBeFunction();
+    expectTypeOf(t.controlItems).toEqualTypeOf<TooltipControlItem[] | undefined>();
+  });
+
+  it('TooltipControlItem has name/control/players fields', () => {
+    const c: TooltipControlItem = { name: 'x', control: 50, players: 3 };
+    expectTypeOf(c.name).toBeString();
+    expectTypeOf(c.control).toBeNumber();
+    expectTypeOf(c.players).toBeNumber();
   });
 
   it('ViewTransform includes scale and position as Point', () => {
@@ -43,22 +54,22 @@ describe('gm.types', () => {
   });
 
   it('GalaxyMapRenderProps matches expected shapes', () => {
-    // systems is an array of DisplayStarSystemType
     expectTypeOf<GalaxyMapRenderProps['systems']>().toEqualTypeOf<
       DisplayStarSystemType[]
     >();
-
-    // individual element type also matches
     expectTypeOf<
       GalaxyMapRenderProps['systems'][number]
     >().toEqualTypeOf<DisplayStarSystemType>();
-
-    // factions matches FactionDataType
     expectTypeOf<
       GalaxyMapRenderProps['factions']
     >().toEqualTypeOf<FactionDataType>();
-
-    // settings matches Settings
     expectTypeOf<GalaxyMapRenderProps['settings']>().toEqualTypeOf<Settings>();
+  });
+
+  it('FactionName is a string alias and FactionNameList is FactionName[]', () => {
+    const name: FactionName = 'Davion';
+    const list: FactionNameList = ['Davion', 'Kurita'];
+    expectTypeOf(name).toBeString();
+    expectTypeOf(list).toEqualTypeOf<FactionName[]>();
   });
 });

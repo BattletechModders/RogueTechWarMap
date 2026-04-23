@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildFactionFilterOptions } from '../src/components/GalaxyMap/gm.selectors';
+import { buildFactionFilterOptions } from './gm.selectors';
 
 describe('buildFactionFilterOptions', () => {
   it('returns unique, sorted faction names using prettyName when available', () => {
@@ -8,7 +8,7 @@ describe('buildFactionFilterOptions', () => {
       { owner: 'FACTION_B' },
       { owner: 'FACTION_A' }, // duplicate
       { owner: 'FACTION_C' },
-    ] as any[]; // minimal shape: just needs owner
+    ] as any[];
 
     const factions = {
       FACTION_A: { prettyName: 'Alpha' },
@@ -18,21 +18,18 @@ describe('buildFactionFilterOptions', () => {
 
     const result = buildFactionFilterOptions(systems, factions);
 
-    // unique + sorted alphabetically by prettyName
     expect(result).toEqual(['Alpha', 'Bravo', 'Charlie']);
   });
 
-  it('falls back to owner key when prettyName is missing', () => {
+  it('falls back to owner key when prettyName is missing or factions entry is absent', () => {
     const systems = [{ owner: 'FACTION_X' }, { owner: 'FACTION_Y' }] as any[];
 
     const factions = {
       FACTION_X: { prettyName: undefined },
-      // FACTION_Y completely missing from map
     } as any;
 
     const result = buildFactionFilterOptions(systems, factions);
 
-    // falls back to owner string
     expect(result.sort()).toEqual(['FACTION_X', 'FACTION_Y'].sort());
   });
 
@@ -52,5 +49,26 @@ describe('buildFactionFilterOptions', () => {
     const result = buildFactionFilterOptions(systems, factions);
 
     expect(result).toEqual(['FACTION_NULL', 'Valid']);
+  });
+
+  it('returns an empty array when systems list is empty', () => {
+    const result = buildFactionFilterOptions([] as any[], {} as any);
+    expect(result).toEqual([]);
+  });
+
+  it('sorts case-sensitively via localeCompare', () => {
+    const systems = [
+      { owner: 'a' },
+      { owner: 'b' },
+      { owner: 'c' },
+    ] as any[];
+    const factions = {
+      a: { prettyName: 'zebra' },
+      b: { prettyName: 'Apple' },
+      c: { prettyName: 'banana' },
+    } as any;
+
+    const result = buildFactionFilterOptions(systems, factions);
+    expect(result).toEqual(['Apple', 'banana', 'zebra']);
   });
 });
