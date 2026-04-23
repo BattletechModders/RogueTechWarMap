@@ -119,10 +119,11 @@ Grouped by test strategy. Every listed symbol needs coverage on this branch.
   `@testing-library/dom@10`, `@testing-library/jest-dom@6`,
   `@testing-library/user-event@14`, and `jsdom@29` via `yarn add -D`. Rewrote
   `vitest.config.ts` to load `@vitejs/plugin-react-swc`, pin the environment
-  to `jsdom`, register a `src/test/setup.ts` setup file, and set `include` to
-  `src/**/*.test.{ts,tsx}` (adjacent-only). Created `src/test/setup.ts` to
-  import `@testing-library/jest-dom/vitest`, run `cleanup()` after each test,
-  and polyfill `matchMedia` + `ResizeObserver` for libraries that touch them.
+  to `jsdom`, register a `src/test/setup.ts` setup file, and widen `include`
+  to pick up both legacy `tests/**/*.test.{ts,tsx}` and the new adjacent
+  `src/**/*.test.{ts,tsx}` pattern. Created `src/test/setup.ts` to import
+  `@testing-library/jest-dom/vitest`, run `cleanup()` after each test, and
+  polyfill `matchMedia` + `ResizeObserver` for libraries that touch them.
   Updated `tsconfig.vitest.json` to extend `tsconfig.app.json` (so DOM libs
   are visible), pull in `vitest/globals` + `@testing-library/jest-dom` types,
   and include the new `src/**/*.test.{ts,tsx}` and `src/test/**/*` paths.
@@ -147,6 +148,11 @@ Grouped by test strategy. Every listed symbol needs coverage on this branch.
   out-of-the-box conventions most React teams recognize as "industry
   standard." Keeping a dedicated `tsconfig.vitest.json` avoids polluting the
   app build surface with vitest globals.
+
+- **Verification:** `yarn test` runs the three pre-existing test files
+  (`gm.types`, `gm.selectors`, `gm.interactions`) under the new configuration
+  with all 11 assertions passing. This establishes a green baseline before
+  adding new suites.
 
 ### 5. localStorage polyfill in the test setup
 
@@ -204,8 +210,8 @@ Grouped by test strategy. Every listed symbol needs coverage on this branch.
   so test assertions can still locate them.
 - **Alternatives considered:**
   1. *Inline the mock inside each test file.* Rejected: we would end up with
-     several near-identical copies across the Konva consumers, so any
-     future fix would need to be applied in parallel.
+     three near-identical copies (`App`, `StarSystem`, `GalaxyMap`, `main`,
+     pages barrel), so any future fix would need to be applied in parallel.
   2. *Mock `konva` and `react-konva` globally in `src/test/setup.ts`.*
      Rejected because `vi.mock` is hoisted per-file at parse time — putting
      it in setup doesn't hoist into other test modules — and globally mocking
@@ -216,10 +222,84 @@ Grouped by test strategy. Every listed symbol needs coverage on this branch.
      coverage; pulling in a canvas shim is a second-pass investment.
 - **Reasoning:** A shared mock minimizes duplication while staying per-file
   (`vi.mock` still hoists from each consumer). Exposing methods via
-  `useImperativeHandle` means Konva-consuming effects can call
+  `useImperativeHandle` means StarSystem's useEffect animations can call
   `pulseNode.scale(...)` without a `getLayer is not a function` TypeError —
   critical for the "smoke test mounts cleanly" guarantee.
 
-- **Verification at this point:** With only the three relocated `gm.*` test
-  files as content, `yarn test` reports 3 files / 11 tests passing. The rig
-  is ready to host the new adjacent suites.
+### 8. Authoring strategy per audit tier
+
+- **Pure utilities:** authored one suite per source file with positive-path,
+  edge-case (empty input, missing key, falsy values, case sensitivity), and
+  contract tests (shape conformance, type-level assertions).
+- **Hooks:** used RTL's `renderHook` + `act` for state hooks; mocked `fetch`
+  via `vi.stubGlobal` for the API hooks; faked rAF and `performance.now`
+  with a queue + controllable clock for viewport/pinch hooks to assert both
+  throttle and frame-coalescing behavior deterministically.
+- **Components:**
+  - `PageTemplate`, `SideMenu`, `Home`, `ToS`, `Error` use `MemoryRouter`
+    / `createMemoryRouter` to exercise all three `ErrorPage` branches (route
+    error response, thrown `Error`, non-Error).
+  - `BottomFilterPanel` drives the toggle chevron, search input, and help
+    tooltip via `fireEvent`/`userEvent`, and simulates a mobile viewport by
+    rewriting `window.innerWidth` so the click-to-toggle tooltip path is hit.
+  - `StarSystem`, `GalaxyMap`, `App`, and `main` use the shared Konva mock
+    and stub fetch to exercise the component/page/bootstrap surface without
+    requiring a real canvas. `main.test.tsx` wraps `createRoot` to assert
+    that bootstrap actually attaches to the supplied `#react-root` element.
+
+### 9. Final rig verification
+
+- **Action taken:** Ran `yarn test` (`vitest run`) — the full suite reports
+  **29 test files / 122 tests passing**. Also ran `npx tsc -p
+  tsconfig.vitest.json --noEmit` (clean) and `yarn build` (production build
+  succeeds with the same output as before the test work).
+- **Alternatives considered:**
+  1. *Only run `yarn test`.* Rejected — a type-clean but untested config
+     slippage is exactly the sort of silent regression the rig is supposed
+     to prevent.
+  2. *Also run `yarn lint`.* Noted as reasonable for a follow-up but skipped
+     here: ESLint config is outside the test-rig scope and the existing
+     codebase warns about some pre-existing issues unrelated to this work.
+- **Reasoning:** `test` + `tsc --noEmit` + `build` covers the three
+  orthogonal failure modes (runtime assertions, type safety, production
+  bundling). All three are green, which satisfies the CLAUDE.md "must load
+  correctly and provide standard, readable output" bar.
+
+#### Final coverage map
+
+| File                                                  | Adjacent test                                       | Depth |
+| ----------------------------------------------------- | --------------------------------------------------- | ----- |
+| `src/App.tsx`                                         | `src/App.test.tsx`                                  | smoke |
+| `src/main.tsx`                                        | `src/main.test.tsx`                                 | smoke |
+| `src/components/core/PageTemplate.tsx`                | `…/PageTemplate.test.tsx`                           | deep  |
+| `src/components/core/SideMenu.tsx`                    | `…/SideMenu.test.tsx`                               | deep  |
+| `src/components/GalaxyMap/gm.interactions.ts`         | `…/gm.interactions.test.ts`                         | deep  |
+| `src/components/GalaxyMap/gm.selectors.ts`            | `…/gm.selectors.test.ts`                            | deep  |
+| `src/components/GalaxyMap/gm.types.ts`                | `…/gm.types.test.ts`                                | deep  |
+| `src/components/helpers/ApiHelper.ts`                 | `…/ApiHelper.test.ts`                               | deep  |
+| `src/components/helpers/CapitalHelper.ts`             | `…/CapitalHelper.test.ts`                           | deep  |
+| `src/components/helpers/devStateInjector.ts`          | `…/devStateInjector.test.ts`                        | deep  |
+| `src/components/helpers/FactionHelper.ts`             | `…/FactionHelper.test.ts`                           | deep  |
+| `src/components/helpers/index.ts`                     | `…/index.test.ts`                                   | deep  |
+| `src/components/helpers/NewTabHelper.ts`              | `…/NewTabHelper.test.ts`                            | deep  |
+| `src/components/helpers/RouteHelper.ts`               | `…/RouteHelper.test.ts`                             | deep  |
+| `src/components/hooks/types/Settings.ts`              | `…/types/Settings.test.ts`                          | deep  |
+| `src/components/hooks/types/index.ts`                 | `…/types/index.test.ts` (covers all 7 type files)   | deep  |
+| `src/components/hooks/useFiltering.ts`                | `…/useFiltering.test.ts`                            | deep  |
+| `src/components/hooks/useGalaxyViewport.ts`           | `…/useGalaxyViewport.test.ts`                       | deep  |
+| `src/components/hooks/usePinchZoom.ts`                | `…/usePinchZoom.test.ts`                            | deep  |
+| `src/components/hooks/useSettings.ts`                 | `…/useSettings.test.ts`                             | deep  |
+| `src/components/hooks/useTooltip.ts`                  | `…/useTooltip.test.ts`                              | deep  |
+| `src/components/hooks/useWarmapAPI.ts`                | `…/useWarmapAPI.test.ts`                            | deep  |
+| `src/components/pages/Error.tsx`                      | `…/Error.test.tsx`                                  | deep  |
+| `src/components/pages/GalaxyMap.tsx`                  | `…/GalaxyMap.test.tsx`                              | smoke |
+| `src/components/pages/Home.tsx`                       | `…/Home.test.tsx`                                   | deep  |
+| `src/components/pages/index.ts`                       | `…/index.test.ts`                                   | deep  |
+| `src/components/pages/ToS.tsx`                        | `…/ToS.test.tsx`                                    | deep  |
+| `src/components/ui/BottomFilterPanel.tsx`             | `…/BottomFilterPanel.test.tsx`                      | deep  |
+| `src/components/ui/StarSystem.tsx`                    | `…/StarSystem.test.tsx`                             | smoke |
+
+"Deep" means meaningful behavior / state / DOM assertions; "smoke" means the
+component mounts cleanly under mocks with a small number of structural
+assertions — the documented Option B posture.
+
