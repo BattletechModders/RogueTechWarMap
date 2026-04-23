@@ -341,3 +341,40 @@ assertions — the documented Option B posture.
   `hooks/types/index.ts`) report as 0/0 because v8 cannot see them as having
   executable code — this is a cosmetic display quirk, not a real gap.
 
+### 11. GitHub Actions CI workflow
+
+- **Action taken:** Added `.github/workflows/test.yml`. The workflow triggers
+  on `push` to `main` or `test-platform` and on any `pull_request` targeting
+  `main`. It checks out the repo, installs Node (matrix of 20 + 22) with
+  yarn caching via `actions/setup-node@v4`, runs `yarn install
+  --frozen-lockfile`, typechecks the test sources with `npx tsc -p
+  tsconfig.vitest.json --noEmit`, runs `yarn test:coverage`, and uploads
+  the `coverage/` directory as a 14-day retained artifact from the Node 20
+  leg only.
+- **Alternatives considered:**
+  1. *Single-version matrix (Node 20 only).* Rejected: running both 20 and
+     22 surfaces version-drift issues early at negligible cost given yarn
+     caching.
+  2. *Use npm instead of yarn in CI.* Rejected — project uses yarn 1 and
+     ships a `yarn.lock` pinned by the `packageManager` field; swapping
+     lockfile tools creates drift risk.
+  3. *Post coverage to Codecov via `codecov/codecov-action`.* Deferred —
+     requires a repo-scoped secret (`CODECOV_TOKEN`) the maintainers would
+     have to provision. Artifact upload gives reviewers the same HTML
+     report without external dependencies; Codecov can be added later.
+  4. *Skip the `tsc --noEmit` step.* Rejected: a vitest green run does not
+     catch type regressions in test files themselves, and TypeScript
+     misalignments in tests have bitten this project's type assertions
+     before (the `expectTypeOf` suites).
+- **Reasoning:** Three orthogonal failure modes — install reproducibility,
+  type safety of tests, and runtime assertions — each get a step. The
+  matrix covers the two supported LTS lines. The coverage artifact makes
+  reviewer inspection a click rather than a local run.
+
+- **Note:** GitHub Actions run against the PR's *base repository* config,
+  so the workflow only becomes active for PR checks on
+  `BattletechModders/RogueTechWarMap` once this PR merges into `main`.
+  Until then, pushes to `nx-thaddeusaid/RogueTechWarMap:test-platform` will
+  still trigger runs in the fork's own Actions (if enabled), which serves
+  as a pre-merge smoke.
+
