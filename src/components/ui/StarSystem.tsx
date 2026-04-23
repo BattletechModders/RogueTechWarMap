@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { Circle, Image as KonvaImage } from 'react-konva';
 import Konva from 'konva';
-import { findFaction, openInNewTab } from '../helpers';
+import { openInNewTab } from '../helpers';
 import pirateIconUrl from '../../assets/joli-rouge-icon.svg';
 import holdTheLineIconUrl from '../../assets/shield.svg';
 import captureEventIconUrl from '../../assets/crosshairs.svg';
@@ -9,11 +9,10 @@ import {
   DisplayStarSystemType,
   FactionDataType,
   Settings,
-  StarSystemState,
-  StarSystemType,
 } from '../hooks/types';
 import { API_BASE_URL } from '../helpers/ApiHelper.ts';
 import type { TooltipControlItem } from '../GalaxyMap/gm.types';
+import { buildTooltipText } from './StarSystem.helpers';
 
 const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;
@@ -115,26 +114,6 @@ const StarSystem: React.FC<StarSystemProps> = ({
   opacity = 1,
 }) => {
   const baseRadius = system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS;
-
-  const buildControlItems = (
-    systemFactions: StarSystemType['factions'],
-    allFactions: FactionDataType
-  ): TooltipControlItem[] => {
-    return [...systemFactions]
-      .sort((a, b) => b.control - a.control)
-      .map((faction) => {
-        const factionData = findFaction(faction.Name, allFactions);
-        return {
-          name: factionData?.prettyName || faction.Name,
-          control: faction.control,
-          players: faction.ActivePlayers,
-        };
-      });
-  };
-
-  const formatControlLine = (item: TooltipControlItem) => {
-    return `${item.name} ${item.control}% · ${item.players}`;
-  };
 
   const hasActivePlayers = system.factions.some(
     (faction) => faction.ActivePlayers > 0
@@ -326,65 +305,6 @@ const StarSystem: React.FC<StarSystemProps> = ({
     };
   }, [shouldPulseSize, pirateIconImage, holdTheLineIconImage, captureEventIconImage]);
 
-  const damageLevelText =
-    system.damageLevel !== undefined &&
-    system.damageLevel !== null &&
-    `${system.damageLevel}`.trim() !== ''
-      ? `${system.damageLevel}`
-      : 'Unknown';
-
-  const formatSystemState = (state?: StarSystemState) => {
-    if (!state) return 'None';
-
-    const stateLabels: Array<[keyof StarSystemState, string]> = [
-      ['isInsurrect', 'Insurrection'],
-      ['hasPirateRaid', 'Pirate Raid'],
-      ['hasCaptureEvent', 'Capture Event'],
-      ['hasHoldTheLineEvent', 'Hold The Line Event'],
-    ];
-
-    const activeStates = stateLabels
-      .filter(([key]) => state[key])
-      .map(([, label]) => label);
-
-    return activeStates.length ? activeStates.join(', ') : 'None';
-  };
-
-  const buildTooltipText = (includeTapHint = false) => {
-    const ownerName =
-      findFaction(system.owner, factions)?.prettyName || 'Unknown';
-    const controlItems = buildControlItems(system.factions, factions);
-    const topControl = controlItems.slice(0, 3);
-    const remainingControlCount = Math.max(
-      0,
-      controlItems.length - topControl.length
-    );
-    const stateDetails = formatSystemState(system.state);
-
-    const lines = [
-      system.name,
-      `(${system.posX}, ${system.posY})`,
-      `Owner: ${ownerName}`,
-      'Control:',
-      ...topControl.map(formatControlLine),
-      ...(remainingControlCount > 0 ? [`+${remainingControlCount} more`] : []),
-      `Damage: ${damageLevelText}`,
-    ];
-
-    if (stateDetails !== 'None') {
-      lines.push(`State: ${stateDetails}`);
-    }
-
-    if (includeTapHint) {
-      lines.push('[Tap to open]');
-    }
-
-    return {
-      text: lines.join('\n'),
-      controlItems,
-    };
-  };
-
   return (
     <>
       {isInsurrectionLike && (
@@ -472,7 +392,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
           const pointer = stage.getPointerPosition();
           if (!pointer) return;
 
-          const tooltipData = buildTooltipText();
+          const tooltipData = buildTooltipText({ system, factions });
           showTooltip(
             tooltipData.text,
             pointer.x,
@@ -501,7 +421,11 @@ const StarSystem: React.FC<StarSystemProps> = ({
               return;
             }
 
-            const tooltipData = buildTooltipText(true);
+            const tooltipData = buildTooltipText({
+              system,
+              factions,
+              includeTapHint: true,
+            });
 
             showTooltip(
               tooltipData.text,

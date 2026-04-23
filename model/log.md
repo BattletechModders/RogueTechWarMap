@@ -378,3 +378,54 @@ assertions — the documented Option B posture.
   still trigger runs in the fork's own Actions (if enabled), which serves
   as a pre-merge smoke.
 
+### 12. Extracting inline map helpers for deep coverage
+
+- **Action taken:** Moved the inline helpers from `GalaxyMap.tsx` and
+  `StarSystem.tsx` into two adjacent modules that are importable by tests:
+  - `src/components/pages/GalaxyMap.helpers.ts` — `getViewportSize`,
+    `getTooltipFontSize`, `getDesktopLineSegments(line, index, {
+    titleFontSize, bodyFontSize })`, and `parseMobileTooltipData(text)`.
+  - `src/components/ui/StarSystem.helpers.ts` — `buildControlItems`,
+    `formatControlLine`, `formatSystemState`, `formatDamageLevel`, and
+    `buildTooltipText({ system, factions, includeTapHint })`.
+  Rewired `GalaxyMap.tsx` and `StarSystem.tsx` to call the extracted
+  helpers (the component now wraps `getDesktopLineSegments` in a small
+  `segmentsFor` closure so it keeps its previous zero-argument call shape
+  at the two Konva call sites, and `buildTooltipText` is invoked with the
+  explicit `{ system, factions }` object). Added 31 deep adjacent tests
+  across `StarSystem.helpers.test.ts` (18) and `GalaxyMap.helpers.test.ts`
+  (13) covering positive paths, edge cases (empty inputs, undefined state,
+  whitespace-only damage level), ordering guarantees, the Owner/Damage
+  label-split branch, and the mobile-tooltip parser's control-block
+  skipping semantics.
+- **Alternatives considered:**
+  1. *Leave the helpers inline and write DOM-level assertions against the
+     rendered tooltip text.* Rejected — asserting multi-line `\n`-joined
+     tooltip strings via the Konva mock is indirect and brittle; a unit
+     test against the pure function is clearer and cheaper to maintain.
+  2. *Extract into a single shared `tooltip.helpers.ts` used by both the
+     map page and the star-system node.* Rejected — the two call sites
+     have different responsibilities (desktop tooltip-layout parsing vs.
+     tooltip text composition) and a shared module would leak concerns;
+     keeping them adjacent to the component that owns them matches the
+     rest of the repository's file layout.
+  3. *Re-export the helpers from the components themselves for tests.*
+     Rejected because that couples production exports to test needs and
+     complicates tree-shaking.
+- **Reasoning:** Pure helpers live outside the Konva render tree, so they
+  are testable under jsdom without any canvas or mock scaffolding. Moving
+  them into their own modules took GalaxyMap.tsx from 72% / 40% / 58% /
+  74% to 79% / 48% / 59% / 82% and upgraded `GalaxyMap.helpers.ts` to
+  94.87% stmts / 88.46% branches / 100% funcs / 94.87% lines, while
+  `StarSystem.helpers.ts` lands at 100% across the board. Overall project
+  coverage moved from 73.9% / 61.21% / 70.52% / 76.75% to **79.22% /
+  69.5% / 76.16% / 82.43%** (stmts / branches / funcs / lines), and the
+  test count grew from 122 to 153 across 31 files, all green.
+
+  The remaining untested lines concentrate where Option B expected them:
+  inside the Konva rendering bodies of `GalaxyMap.tsx` and
+  `StarSystem.tsx`, the pinch-gesture math in `usePinchZoom.ts`, and the
+  inline height-animation setup in `BottomFilterPanel.tsx`. Lifting those
+  would require a real canvas polyfill or component-level interaction
+  tests, which remain out of scope for this rig.
+
