@@ -303,3 +303,41 @@ Grouped by test strategy. Every listed symbol needs coverage on this branch.
 component mounts cleanly under mocks with a small number of structural
 assertions — the documented Option B posture.
 
+### 10. Coverage reporter (`@vitest/coverage-v8`)
+
+- **Action taken:** Installed `@vitest/coverage-v8@4.0.8` (pinned to match
+  `vitest@4.0.8` exactly), configured the reporter inside `vitest.config.ts`
+  with `provider: 'v8'`, text + html + lcov outputs, `reportsDirectory:
+  './coverage'`, `include: ['src/**/*.{ts,tsx}']`, and excludes for test
+  files, the `src/test/**` rig directory, and `src/vite-env.d.ts`. Added
+  `coverage/` to `.gitignore` so generated reports are not committed. The
+  `test:coverage` npm script (already present) now produces real numbers.
+- **Alternatives considered:**
+  1. *Use `@vitest/coverage-istanbul` instead.* Rejected: v8 is faster, has
+     zero transform cost in watch mode, and is the default Vitest recommends.
+     Istanbul only wins when you need legacy-browser coverage semantics that
+     are irrelevant in this node/jsdom context.
+  2. *Leave `coverage/` uncomitted but not in `.gitignore`.* Rejected — every
+     local `yarn test:coverage` run would dirty the working tree and show
+     dozens of generated HTML/CSS assets as untracked. `.gitignore` is the
+     conventional answer.
+  3. *Accept the latest `@vitest/coverage-v8@4.1.5`.* Rejected: v4.1.x
+     imports `BaseCoverageProvider` from `vitest/node`, which v4.0.8 does
+     not export. A version mismatch surfaces as an unhandled import error on
+     every coverage run. Pinning both packages to the exact same minor
+     resolves it.
+- **Reasoning:** The `test:coverage` script existed as an alias for
+  `vitest run --coverage` but without the reporter installed, it failed with
+  a cryptic missing-provider error. Wiring v8 gives reviewers real numbers
+  without costing dev-mode performance.
+
+- **Initial report (after this change):** All files `73.9% stmts / 61.21%
+  branches / 70.52% funcs / 76.75% lines`. Deep-tested modules (helpers,
+  most hooks, Error / Home / ToS / PageTemplate / SideMenu pages) land at
+  100%. The Option-B smoke targets (`GalaxyMap.tsx`, `StarSystem.tsx`,
+  `usePinchZoom.ts`) are the sources of the un-green lines; that matches the
+  documented posture. Type-only files (`ControlInfo.ts`, `StarSystemType.ts`,
+  etc.) and re-export barrels (`helpers/index.ts`, `pages/index.ts`,
+  `hooks/types/index.ts`) report as 0/0 because v8 cannot see them as having
+  executable code — this is a cosmetic display quirk, not a real gap.
+
