@@ -6,43 +6,25 @@ const ENABLE_STORAGE_KEY = 'warMapDevStateTest';
 const PRESET_STORAGE_KEY = 'warMapDevStatePreset';
 const OVERRIDES_STORAGE_KEY = 'warMapDevStateOverrides';
 const DEV_INSURRECTION_SYSTEMS = [
-  'Terra',
-  'Altair',
-  'Asta',
-  'Bryant',
-  'Caph',
-  'Dieron',
-  'Epsilon Eridani',
-  'Fomalhaut',
-  'Keid',
-  'New Home',
-  'New Stevens',
-  'Saffel',
+  'Tainjin',
+  "Ma'anshan",
+  'Millerton',
+  'Moriguchi',
+  'Nouasseur',
+  'Qanatir',
+  'Zwipadze',
 ];
 const DEV_PIRATE_RAID_SYSTEMS = [
-  'Conwy',
-  'Algol',
-  'Algot',
-  'Almach',
-  'Alrescha',
-  'Buchlau',
-  'Demeter',
-  'Foochow',
-  'Halloran',
-  'Hunan',
-  'Kansu',
-  'Menkar',
-  'New Aragon',
-  'New Hessen',
-  'Ningpo',
-  'Pleione',
-  'Poznan',
-  'Slocum',
-  'Tianamon',
-  'Yangtze',
+  'Bougie',
+  'Beauvais',
+  'Cilvituk',
+  'Melilla',
+  'Naco',
+  'Sialkot',
+  'Zefri',
 ];
-const DEV_HOLD_THE_LINE_SYSTEMS = ['Alnadal'];
-const DEV_CAPTURE_EVENT_SYSTEMS = ['Rowe'];
+const DEV_HOLD_THE_LINE_SYSTEMS = ['Port Vail (The Rack 3050+)'];
+const DEV_CAPTURE_EVENT_SYSTEMS = ['Wiltshire'];
 
 type StateOverrideMap = Record<string, StarSystemState>;
 
@@ -50,6 +32,18 @@ const isTruthyFlag = (value: string | null) => {
   if (!value) return false;
   const normalized = value.trim().toLowerCase();
   return normalized !== '0' && normalized !== 'false' && normalized !== 'off';
+};
+
+const getQueryParamCaseInsensitive = (
+  params: URLSearchParams,
+  paramName: string
+): string | null => {
+  for (const [key, value] of params) {
+    if (key.toLowerCase() === paramName.toLowerCase()) {
+      return value;
+    }
+  }
+  return null;
 };
 
 const isStateOverrideMap = (value: unknown): value is StateOverrideMap => {
@@ -70,6 +64,38 @@ const isStateOverrideMap = (value: unknown): value is StateOverrideMap => {
         typeof typed.hasHoldTheLineEvent === 'boolean')
     );
   });
+};
+
+const DEV_STATE_INJECTION_DEBUG =
+  import.meta.env.DEV || import.meta.env.VITE_ENABLE_STATE_TEST === 'true';
+
+const buildNamedEventOverrides = (
+  systems: StarSystemType[],
+  targetNames: string[],
+  stateKey: keyof StarSystemState,
+  stateValue: boolean
+): StateOverrideMap => {
+  const systemNameLookup = new Map(
+    systems.map((system) => [system.name.toLowerCase(), system.name])
+  );
+  const overrides: StateOverrideMap = {};
+
+  targetNames.forEach((targetName) => {
+    const canonicalName = systemNameLookup.get(targetName.toLowerCase());
+    if (!canonicalName) {
+      if (DEV_STATE_INJECTION_DEBUG) {
+        console.warn(
+          '[devStateInjector] target system not found for override:',
+          targetName
+        );
+      }
+      return;
+    }
+
+    overrides[canonicalName] = { [stateKey]: stateValue } as StarSystemState;
+  });
+
+  return overrides;
 };
 
 const buildSampleOverrides = (systems: StarSystemType[]): StateOverrideMap => {
@@ -126,71 +152,43 @@ const readOverridesFromStorage = (): StateOverrideMap | null => {
 
 const buildNamedInsurrectionOverrides = (
   systems: StarSystemType[]
-): StateOverrideMap => {
-  const systemNameLookup = new Map(
-    systems.map((system) => [system.name.toLowerCase(), system.name])
+): StateOverrideMap =>
+  buildNamedEventOverrides(
+    systems,
+    DEV_INSURRECTION_SYSTEMS,
+    'isInsurrect',
+    true
   );
-  const overrides: StateOverrideMap = {};
-
-  DEV_INSURRECTION_SYSTEMS.forEach((targetName) => {
-    const canonicalName = systemNameLookup.get(targetName.toLowerCase());
-    if (!canonicalName) return;
-    overrides[canonicalName] = { isInsurrect: true };
-  });
-
-  return overrides;
-};
 
 const buildNamedPirateRaidOverrides = (
   systems: StarSystemType[]
-): StateOverrideMap => {
-  const systemNameLookup = new Map(
-    systems.map((system) => [system.name.toLowerCase(), system.name])
+): StateOverrideMap =>
+  buildNamedEventOverrides(
+    systems,
+    DEV_PIRATE_RAID_SYSTEMS,
+    'hasPirateRaid',
+    true
   );
-  const overrides: StateOverrideMap = {};
-
-  DEV_PIRATE_RAID_SYSTEMS.forEach((targetName) => {
-    const canonicalName = systemNameLookup.get(targetName.toLowerCase());
-    if (!canonicalName) return;
-    overrides[canonicalName] = { hasPirateRaid: true };
-  });
-
-  return overrides;
-};
 
 const buildNamedHoldTheLineOverrides = (
   systems: StarSystemType[]
-): StateOverrideMap => {
-  const systemNameLookup = new Map(
-    systems.map((system) => [system.name.toLowerCase(), system.name])
+): StateOverrideMap =>
+  buildNamedEventOverrides(
+    systems,
+    DEV_HOLD_THE_LINE_SYSTEMS,
+    'hasHoldTheLineEvent',
+    true
   );
-  const overrides: StateOverrideMap = {};
-
-  DEV_HOLD_THE_LINE_SYSTEMS.forEach((targetName) => {
-    const canonicalName = systemNameLookup.get(targetName.toLowerCase());
-    if (!canonicalName) return;
-    overrides[canonicalName] = { hasHoldTheLineEvent: true };
-  });
-
-  return overrides;
-};
 
 const buildNamedCaptureEventOverrides = (
   systems: StarSystemType[]
-): StateOverrideMap => {
-  const systemNameLookup = new Map(
-    systems.map((system) => [system.name.toLowerCase(), system.name])
+): StateOverrideMap =>
+  buildNamedEventOverrides(
+    systems,
+    DEV_CAPTURE_EVENT_SYSTEMS,
+    'hasCaptureEvent',
+    true
   );
-  const overrides: StateOverrideMap = {};
-
-  DEV_CAPTURE_EVENT_SYSTEMS.forEach((targetName) => {
-    const canonicalName = systemNameLookup.get(targetName.toLowerCase());
-    if (!canonicalName) return;
-    overrides[canonicalName] = { hasCaptureEvent: true };
-  });
-
-  return overrides;
-};
 
 export const applyDevStateInjection = (
   systems: StarSystemType[]
@@ -201,8 +199,20 @@ export const applyDevStateInjection = (
 
   const params = new URLSearchParams(window.location.search);
   const enabled =
-    isTruthyFlag(params.get(ENABLE_QUERY_PARAM)) ||
+    isTruthyFlag(getQueryParamCaseInsensitive(params, ENABLE_QUERY_PARAM)) ||
     isTruthyFlag(window.localStorage.getItem(ENABLE_STORAGE_KEY));
+
+  if (DEV_STATE_INJECTION_DEBUG) {
+    console.debug('[devStateInjector] injection gate', {
+      allowInjectedStates,
+      query: window.location.search,
+      paramValue: getQueryParamCaseInsensitive(params, ENABLE_QUERY_PARAM),
+      localStorageKey: window.localStorage.getItem(ENABLE_STORAGE_KEY),
+      enabled,
+      presetParam: getQueryParamCaseInsensitive(params, PRESET_QUERY_PARAM),
+      presetStorage: window.localStorage.getItem(PRESET_STORAGE_KEY),
+    });
+  }
 
   if (!enabled) return systems;
 
@@ -229,7 +239,26 @@ export const applyDevStateInjection = (
     ...customOverrides,
   };
 
-  if (!Object.keys(overrides).length) return systems;
+  if (DEV_STATE_INJECTION_DEBUG) {
+    console.debug('[devStateInjector] overrides', {
+      preset,
+      totalOverrides: Object.keys(overrides).length,
+      namedInsurrection: Object.keys(namedInsurrectionOverrides).length,
+      namedPirateRaid: Object.keys(namedPirateRaidOverrides).length,
+      namedHoldTheLine: Object.keys(namedHoldTheLineOverrides).length,
+      namedCaptureEvent: Object.keys(namedCaptureEventOverrides).length,
+      customOverrides: customOverrides
+        ? Object.keys(customOverrides).length
+        : 0,
+    });
+  }
+
+  if (!Object.keys(overrides).length) {
+    if (DEV_STATE_INJECTION_DEBUG) {
+      console.warn('[devStateInjector] no dev state overrides were applied');
+    }
+    return systems;
+  }
 
   return systems.map((system) => {
     const injected = overrides[system.name];

@@ -1,6 +1,7 @@
 import {
   StageSize,
   GalaxyMapRenderProps,
+  ViewTransform,
 } from '../GalaxyMap/gm.types';
 import { buildFactionFilterOptions } from '../GalaxyMap/gm.selectors';
 import { useMemo, useEffect, useRef, useState } from 'react';
@@ -258,6 +259,43 @@ const GalaxyMapRender = ({
   const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
   const tooltipFontSize = getTooltipFontSize();
   const desktopTooltipPadding = 6;
+
+  const getViewportBounds = (
+    stageSize: StageSize,
+    view: ViewTransform,
+    screenMargin = 120
+  ) => {
+    if (stageSize.width <= 0 || stageSize.height <= 0) {
+      return {
+        left: Number.NEGATIVE_INFINITY,
+        right: Number.POSITIVE_INFINITY,
+        top: Number.NEGATIVE_INFINITY,
+        bottom: Number.POSITIVE_INFINITY,
+      };
+    }
+
+    const margin = Math.max(screenMargin / view.scale, 1);
+    const left = (0 - view.position.x) / view.scale - margin;
+    const top = (0 - view.position.y) / view.scale - margin;
+    const right = (stageSize.width - view.position.x) / view.scale + margin;
+    const bottom = (stageSize.height - view.position.y) / view.scale + margin;
+
+    return { left, right, top, bottom };
+  };
+
+  const visibleSystems = useMemo(() => {
+    const viewport = getViewportBounds(stageSize, view, 120);
+    return systems.filter((system) => {
+      const x = Number(system.posX);
+      const y = -Number(system.posY);
+      return (
+        x >= viewport.left &&
+        x <= viewport.right &&
+        y >= viewport.top &&
+        y <= viewport.bottom
+      );
+    });
+  }, [systems, stageSize, view]);
   const desktopPointerHeight = 10;
   const desktopPointerWidth = 12;
   const desktopTitleFontSize = tooltipFontSize * 1.12;
@@ -422,7 +460,9 @@ const GalaxyMapRender = ({
             />
           ) : (
             <Text
-              text={bgLoadError ? 'Background unavailable' : 'Loading Background...'}
+              text={
+                bgLoadError ? 'Background unavailable' : 'Loading Background...'
+              }
               x={stageSize.width / 2}
               y={stageSize.height / 2}
               fontSize={24}
@@ -432,7 +472,7 @@ const GalaxyMapRender = ({
           )}
         </Layer>
         <Layer>
-          {systems.map((system) => {
+          {visibleSystems.map((system) => {
             /* Resolve owner display name via faction metadata for consistent filter matching and labels. */
             const ownerPretty =
               factions[system.owner]?.prettyName ?? system.owner;
