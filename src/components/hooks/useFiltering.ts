@@ -1,17 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
-import { findFaction, isCapital } from '../helpers';
+import { useCallback, useMemo } from 'react';
+import { findFaction } from '../helpers';
 import { DisplayStarSystemType, StarSystemType } from './types';
 import useWarmapAPI from './useWarmapAPI';
 import useSettings from './useSettings';
 
 const useFiltering = () => {
-  const [displaySystems, setDisplaySystems] = useState<DisplayStarSystemType[]>(
-    []
-  );
   const { rawSystems, factions, capitals, fetchFactionData, fetchSystemData } =
     useWarmapAPI();
 
   const { settings, setFlashActive } = useSettings();
+  const capitalSet = useMemo(() => new Set(capitals), [capitals]);
 
   const projectSystemData = useCallback(
     (rawSystems: StarSystemType[]): DisplayStarSystemType[] => {
@@ -20,21 +18,22 @@ const useFiltering = () => {
         const displayName = faction?.prettyName ?? 'Unknown Faction';
         const projectedSystem: DisplayStarSystemType = {
           ...value,
-          isCapital: isCapital(value.name, capitals),
+          isCapital: capitalSet.has(value.name),
           factionColour: faction && faction.colour ? faction.colour : 'gray',
           factionName: displayName,
+          normalizedName: value.name.toLowerCase(),
         };
 
         return projectedSystem;
       });
     },
-    [capitals, factions]
+    [capitalSet, factions]
   );
 
-  useEffect(() => {
-    const projectedSystems = projectSystemData(rawSystems);
-    setDisplaySystems(projectedSystems);
-  }, [rawSystems, capitals, factions, projectSystemData]);
+  const displaySystems = useMemo(
+    () => projectSystemData(rawSystems),
+    [projectSystemData, rawSystems]
+  );
 
   return {
     displaySystems,

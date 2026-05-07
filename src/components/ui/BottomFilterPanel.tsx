@@ -1,6 +1,30 @@
-import { useState, useEffect, useRef } from 'react';
-import Select, { MultiValue } from 'react-select';
-import { ChevronsUp, ChevronsDown } from 'lucide-react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import type { MultiValue } from 'react-select';
+import { ChevronsDown, ChevronsUp } from 'lucide-react';
+
+const FactionSelect = lazy(() => import('react-select'));
+
+type FactionOption = {
+  value: string;
+  label: string;
+};
+
+const selectStyles = {
+  control: (base: object) => ({
+    ...base,
+    color: 'black',
+    width: '100%',
+  }),
+  input: (base: object) => ({ ...base, color: 'black' }),
+  singleValue: (base: object) => ({ ...base, color: 'black' }),
+  multiValueLabel: (base: object) => ({ ...base, color: 'black' }),
+  option: (base: object, state: { isFocused: boolean }) => ({
+    ...base,
+    color: 'black',
+    backgroundColor: state.isFocused ? '#e6e6e6' : 'white',
+  }),
+  menuPortal: (base: object) => ({ ...base, zIndex: 9999 }),
+};
 
 const BottomFilterPanel = ({
   searchTerm,
@@ -17,53 +41,52 @@ const BottomFilterPanel = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  /* Desktop/mobile layout mode is driven by viewport width and updated on resize. */
   const [isDesktop, setIsDesktop] = useState(
     typeof window !== 'undefined' && window.innerWidth >= 768
   );
+
   useEffect(() => {
     const onResize = () => setIsDesktop(window.innerWidth >= 768);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  /* Build react-select option/value pairs from faction names for stable controlled input state. */
-  const options = factions.map((f) => ({ value: f, label: f }));
-  const selectedOpts = options.filter((o) =>
-    selectedFactions.includes(o.value)
+  const options = useMemo<FactionOption[]>(
+    () => factions.map((faction) => ({ value: faction, label: faction })),
+    [factions]
   );
-  const onFactionChange = (
-    vals: MultiValue<{ value: string; label: string }>
-  ) => setSelectedFactions(vals.map((v) => v.value));
+
+  const selectedOpts = useMemo(
+    () => options.filter((option) => selectedFactions.includes(option.value)),
+    [options, selectedFactions]
+  );
+
+  const onFactionChange = (vals: unknown) =>
+    setSelectedFactions(
+      (vals as MultiValue<FactionOption>).map((value) => value.value)
+    );
 
   const removeFaction = (name: string) =>
-    setSelectedFactions(selectedFactions.filter((f) => f !== name));
+    setSelectedFactions(selectedFactions.filter((faction) => faction !== name));
 
   const panelRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<string>('32px');
-
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     const panel = panelRef.current;
     if (!panel) return;
 
-    // Measure the current height so height animation starts from an exact frame.
     const startHeight = panel.offsetHeight;
-
-    // Disable transitions temporarily so we can snapshot the target height without an
-    // intermediate animated jump.
     panel.style.transition = 'none';
     panel.style.height = 'auto';
 
     const targetHeight = panel.scrollHeight;
 
-    // Re-enable transition and restore the measured start height before animating.
     requestAnimationFrame(() => {
       panel.style.transition = 'height 0.5s ease';
       panel.style.height = `${startHeight}px`;
 
-      // Apply the final target height in the next frame to trigger a clean transition.
       requestAnimationFrame(() => {
         const expandedHeight = Math.max(targetHeight, 125);
         setHeight(`${isOpen ? expandedHeight : 32}px`);
@@ -84,8 +107,8 @@ const BottomFilterPanel = ({
     maxWidth: isDesktop ? '220px' : '90vw',
     zIndex: 10000,
     ...(isDesktop
-      ? { bottom: 22, left: 0 } // Desktop tooltip aligns under the help icon.
-      : { bottom: 28, right: 8, left: 'auto', transform: 'none' }), // Mobile tooltip floats centered under the icon.
+      ? { bottom: 22, left: 0 }
+      : { bottom: 28, right: 8, left: 'auto', transform: 'none' }),
   };
 
   return (
@@ -110,7 +133,6 @@ const BottomFilterPanel = ({
         opacity: isOpen ? 1 : 0.5,
       }}
     >
-      {/* Header trigger lets users expand/collapse the bottom filter panel. */}
       <div
         style={{
           display: 'flex',
@@ -123,7 +145,6 @@ const BottomFilterPanel = ({
         {isOpen ? <ChevronsDown size={24} /> : <ChevronsUp size={24} />}
       </div>
 
-      {/* Open state uses two columns: left = search, right = faction filters. */}
       {isOpen && (
         <div
           style={{
@@ -132,15 +153,14 @@ const BottomFilterPanel = ({
             height: '100%',
           }}
         >
-           {/* Left column: system search field */}
           <div style={{ flex: 1, paddingRight: '0.75rem' }}>
             <input
               type="text"
-              placeholder="Search systems…"
+              placeholder="Search systems..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
-                width: isDesktop ? '50%' : '100%', // Desktop keeps a compact search field width.
+                width: isDesktop ? '50%' : '100%',
                 padding: '6px 10px',
                 fontSize: '16px',
                 borderRadius: '6px',
@@ -148,12 +168,11 @@ const BottomFilterPanel = ({
                 outline: 'none',
                 backgroundColor: 'white',
                 color: 'black',
-                margin: '0 0.25rem 0.5rem', // Add spacing so pills and controls are not crowded.
+                margin: '0 0.25rem 0.5rem',
               }}
             />
           </div>
 
-           {/* Right column: faction selector controls */}
           <div
             style={{
               flex: 1,
@@ -166,32 +185,31 @@ const BottomFilterPanel = ({
                 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
               >
                 <div style={{ flexGrow: 1 }}>
-                  <Select
-                    isMulti
-                    options={options}
-                    value={selectedOpts}
-                    onChange={onFactionChange}
-                    menuPortalTarget={document.body}
-                    menuPlacement="top"
-                    placeholder="Filter factions…"
-                    components={{ MultiValue: () => null }}
-                    styles={{
-                      control: (base) => ({
-                        ...base,
-                        color: 'black',
-                        width: '100%',
-                      }),
-                      input: (base) => ({ ...base, color: 'black' }),
-                      singleValue: (base) => ({ ...base, color: 'black' }),
-                      multiValueLabel: (base) => ({ ...base, color: 'black' }),
-                      option: (base, state) => ({
-                        ...base,
-                        color: 'black',
-                        backgroundColor: state.isFocused ? '#e6e6e6' : 'white',
-                      }),
-                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                    }}
-                  />
+                  <Suspense
+                    fallback={
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '38px',
+                          borderRadius: '6px',
+                          background: 'white',
+                          opacity: 0.85,
+                        }}
+                      />
+                    }
+                  >
+                    <FactionSelect
+                      isMulti
+                      options={options}
+                      value={selectedOpts}
+                      onChange={onFactionChange}
+                      menuPortalTarget={document.body}
+                      menuPlacement="top"
+                      placeholder="Filter factions..."
+                      components={{ MultiValue: () => null }}
+                      styles={selectStyles}
+                    />
+                  </Suspense>
                 </div>
 
                 <div
@@ -222,7 +240,6 @@ const BottomFilterPanel = ({
                 </div>
               </div>
 
-               {/* Selected factions appear as removable chips for quick feedback and edits. */}
               {selectedFactions.length > 0 && (
                 <div
                   style={{
@@ -232,9 +249,9 @@ const BottomFilterPanel = ({
                     gap: '4px',
                   }}
                 >
-                  {selectedFactions.map((f) => (
+                  {selectedFactions.map((faction) => (
                     <span
-                      key={f}
+                      key={faction}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -245,9 +262,9 @@ const BottomFilterPanel = ({
                         borderRadius: '4px',
                       }}
                     >
-                      {f}
+                      {faction}
                       <span
-                        onClick={() => removeFaction(f)}
+                        onClick={() => removeFaction(faction)}
                         style={{
                           marginLeft: '4px',
                           cursor: 'pointer',
