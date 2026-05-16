@@ -1,7 +1,7 @@
 export interface Settings {
-  flashActivePlayes: boolean;
+  flashActivePlayers: boolean;
 }
 
 export const initialSettings: Settings = {
-  flashActivePlayes: true,
+  flashActivePlayers: true,
 };

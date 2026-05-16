@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import type { TooltipControlItem } from '../GalaxyMap/gm.types';
 
 interface TooltipState {
   visible: boolean;
@@ -6,6 +7,7 @@ interface TooltipState {
   x: number;
   y: number;
   onTouch?: () => void;
+  controlItems?: TooltipControlItem[];
 }
 
 const useTooltip = (scaleRef: React.RefObject<number>) => {
@@ -16,28 +18,33 @@ const useTooltip = (scaleRef: React.RefObject<number>) => {
     y: 0,
   });
 
-  const showTooltip = (
-    text: string,
-    pointerX: number,
-    pointerY: number,
-    stageX?: number,
-    stageY?: number,
-    onTouch?: () => void
-  ) => {
-    const scale = scaleRef.current || 1;
+  const showTooltip = useCallback(
+    (
+      text: string,
+      pointerX: number,
+      pointerY: number,
+      stageX?: number,
+      stageY?: number,
+      onTouch?: () => void,
+      controlItems?: TooltipControlItem[]
+    ) => {
+      const scale = scaleRef.current || 1;
 
-    setTooltip({
-      visible: true,
-      text,
-      x: stageX !== undefined ? (pointerX - stageX) / scale : pointerX,
-      y: stageY !== undefined ? (pointerY - stageY) / scale : pointerY,
-      onTouch,
-    });
-  };
+      setTooltip({
+        visible: true,
+        text,
+        x: stageX !== undefined ? (pointerX - stageX) / scale : pointerX,
+        y: stageY !== undefined ? (pointerY - stageY) / scale : pointerY,
+        onTouch,
+        controlItems,
+      });
+    },
+    [scaleRef]
+  );
 
-  const hideTooltip = () => {
+  const hideTooltip = useCallback(() => {
     setTooltip((prev) => ({ ...prev, visible: false }));
-  };
+  }, []);
 
   return { tooltip, showTooltip, hideTooltip };
 };
