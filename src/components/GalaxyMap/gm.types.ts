@@ -6,33 +6,26 @@ import type {
 
 export type Point = { x: number; y: number };
 
-/** Stage viewport dimensions passed to <Stage> and updated when the browser resizes. */
+/** Stage (canvas) size used by React-Konva <Stage> */
 export interface StageSize {
   width: number;
   height: number;
 }
 
-/** Tooltip payload shape read by GalaxyMap and rendered in both desktop and mobile views. */
+/** Tooltip shape as consumed by GalaxyMap.tsx */
 export interface TooltipData {
   visible: boolean;
   x: number;
   y: number;
   text: string;
   onTouch?: () => void;
-  controlItems?: TooltipControlItem[];
 }
 
-export interface TooltipControlItem {
-  name: string;
-  control: number;
-  players: number;
-}
-
-/** Camera transform snapshot for the map viewport. */
+/** View transform pieces GalaxyMap manages internally */
 export interface ViewTransform {
-  /** Current zoom level, where 1 is normal scale and bounds are enforced by the viewport hook. */
+  /** Current zoom scale (e.g., 0.2 .. 25) */
   scale: number;
-  /** Stage translation in screen coordinates after pan/drag and zoom operations. */
+  /** Stage position (screen-space) */
   position: Point;
 }
 
