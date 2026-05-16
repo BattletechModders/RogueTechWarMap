@@ -1,11 +1,18 @@
 import {
   StageSize,
   GalaxyMapRenderProps,
+  ViewTransform,
 } from '../GalaxyMap/gm.types';
 import { buildFactionFilterOptions } from '../GalaxyMap/gm.selectors';
-import { useMemo, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Stage, Layer, Image, Text, Group, Rect, Line } from 'react-konva';
-import Konva from 'konva';
 import StarSystem from '../ui/StarSystem';
 import BottomFilterPanel from '../ui/BottomFilterPanel';
 import useTooltip from '../hooks/useTooltip';
@@ -15,6 +22,11 @@ import { usePinchZoom } from '../hooks/usePinchZoom';
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
+const TOOLTIP_FONT_FAMILY = 'Roboto Mono, monospace';
+const tooltipMeasureContext =
+  typeof document !== 'undefined'
+    ? document.createElement('canvas').getContext('2d')
+    : null;
 
 const getViewportSize = () => {
   if (typeof window === 'undefined') {
@@ -33,6 +45,19 @@ const getTooltipFontSize = () => {
   }
 
   return parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.85;
+};
+
+const measureTooltipTextWidth = (
+  text: string,
+  fontSize: number,
+  fontStyle: 'bold' | 'normal'
+) => {
+  if (!tooltipMeasureContext) {
+    return text.length * fontSize * 0.6;
+  }
+
+  tooltipMeasureContext.font = `${fontStyle} ${fontSize}px ${TOOLTIP_FONT_FAMILY}`;
+  return tooltipMeasureContext.measureText(text).width;
 };
 
 const GalaxyMap = () => {
@@ -93,14 +118,14 @@ const GalaxyMapRender = ({
     scaleRef,
     positionRef,
     view,
-    zoomScaleFactor,
     requestBatchDraw,
     setZoomScaleFactor,
     handlers: { onWheel, onDragMove },
   } = useGalaxyViewport();
   const [searchTerm, setSearchTerm] = useState('');
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const [showAllControl, setShowAllControl] = useState(false);
-  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const normalizedSearch = deferredSearchTerm.trim().toLowerCase();
   const shouldFilter = normalizedSearch.length >= 2;
 
   /* Empty means "all factions"; when populated, only matching owners are rendered. */
@@ -258,13 +283,99 @@ const GalaxyMapRender = ({
   const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;
   const tooltipFontSize = getTooltipFontSize();
   const desktopTooltipPadding = 6;
+  const factionOptions = useMemo(
+    () => buildFactionFilterOptions(systems, factions),
+    [systems, factions]
+  );
+
+  const getViewportBounds = (
+    stageSize: StageSize,
+    view: ViewTransform,
+    screenMargin = 120
+  ) => {
+    if (stageSize.width <= 0 || stageSize.height <= 0) {
+      return {
+        left: Number.NEGATIVE_INFINITY,
+        right: Number.POSITIVE_INFINITY,
+        top: Number.NEGATIVE_INFINITY,
+        bottom: Number.POSITIVE_INFINITY,
+      };
+    }
+
+    const margin = Math.max(screenMargin / view.scale, 1);
+    const left = (0 - view.position.x) / view.scale - margin;
+    const top = (0 - view.position.y) / view.scale - margin;
+    const right = (stageSize.width - view.position.x) / view.scale + margin;
+    const bottom = (stageSize.height - view.position.y) / view.scale + margin;
+
+    return { left, right, top, bottom };
+  };
+
+  const visibleSystems = useMemo(() => {
+    const viewport = getViewportBounds(stageSize, view, 120);
+    const selectedFactionsSet = new Set(selectedFactions);
+
+    return systems.filter((system) => {
+      const x = Number(system.posX);
+      const y = -Number(system.posY);
+
+      if (
+        x < viewport.left ||
+        x > viewport.right ||
+        y < viewport.top ||
+        y > viewport.bottom
+      ) {
+        return false;
+      }
+
+      return (
+        !selectedFactionsSet.size ||
+        selectedFactionsSet.has(system.factionName)
+      );
+    });
+  }, [selectedFactions, stageSize, systems, view]);
   const desktopPointerHeight = 10;
   const desktopPointerWidth = 12;
   const desktopTitleFontSize = tooltipFontSize * 1.12;
   const desktopBodyFontSize = tooltipFontSize * 0.92;
   const desktopLineHeight = desktopTitleFontSize * 1.2;
 
-  const getDesktopLineSegments = (line: string, index: number) => {
+  const renderedSystems = useMemo(
+    () =>
+      visibleSystems.map((system) => {
+        const isMatch =
+          !shouldFilter || system.normalizedName.includes(normalizedSearch);
+        const opacity = shouldFilter ? (isMatch ? 1 : 0.2) : 1;
+
+        return (
+          <StarSystem
+            key={system.id}
+            scaleRef={scaleRef}
+            system={system}
+            factions={factions}
+            settings={settings}
+            showTooltip={showTooltip}
+            hideTooltip={hideTooltip}
+            tooltipVisibleRef={tooltipVisibleRef}
+            touchedSystemNameRef={touchedSystemNameRef}
+            highlighted={shouldFilter && isMatch}
+            opacity={opacity}
+          />
+        );
+      }),
+    [
+      factions,
+      hideTooltip,
+      normalizedSearch,
+      scaleRef,
+      settings,
+      shouldFilter,
+      showTooltip,
+      visibleSystems,
+    ]
+  );
+
+  const getDesktopLineSegments = useCallback((line: string, index: number) => {
     if (index === 0) {
       return [
         {
@@ -301,7 +412,7 @@ const GalaxyMapRender = ({
         fontSize: desktopBodyFontSize,
       },
     ];
-  };
+  }, [desktopTitleFontSize, desktopBodyFontSize]);
 
   const desktopTooltipLines = useMemo(
     () => (tooltip.text || '').split('\n').map((line) => line.trimEnd()),
@@ -312,15 +423,14 @@ const GalaxyMapRender = ({
     const lines = desktopTooltipLines.length ? desktopTooltipLines : [''];
     const widths = lines.map((line, index) =>
       getDesktopLineSegments(line, index).reduce((sum, segment) => {
-        const measure = new Konva.Text({
-          text: segment.text,
-          fontFamily: 'Roboto Mono, monospace',
-          fontSize: segment.fontSize,
-          fontStyle: segment.fontStyle,
-        });
-        const width = measure.width();
-        measure.destroy();
-        return sum + width;
+        return (
+          sum +
+          measureTooltipTextWidth(
+            segment.text,
+            segment.fontSize,
+            segment.fontStyle
+          )
+        );
       }, 0)
     );
 
@@ -329,7 +439,7 @@ const GalaxyMapRender = ({
     const boxHeight =
       lines.length * desktopLineHeight + desktopTooltipPadding * 2;
     return { lines, boxWidth, boxHeight };
-  }, [desktopTooltipLines, tooltipFontSize, desktopLineHeight]);
+  }, [desktopTooltipLines, desktopLineHeight, getDesktopLineSegments]);
 
   useEffect(() => {
     if (tooltip.visible) {
@@ -358,25 +468,13 @@ const GalaxyMapRender = ({
     const title = lines[0] ?? '';
     const subtitle = lines[1]?.startsWith('(') ? lines[1] : '';
     const rawDetails = lines.slice(subtitle ? 2 : 1);
-    const details: string[] = [];
-    let inControlBlock = false;
 
-    for (const line of rawDetails) {
-      if (line === 'Control:') {
-        inControlBlock = true;
-        continue;
-      }
-
-      if (inControlBlock) {
-        const isKeyValueLine = /^[A-Za-z ]+:\s/.test(line);
-        if (!isKeyValueLine) {
-          continue;
-        }
-        inControlBlock = false;
-      }
-
-      details.push(line);
-    }
+    // Control lines are rendered separately via tooltip.controlItems — keep only
+    // the known labelled fields so faction percentage lines are never silently dropped.
+    const DETAIL_PREFIXES = ['Owner:', 'Damage:', 'State:'];
+    const details = rawDetails.filter((line) =>
+      DETAIL_PREFIXES.some((prefix) => line.startsWith(prefix))
+    );
 
     return { title, subtitle, details };
   }, [tooltip.text]);
@@ -422,7 +520,9 @@ const GalaxyMapRender = ({
             />
           ) : (
             <Text
-              text={bgLoadError ? 'Background unavailable' : 'Loading Background...'}
+              text={
+                bgLoadError ? 'Background unavailable' : 'Loading Background...'
+              }
               x={stageSize.width / 2}
               y={stageSize.height / 2}
               fontSize={24}
@@ -432,35 +532,7 @@ const GalaxyMapRender = ({
           )}
         </Layer>
         <Layer>
-          {systems.map((system) => {
-            /* Resolve owner display name via faction metadata for consistent filter matching and labels. */
-            const ownerPretty =
-              factions[system.owner]?.prettyName ?? system.owner;
-            const factionMatch =
-              !selectedFactions.length ||
-              selectedFactions.includes(ownerPretty);
-            if (!factionMatch) return null;
-
-            const isMatch = system.name
-              .toLowerCase()
-              .includes(normalizedSearch);
-            const opacity = shouldFilter ? (isMatch ? 1 : 0.2) : 1;
-            return (
-              <StarSystem
-                key={`${system.name}-${system.posX}-${system.posY}-${system.owner}`}
-                zoomScaleFactor={zoomScaleFactor < 1 ? zoomScaleFactor : 1}
-                system={system}
-                factions={factions}
-                settings={settings}
-                showTooltip={showTooltip}
-                hideTooltip={hideTooltip}
-                tooltipVisibleRef={tooltipVisibleRef}
-                touchedSystemNameRef={touchedSystemNameRef}
-                highlighted={shouldFilter && isMatch}
-                opacity={opacity}
-              />
-            );
-          })}
+          {renderedSystems}
         </Layer>
         <Layer>
           {tooltip.visible && !isMobile && (
@@ -519,15 +591,14 @@ const GalaxyMapRender = ({
                         const segmentOffset = segments
                           .slice(0, segmentIndex)
                           .reduce((sum, previousSegment) => {
-                            const measure = new Konva.Text({
-                              text: previousSegment.text,
-                              fontFamily: 'Roboto Mono, monospace',
-                              fontSize: previousSegment.fontSize,
-                              fontStyle: previousSegment.fontStyle,
-                            });
-                            const width = measure.width();
-                            measure.destroy();
-                            return sum + width;
+                            return (
+                              sum +
+                              measureTooltipTextWidth(
+                                previousSegment.text,
+                                previousSegment.fontSize,
+                                previousSegment.fontStyle
+                              )
+                            );
                           }, 0);
 
                         return (
@@ -536,7 +607,7 @@ const GalaxyMapRender = ({
                             x={segmentOffset}
                             y={0}
                             text={segment.text}
-                            fontFamily="Roboto Mono, monospace"
+                            fontFamily={TOOLTIP_FONT_FAMILY}
                             fontSize={segment.fontSize}
                             fontStyle={segment.fontStyle}
                             fill="black"
@@ -657,10 +728,7 @@ const GalaxyMapRender = ({
       <BottomFilterPanel
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        factions={useMemo(
-          () => buildFactionFilterOptions(systems, factions),
-          [systems, factions]
-        )}
+        factions={factionOptions}
         selectedFactions={selectedFactions}
         setSelectedFactions={setSelectedFactions}
       />

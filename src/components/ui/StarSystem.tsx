@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react';
-import { Circle, Image as KonvaImage } from 'react-konva';
+import { Circle, Group, Image as KonvaImage } from 'react-konva';
 import Konva from 'konva';
 import { findFaction, openInNewTab } from '../helpers';
 import pirateIconUrl from '../../assets/joli-rouge-icon.svg';
@@ -17,74 +17,37 @@ import type { TooltipControlItem } from '../GalaxyMap/gm.types';
 
 const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;
-let pirateIconImageCache: HTMLImageElement | null = null;
-let pirateIconImagePromise: Promise<HTMLImageElement> | null = null;
-let holdTheLineIconImageCache: HTMLImageElement | null = null;
-let holdTheLineIconImagePromise: Promise<HTMLImageElement> | null = null;
-let captureEventIconImageCache: HTMLImageElement | null = null;
-let captureEventIconImagePromise: Promise<HTMLImageElement> | null = null;
 
-const loadPirateIconImage = (): Promise<HTMLImageElement> => {
-  if (pirateIconImageCache) return Promise.resolve(pirateIconImageCache);
-  if (pirateIconImagePromise) return pirateIconImagePromise;
+const makeIconLoader = (url: string) => {
+  let cache: HTMLImageElement | null = null;
+  let promise: Promise<HTMLImageElement> | null = null;
 
-  pirateIconImagePromise = new Promise((resolve, reject) => {
-    const image = new window.Image();
-    image.src = pirateIconUrl;
-    image.onload = () => {
-      pirateIconImageCache = image;
-      resolve(image);
-    };
-    image.onerror = () => {
-      reject(new Error('Failed to load pirate raid icon.'));
-    };
-  });
+  return (): Promise<HTMLImageElement> => {
+    if (cache) return Promise.resolve(cache);
+    if (promise) return promise;
 
-  return pirateIconImagePromise;
+    promise = new Promise((resolve, reject) => {
+      const image = new window.Image();
+      image.src = url;
+      image.onload = () => {
+        cache = image;
+        resolve(image);
+      };
+      image.onerror = () => reject(new Error(`Failed to load icon: ${url}`));
+    });
+
+    return promise;
+  };
 };
 
-const loadHoldTheLineIconImage = (): Promise<HTMLImageElement> => {
-  if (holdTheLineIconImageCache) return Promise.resolve(holdTheLineIconImageCache);
-  if (holdTheLineIconImagePromise) return holdTheLineIconImagePromise;
-
-  holdTheLineIconImagePromise = new Promise((resolve, reject) => {
-    const image = new window.Image();
-    image.src = holdTheLineIconUrl;
-    image.onload = () => {
-      holdTheLineIconImageCache = image;
-      resolve(image);
-    };
-    image.onerror = () => {
-      reject(new Error('Failed to load hold the line icon.'));
-    };
-  });
-
-  return holdTheLineIconImagePromise;
-};
-
-const loadCaptureEventIconImage = (): Promise<HTMLImageElement> => {
-  if (captureEventIconImageCache) return Promise.resolve(captureEventIconImageCache);
-  if (captureEventIconImagePromise) return captureEventIconImagePromise;
-
-  captureEventIconImagePromise = new Promise((resolve, reject) => {
-    const image = new window.Image();
-    image.src = captureEventIconUrl;
-    image.onload = () => {
-      captureEventIconImageCache = image;
-      resolve(image);
-    };
-    image.onerror = () => {
-      reject(new Error('Failed to load capture event icon.'));
-    };
-  });
-
-  return captureEventIconImagePromise;
-};
+const loadPirateIconImage = makeIconLoader(pirateIconUrl);
+const loadHoldTheLineIconImage = makeIconLoader(holdTheLineIconUrl);
+const loadCaptureEventIconImage = makeIconLoader(captureEventIconUrl);
 
 interface StarSystemProps {
   system: DisplayStarSystemType;
   factions: FactionDataType;
-  zoomScaleFactor: number;
+  scaleRef: React.RefObject<number>;
   settings: Settings;
   showTooltip: (
     text: string,
@@ -104,7 +67,7 @@ interface StarSystemProps {
 
 const StarSystem: React.FC<StarSystemProps> = ({
   system,
-  zoomScaleFactor,
+  scaleRef,
   factions,
   settings,
   showTooltip,
@@ -146,14 +109,13 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const isInsurrectionLike = isInsurrect || hasHoldTheLineEvent || hasCaptureEvent;
   const shouldPulseSize = hasPirateRaid || hasHoldTheLineEvent || hasCaptureEvent;
   const showActivePlayerIndicator =
-    settings.flashActivePlayes && hasActivePlayers;
+    settings.flashActivePlayers && hasActivePlayers;
   const activePlayerRadiusMultiplier = showActivePlayerIndicator ? 1.25 : 1;
   const radius =
-    ((highlighted ? baseRadius * 3 : baseRadius) *
-      activePlayerRadiusMultiplier) /
-    zoomScaleFactor;
+    (highlighted ? baseRadius * 3 : baseRadius) * activePlayerRadiusMultiplier;
   const centerX = Number(system.posX);
   const centerY = -Number(system.posY);
+  const groupRef = useRef<Konva.Group>(null);
   const circleOpacity = showActivePlayerIndicator
     ? Math.min(1, opacity + 0.25)
     : opacity;
@@ -201,66 +163,49 @@ const StarSystem: React.FC<StarSystemProps> = ({
 
   useEffect(() => {
     if (!hasPirateRaid) return;
-    if (pirateIconImageCache) {
-      setPirateIconImage(pirateIconImageCache);
-      return;
-    }
-
     let cancelled = false;
     loadPirateIconImage()
-      .then((image) => {
-        if (!cancelled) setPirateIconImage(image);
-      })
-      .catch(() => {
-        if (!cancelled) setPirateIconImage(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .then((image) => { if (!cancelled) setPirateIconImage(image); })
+      .catch(() => { if (!cancelled) setPirateIconImage(null); });
+    return () => { cancelled = true; };
   }, [hasPirateRaid]);
 
   useEffect(() => {
     if (!hasHoldTheLineEvent) return;
-    if (holdTheLineIconImageCache) {
-      setHoldTheLineIconImage(holdTheLineIconImageCache);
-      return;
-    }
-
     let cancelled = false;
     loadHoldTheLineIconImage()
-      .then((image) => {
-        if (!cancelled) setHoldTheLineIconImage(image);
-      })
-      .catch(() => {
-        if (!cancelled) setHoldTheLineIconImage(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .then((image) => { if (!cancelled) setHoldTheLineIconImage(image); })
+      .catch(() => { if (!cancelled) setHoldTheLineIconImage(null); });
+    return () => { cancelled = true; };
   }, [hasHoldTheLineEvent]);
 
   useEffect(() => {
     if (!hasCaptureEvent) return;
-    if (captureEventIconImageCache) {
-      setCaptureEventIconImage(captureEventIconImageCache);
-      return;
-    }
-
     let cancelled = false;
     loadCaptureEventIconImage()
-      .then((image) => {
-        if (!cancelled) setCaptureEventIconImage(image);
-      })
-      .catch(() => {
-        if (!cancelled) setCaptureEventIconImage(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .then((image) => { if (!cancelled) setCaptureEventIconImage(image); })
+      .catch(() => { if (!cancelled) setCaptureEventIconImage(null); });
+    return () => { cancelled = true; };
   }, [hasCaptureEvent]);
+
+  // Keep the group scale in sync with the stage zoom imperatively so zoom events
+  // don't trigger React re-renders for every visible StarSystem.
+  useEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+
+    let lastApplied = -1;
+
+    const animation = new Konva.Animation(() => {
+      const s = 1 / Math.min(scaleRef.current ?? 1, 1);
+      if (s === lastApplied) return false;
+      lastApplied = s;
+      group.scale({ x: s, y: s });
+    }, group.getLayer());
+
+    animation.start();
+    return () => { animation.stop(); };
+  }, [scaleRef]);
 
   useEffect(() => {
     if (
@@ -299,20 +244,18 @@ const StarSystem: React.FC<StarSystemProps> = ({
     if (!shouldPulseSize || !systemCircleRef.current) return;
 
     const systemNode = systemCircleRef.current;
-    const pirateIconNode = pirateIconRef.current;
-    const holdTheLineIconNode = holdTheLineIconRef.current;
-    const captureEventIconNode = captureEventIconRef.current;
 
+    // Read icon nodes from refs each frame so the animation picks up newly-mounted
+    // icons without restarting — avoids a mid-frame glitch when an image loads.
     const animation = new Konva.Animation((frame) => {
       if (!frame) return;
       const wave = (Math.sin(frame.time * 0.0055) + 1) / 2;
       const scale = 0.92 + wave * 0.655;
 
       systemNode.scale({ x: scale, y: scale });
-      if (pirateIconNode) pirateIconNode.scale({ x: scale, y: scale });
-      if (holdTheLineIconNode) holdTheLineIconNode.scale({ x: scale, y: scale });
-      if (captureEventIconNode)
-        captureEventIconNode.scale({ x: scale, y: scale });
+      pirateIconRef.current?.scale({ x: scale, y: scale });
+      holdTheLineIconRef.current?.scale({ x: scale, y: scale });
+      captureEventIconRef.current?.scale({ x: scale, y: scale });
     }, systemNode.getLayer());
 
     animation.start();
@@ -320,11 +263,11 @@ const StarSystem: React.FC<StarSystemProps> = ({
     return () => {
       animation.stop();
       systemNode.scale({ x: 1, y: 1 });
-      if (pirateIconNode) pirateIconNode.scale({ x: 1, y: 1 });
-      if (holdTheLineIconNode) holdTheLineIconNode.scale({ x: 1, y: 1 });
-      if (captureEventIconNode) captureEventIconNode.scale({ x: 1, y: 1 });
+      pirateIconRef.current?.scale({ x: 1, y: 1 });
+      holdTheLineIconRef.current?.scale({ x: 1, y: 1 });
+      captureEventIconRef.current?.scale({ x: 1, y: 1 });
     };
-  }, [shouldPulseSize, pirateIconImage, holdTheLineIconImage, captureEventIconImage]);
+  }, [shouldPulseSize]);
 
   const damageLevelText =
     system.damageLevel !== undefined &&
@@ -385,13 +328,20 @@ const StarSystem: React.FC<StarSystemProps> = ({
     };
   };
 
+  const initialGroupScale = 1 / Math.min(scaleRef.current ?? 1, 1);
+
   return (
-    <>
+    <Group
+      ref={groupRef}
+      x={centerX}
+      y={centerY}
+      scale={{ x: initialGroupScale, y: initialGroupScale }}
+    >
       {isInsurrectionLike && (
         <Circle
           ref={insurrectGlowRef}
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           radius={insurrectGlowRadius}
           fillRadialGradientStartPoint={{ x: 0, y: 0 }}
           fillRadialGradientStartRadius={0}
@@ -414,8 +364,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       {isInsurrectionLike && (
         <Circle
           ref={insurrectPulseRef}
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           radius={insurrectPulseRadius}
           fillRadialGradientStartPoint={{ x: 0, y: 0 }}
           fillRadialGradientStartRadius={0}
@@ -432,8 +382,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       )}
       {showActivePlayerIndicator && (
         <Circle
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           fill={system.factionColour}
           radius={haloRadius}
           opacity={haloOpacity}
@@ -442,8 +392,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       )}
       {showActivePlayerIndicator && (
         <Circle
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           radius={radius}
           stroke="#ffffff"
           strokeWidth={Math.max(0.2, radius * 0.14)}
@@ -453,8 +403,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       )}
       <Circle
         ref={systemCircleRef}
-        x={centerX}
-        y={centerY}
+        x={0}
+        y={0}
         fill={system.factionColour}
         radius={radius}
         hitStrokeWidth={3}
@@ -522,8 +472,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
         <KonvaImage
           ref={pirateIconRef}
           image={pirateIconImage}
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           width={pirateIconSize}
           height={pirateIconSize}
           offsetX={pirateIconSize / 2}
@@ -535,8 +485,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
         <KonvaImage
           ref={holdTheLineIconRef}
           image={holdTheLineIconImage}
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           width={pirateIconSize}
           height={pirateIconSize}
           offsetX={pirateIconSize / 2}
@@ -551,8 +501,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
         <KonvaImage
           ref={captureEventIconRef}
           image={captureEventIconImage}
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           width={pirateIconSize}
           height={pirateIconSize}
           offsetX={pirateIconSize / 2}
@@ -565,8 +515,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       )}
       {showActivePlayerIndicator && (
         <Circle
-          x={centerX - shineOffset}
-          y={centerY - shineOffset}
+          x={-shineOffset}
+          y={-shineOffset}
           radius={shineRadius}
           fillRadialGradientStartPoint={{ x: 0, y: 0 }}
           fillRadialGradientStartRadius={0}
@@ -581,7 +531,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
           listening={false}
         />
       )}
-    </>
+    </Group>
   );
 };
 

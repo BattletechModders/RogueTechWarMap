@@ -18,12 +18,26 @@ export function useGalaxyViewport({
 
   const scaleRef = useRef<number>(1);
   const positionRef = useRef<Point>({
-    x: window.innerWidth / 2,
-    y: window.innerHeight / 2,
+    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 0,
+    y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0,
   });
 
-  // Exposes current scale to React consumers that need rerenders (like star node sizing).
+  // Exposes current scale and position to React consumers that need rerenders.
   const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
+  const [renderPosition, setRenderPosition] = useState<Point>(
+    positionRef.current
+  );
+  const positionUpdateRequestedRef = useRef(false);
+
+  const schedulePositionUpdate = useCallback(() => {
+    if (positionUpdateRequestedRef.current) return;
+    positionUpdateRequestedRef.current = true;
+
+    requestAnimationFrame(() => {
+      setRenderPosition(positionRef.current);
+      positionUpdateRequestedRef.current = false;
+    });
+  }, []);
 
   // Batch draw calls per animation frame to avoid a Konva redraw storm during drag/zoom.
   const frameRequestedRef = useRef(false);
@@ -78,25 +92,35 @@ export function useGalaxyViewport({
       stage.position(positionRef.current);
 
       requestBatchDraw(stage);
-
+      schedulePositionUpdate();
       setZoomScaleFactor(newScale);
     },
-    [maxScale, minScale, requestBatchDraw, wheelThrottleMs]
+    [
+      maxScale,
+      minScale,
+      requestBatchDraw,
+      schedulePositionUpdate,
+      wheelThrottleMs,
+    ]
   );
 
-  const onDragMove = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
-    positionRef.current = { x: e.target.x(), y: e.target.y() };
-  }, []);
+  const onDragMove = useCallback(
+    (e: Konva.KonvaEventObject<DragEvent>) => {
+      positionRef.current = { x: e.target.x(), y: e.target.y() };
+      schedulePositionUpdate();
+    },
+    [schedulePositionUpdate]
+  );
 
   // Build a memoized snapshot consumed by Stage props and tooltip scaling.
   // It intentionally updates only on React render so we avoid excess calculations.
   const view: ViewTransform = useMemo(
     () => ({
       scale: scaleRef.current,
-      position: positionRef.current,
+      position: renderPosition,
     }),
     // Re-render is required here because refs update without triggering React by design.
-    [zoomScaleFactor]
+    [renderPosition, zoomScaleFactor]
   );
 
   return {
