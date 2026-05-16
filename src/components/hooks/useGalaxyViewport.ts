@@ -22,6 +22,19 @@ export function useGalaxyViewport({
     y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0,
   });
 
+  // Synchronous scale-change listeners: called inside the same RAF as requestBatchDraw
+  // so group scales are always up-to-date before the canvas redraws.
+  const scaleListenersRef = useRef<Set<(scale: number) => void>>(new Set());
+
+  const registerScaleListener = useCallback((listener: (scale: number) => void) => {
+    scaleListenersRef.current.add(listener);
+    return () => { scaleListenersRef.current.delete(listener); };
+  }, []);
+
+  const notifyScaleListeners = useCallback((scale: number) => {
+    scaleListenersRef.current.forEach((fn) => fn(scale));
+  }, []);
+
   // Exposes current scale and position to React consumers that need rerenders.
   const [zoomScaleFactor, setZoomScaleFactor] = useState<number>(1);
   const [renderPosition, setRenderPosition] = useState<Point>(
@@ -91,6 +104,8 @@ export function useGalaxyViewport({
       stage.scale({ x: newScale, y: newScale });
       stage.position(positionRef.current);
 
+      // Update star-size compensation before the canvas redraws so there's no lag.
+      notifyScaleListeners(newScale);
       requestBatchDraw(stage);
       schedulePositionUpdate();
       setZoomScaleFactor(newScale);
@@ -132,6 +147,8 @@ export function useGalaxyViewport({
 
     requestBatchDraw,
     setZoomScaleFactor,
+    registerScaleListener,
+    notifyScaleListeners,
 
     handlers: {
       onWheel,

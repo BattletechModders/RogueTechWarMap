@@ -120,6 +120,8 @@ const GalaxyMapRender = ({
     view,
     requestBatchDraw,
     setZoomScaleFactor,
+    registerScaleListener,
+    notifyScaleListeners,
     handlers: { onWheel, onDragMove },
   } = useGalaxyViewport();
   const [searchTerm, setSearchTerm] = useState('');
@@ -144,6 +146,7 @@ const GalaxyMapRender = ({
     positionRef,
     requestBatchDraw,
     setZoomScaleFactor,
+    notifyScaleListeners,
     hideTooltip,
     minScale: MIN_SCALE,
     maxScale: MAX_SCALE,
@@ -351,6 +354,7 @@ const GalaxyMapRender = ({
           <StarSystem
             key={system.id}
             scaleRef={scaleRef}
+            registerScaleListener={registerScaleListener}
             system={system}
             factions={factions}
             settings={settings}
@@ -367,6 +371,7 @@ const GalaxyMapRender = ({
       factions,
       hideTooltip,
       normalizedSearch,
+      registerScaleListener,
       scaleRef,
       settings,
       shouldFilter,

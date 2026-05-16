@@ -48,6 +48,7 @@ interface StarSystemProps {
   system: DisplayStarSystemType;
   factions: FactionDataType;
   scaleRef: React.RefObject<number>;
+  registerScaleListener: (listener: (scale: number) => void) => () => void;
   settings: Settings;
   showTooltip: (
     text: string,
@@ -68,6 +69,7 @@ interface StarSystemProps {
 const StarSystem: React.FC<StarSystemProps> = ({
   system,
   scaleRef,
+  registerScaleListener,
   factions,
   settings,
   showTooltip,
@@ -191,21 +193,13 @@ const StarSystem: React.FC<StarSystemProps> = ({
   // Keep the group scale in sync with the stage zoom imperatively so zoom events
   // don't trigger React re-renders for every visible StarSystem.
   useEffect(() => {
-    const group = groupRef.current;
-    if (!group) return;
-
-    let lastApplied = -1;
-
-    const animation = new Konva.Animation(() => {
-      const s = 1 / Math.min(scaleRef.current ?? 1, 1);
-      if (s === lastApplied) return false;
-      lastApplied = s;
+    return registerScaleListener((scale) => {
+      const group = groupRef.current;
+      if (!group) return;
+      const s = 1 / Math.min(scale, 1);
       group.scale({ x: s, y: s });
-    }, group.getLayer());
-
-    animation.start();
-    return () => { animation.stop(); };
-  }, [scaleRef]);
+    });
+  }, [registerScaleListener]);
 
   useEffect(() => {
     if (
