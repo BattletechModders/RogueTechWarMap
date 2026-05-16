@@ -25,4 +25,13 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Test files and mock helpers legitimately need `any` to type fake Konva
+    // objects and partial event stubs without full interface implementations.
+    // Must come after the main config so it takes precedence for matched files.
+    files: ['**/*.test.ts', '**/*.test.tsx', 'src/test/**', 'tests/**'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 )

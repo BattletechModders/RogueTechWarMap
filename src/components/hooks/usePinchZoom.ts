@@ -166,7 +166,7 @@ export function usePinchZoom({
       }
       frameQueued.current = false;
     }
-  }, []);
+  }, [scaleRef, setZoomScaleFactor]);
 
   return {
     isPinching,

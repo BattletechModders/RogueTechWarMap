@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Lint
+        run: yarn lint
+
       - name: Typecheck test sources
         run: npx tsc -p tsconfig.vitest.json --noEmit
 
