@@ -60,7 +60,7 @@
   },
   "simple-git-hooks": {
     "pre-commit": "yarn lint",
-    "pre-push": "npx tsc -p tsconfig.vitest.json --noEmit && yarn test"
+    "pre-push": "[ -s \"$HOME/.nvm/nvm.sh\" ] && . \"$HOME/.nvm/nvm.sh\" && nvm use; npx tsc -p tsconfig.vitest.json --noEmit && yarn test"
   },
   "resolutions": {
     "minimatch": "^3.1.3",
