@@ -118,7 +118,6 @@ const GalaxyMapRender = ({
     scaleRef,
     positionRef,
     view,
-    zoomScaleFactor,
     requestBatchDraw,
     setZoomScaleFactor,
     handlers: { onWheel, onDragMove },
