@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240">
+  <!-- Shield outline -->
+  <path d="M100 10
+       L170 35
+       V105
+       C170 155 140 195 100 225
+       C60 195 30 155 30 105
+       V35
+       Z" fill="none" stroke="black" stroke-width="8" stroke-linejoin="round"></path>
+
+  <!-- Left half filled black -->
+  <clipPath id="shield-clip">
+    <path d="M100 10
+         L170 35
+         V105
+         C170 155 140 195 100 225
+         C60 195 30 155 30 105
+         V35
+         Z"></path>
+  </clipPath>
+
+  <rect x="0" y="0" width="100" height="240" fill="black" clip-path="url(#shield-clip)"></rect>
+</svg>
