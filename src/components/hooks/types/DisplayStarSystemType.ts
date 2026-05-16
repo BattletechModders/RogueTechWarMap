@@ -1,6 +1,7 @@
 import type { StarSystemWithState } from './StarSystemWithState';
 
 export type DisplayStarSystemType = StarSystemWithState & {
+  id: string;
   isCapital: boolean;
   factionColour: string;
   factionName: string;

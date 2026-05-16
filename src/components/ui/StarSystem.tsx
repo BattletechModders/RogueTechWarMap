@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react';
-import { Circle, Image as KonvaImage } from 'react-konva';
+import { Circle, Group, Image as KonvaImage } from 'react-konva';
 import Konva from 'konva';
 import { findFaction, openInNewTab } from '../helpers';
 import pirateIconUrl from '../../assets/joli-rouge-icon.svg';
@@ -47,7 +47,7 @@ const loadCaptureEventIconImage = makeIconLoader(captureEventIconUrl);
 interface StarSystemProps {
   system: DisplayStarSystemType;
   factions: FactionDataType;
-  zoomScaleFactor: number;
+  scaleRef: React.RefObject<number>;
   settings: Settings;
   showTooltip: (
     text: string,
@@ -67,7 +67,7 @@ interface StarSystemProps {
 
 const StarSystem: React.FC<StarSystemProps> = ({
   system,
-  zoomScaleFactor,
+  scaleRef,
   factions,
   settings,
   showTooltip,
@@ -112,11 +112,10 @@ const StarSystem: React.FC<StarSystemProps> = ({
     settings.flashActivePlayers && hasActivePlayers;
   const activePlayerRadiusMultiplier = showActivePlayerIndicator ? 1.25 : 1;
   const radius =
-    ((highlighted ? baseRadius * 3 : baseRadius) *
-      activePlayerRadiusMultiplier) /
-    zoomScaleFactor;
+    (highlighted ? baseRadius * 3 : baseRadius) * activePlayerRadiusMultiplier;
   const centerX = Number(system.posX);
   const centerY = -Number(system.posY);
+  const groupRef = useRef<Konva.Group>(null);
   const circleOpacity = showActivePlayerIndicator
     ? Math.min(1, opacity + 0.25)
     : opacity;
@@ -188,6 +187,25 @@ const StarSystem: React.FC<StarSystemProps> = ({
       .catch(() => { if (!cancelled) setCaptureEventIconImage(null); });
     return () => { cancelled = true; };
   }, [hasCaptureEvent]);
+
+  // Keep the group scale in sync with the stage zoom imperatively so zoom events
+  // don't trigger React re-renders for every visible StarSystem.
+  useEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+
+    let lastApplied = -1;
+
+    const animation = new Konva.Animation(() => {
+      const s = 1 / Math.min(scaleRef.current ?? 1, 1);
+      if (s === lastApplied) return false;
+      lastApplied = s;
+      group.scale({ x: s, y: s });
+    }, group.getLayer());
+
+    animation.start();
+    return () => animation.stop();
+  }, [scaleRef]);
 
   useEffect(() => {
     if (
@@ -310,13 +328,20 @@ const StarSystem: React.FC<StarSystemProps> = ({
     };
   };
 
+  const initialGroupScale = 1 / Math.min(scaleRef.current ?? 1, 1);
+
   return (
-    <>
+    <Group
+      ref={groupRef}
+      x={centerX}
+      y={centerY}
+      scale={{ x: initialGroupScale, y: initialGroupScale }}
+    >
       {isInsurrectionLike && (
         <Circle
           ref={insurrectGlowRef}
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           radius={insurrectGlowRadius}
           fillRadialGradientStartPoint={{ x: 0, y: 0 }}
           fillRadialGradientStartRadius={0}
@@ -339,8 +364,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       {isInsurrectionLike && (
         <Circle
           ref={insurrectPulseRef}
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           radius={insurrectPulseRadius}
           fillRadialGradientStartPoint={{ x: 0, y: 0 }}
           fillRadialGradientStartRadius={0}
@@ -357,8 +382,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       )}
       {showActivePlayerIndicator && (
         <Circle
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           fill={system.factionColour}
           radius={haloRadius}
           opacity={haloOpacity}
@@ -367,8 +392,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       )}
       {showActivePlayerIndicator && (
         <Circle
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           radius={radius}
           stroke="#ffffff"
           strokeWidth={Math.max(0.2, radius * 0.14)}
@@ -378,8 +403,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       )}
       <Circle
         ref={systemCircleRef}
-        x={centerX}
-        y={centerY}
+        x={0}
+        y={0}
         fill={system.factionColour}
         radius={radius}
         hitStrokeWidth={3}
@@ -447,8 +472,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
         <KonvaImage
           ref={pirateIconRef}
           image={pirateIconImage}
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           width={pirateIconSize}
           height={pirateIconSize}
           offsetX={pirateIconSize / 2}
@@ -460,8 +485,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
         <KonvaImage
           ref={holdTheLineIconRef}
           image={holdTheLineIconImage}
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           width={pirateIconSize}
           height={pirateIconSize}
           offsetX={pirateIconSize / 2}
@@ -476,8 +501,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
         <KonvaImage
           ref={captureEventIconRef}
           image={captureEventIconImage}
-          x={centerX}
-          y={centerY}
+          x={0}
+          y={0}
           width={pirateIconSize}
           height={pirateIconSize}
           offsetX={pirateIconSize / 2}
@@ -490,8 +515,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
       )}
       {showActivePlayerIndicator && (
         <Circle
-          x={centerX - shineOffset}
-          y={centerY - shineOffset}
+          x={-shineOffset}
+          y={-shineOffset}
           radius={shineRadius}
           fillRadialGradientStartPoint={{ x: 0, y: 0 }}
           fillRadialGradientStartRadius={0}
@@ -506,7 +531,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
           listening={false}
         />
       )}
-    </>
+    </Group>
   );
 };
 

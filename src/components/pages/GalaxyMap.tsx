@@ -350,8 +350,8 @@ const GalaxyMapRender = ({
 
         return (
           <StarSystem
-            key={`${system.name}-${system.posX}-${system.posY}-${system.owner}`}
-            zoomScaleFactor={zoomScaleFactor < 1 ? zoomScaleFactor : 1}
+            key={system.id}
+            scaleRef={scaleRef}
             system={system}
             factions={factions}
             settings={settings}
@@ -368,11 +368,11 @@ const GalaxyMapRender = ({
       factions,
       hideTooltip,
       normalizedSearch,
+      scaleRef,
       settings,
       shouldFilter,
       showTooltip,
       visibleSystems,
-      zoomScaleFactor,
     ]
   );
 
