@@ -146,7 +146,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const isInsurrectionLike = isInsurrect || hasHoldTheLineEvent || hasCaptureEvent;
   const shouldPulseSize = hasPirateRaid || hasHoldTheLineEvent || hasCaptureEvent;
   const showActivePlayerIndicator =
-    settings.flashActivePlayes && hasActivePlayers;
+    settings.flashActivePlayers && hasActivePlayers;
   const activePlayerRadiusMultiplier = showActivePlayerIndicator ? 1.25 : 1;
   const radius =
     ((highlighted ? baseRadius * 3 : baseRadius) *

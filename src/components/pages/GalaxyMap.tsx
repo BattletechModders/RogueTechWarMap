@@ -5,6 +5,7 @@ import {
 } from '../GalaxyMap/gm.types';
 import { buildFactionFilterOptions } from '../GalaxyMap/gm.selectors';
 import {
+  useCallback,
   useDeferredValue,
   useEffect,
   useMemo,
@@ -375,7 +376,7 @@ const GalaxyMapRender = ({
     ]
   );
 
-  const getDesktopLineSegments = (line: string, index: number) => {
+  const getDesktopLineSegments = useCallback((line: string, index: number) => {
     if (index === 0) {
       return [
         {
@@ -412,7 +413,7 @@ const GalaxyMapRender = ({
         fontSize: desktopBodyFontSize,
       },
     ];
-  };
+  }, [desktopTitleFontSize, desktopBodyFontSize]);
 
   const desktopTooltipLines = useMemo(
     () => (tooltip.text || '').split('\n').map((line) => line.trimEnd()),
@@ -439,7 +440,7 @@ const GalaxyMapRender = ({
     const boxHeight =
       lines.length * desktopLineHeight + desktopTooltipPadding * 2;
     return { lines, boxWidth, boxHeight };
-  }, [desktopTooltipLines, tooltipFontSize, desktopLineHeight]);
+  }, [desktopTooltipLines, desktopLineHeight, getDesktopLineSegments]);
 
   useEffect(() => {
     if (tooltip.visible) {
