@@ -5,7 +5,12 @@ import {
 } from '../GalaxyMap/gm.types';
 import { buildFactionFilterOptions } from '../GalaxyMap/gm.selectors';
 import {
-  useCallback,
+  getViewportSize,
+  getTooltipFontSize,
+  getDesktopLineSegments,
+  parseMobileTooltipData,
+} from './GalaxyMap.helpers';
+import {
   useDeferredValue,
   useEffect,
   useMemo,
@@ -27,25 +32,6 @@ const tooltipMeasureContext =
   typeof document !== 'undefined'
     ? document.createElement('canvas').getContext('2d')
     : null;
-
-const getViewportSize = () => {
-  if (typeof window === 'undefined') {
-    return { width: 0, height: 0 };
-  }
-
-  return {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  };
-};
-
-const getTooltipFontSize = () => {
-  if (typeof document === 'undefined') {
-    return 16 * 0.85;
-  }
-
-  return parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.85;
-};
 
 const measureTooltipTextWidth = (
   text: string,
@@ -375,44 +361,10 @@ const GalaxyMapRender = ({
     ]
   );
 
-  const getDesktopLineSegments = useCallback((line: string, index: number) => {
-    if (index === 0) {
-      return [
-        {
-          text: line,
-          fontStyle: 'bold' as const,
-          fontSize: desktopTitleFontSize,
-        },
-      ];
-    }
-
-    const match = line.match(/^(Owner:|Damage:)\s*(.*)$/);
-    if (match) {
-      const [, label, value] = match;
-      return [
-        {
-          text: `${label} `,
-          fontStyle: 'bold' as const,
-          fontSize: desktopBodyFontSize,
-        },
-        {
-          text: value,
-          fontStyle: 'normal' as const,
-          fontSize: desktopBodyFontSize,
-        },
-      ];
-    }
-
-    return [
-      {
-        text: line,
-        fontStyle: /^(Control|State):/.test(line)
-          ? ('bold' as const)
-          : ('normal' as const),
-        fontSize: desktopBodyFontSize,
-      },
-    ];
-  }, [desktopTitleFontSize, desktopBodyFontSize]);
+  const sizes = useMemo(
+    () => ({ titleFontSize: desktopTitleFontSize, bodyFontSize: desktopBodyFontSize }),
+    [desktopTitleFontSize, desktopBodyFontSize]
+  );
 
   const desktopTooltipLines = useMemo(
     () => (tooltip.text || '').split('\n').map((line) => line.trimEnd()),
@@ -422,7 +374,7 @@ const GalaxyMapRender = ({
   const desktopTooltipLayout = useMemo(() => {
     const lines = desktopTooltipLines.length ? desktopTooltipLines : [''];
     const widths = lines.map((line, index) =>
-      getDesktopLineSegments(line, index).reduce((sum, segment) => {
+      getDesktopLineSegments(line, index, sizes).reduce((sum, segment) => {
         return (
           sum +
           measureTooltipTextWidth(
@@ -439,7 +391,7 @@ const GalaxyMapRender = ({
     const boxHeight =
       lines.length * desktopLineHeight + desktopTooltipPadding * 2;
     return { lines, boxWidth, boxHeight };
-  }, [desktopTooltipLines, desktopLineHeight, getDesktopLineSegments]);
+  }, [desktopTooltipLines, desktopLineHeight, sizes]);
 
   useEffect(() => {
     if (tooltip.visible) {
@@ -454,30 +406,10 @@ const GalaxyMapRender = ({
     }
   }, [tooltip.visible]);
 
-  const mobileTooltipData = useMemo(() => {
-    const trimmed = tooltip.text?.trim();
-    if (!trimmed) {
-      return { title: '', subtitle: '', details: [] as string[] };
-    }
-
-    const lines = trimmed
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line && line !== '[Tap to open]');
-
-    const title = lines[0] ?? '';
-    const subtitle = lines[1]?.startsWith('(') ? lines[1] : '';
-    const rawDetails = lines.slice(subtitle ? 2 : 1);
-
-    // Control lines are rendered separately via tooltip.controlItems — keep only
-    // the known labelled fields so faction percentage lines are never silently dropped.
-    const DETAIL_PREFIXES = ['Owner:', 'Damage:', 'State:'];
-    const details = rawDetails.filter((line) =>
-      DETAIL_PREFIXES.some((prefix) => line.startsWith(prefix))
-    );
-
-    return { title, subtitle, details };
-  }, [tooltip.text]);
+  const mobileTooltipData = useMemo(
+    () => parseMobileTooltipData(tooltip.text),
+    [tooltip.text]
+  );
 
   const controlItems = useMemo(
     () =>
@@ -569,7 +501,7 @@ const GalaxyMapRender = ({
               />
               {desktopTooltipLayout.lines.map((line, index) =>
                 (() => {
-                  const segments = getDesktopLineSegments(line, index);
+                  const segments = getDesktopLineSegments(line, index, sizes);
                   return (
                     <Group
                       key={`${line}-${index}`}
