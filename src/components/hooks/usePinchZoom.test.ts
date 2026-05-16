@@ -20,6 +20,7 @@ const buildFakeStage = (): FakeStage => ({
 
 const renderPinch = (opts?: Partial<{ minScale: number; maxScale: number }>) => {
   const requestBatchDraw = vi.fn();
+  const schedulePositionUpdate = vi.fn();
   const setZoomScaleFactor = vi.fn();
   const hideTooltip = vi.fn();
   const fakeStage = buildFakeStage();
@@ -33,6 +34,7 @@ const renderPinch = (opts?: Partial<{ minScale: number; maxScale: number }>) => 
       scaleRef,
       positionRef,
       requestBatchDraw,
+      schedulePositionUpdate,
       setZoomScaleFactor,
       hideTooltip,
       minScale: opts?.minScale,
@@ -40,7 +42,7 @@ const renderPinch = (opts?: Partial<{ minScale: number; maxScale: number }>) => 
     });
   });
 
-  return { hook, fakeStage, requestBatchDraw, setZoomScaleFactor, hideTooltip };
+  return { hook, fakeStage, requestBatchDraw, schedulePositionUpdate, setZoomScaleFactor, hideTooltip };
 };
 
 describe('usePinchZoom', () => {
@@ -155,5 +157,37 @@ describe('usePinchZoom', () => {
     );
 
     expect(fakeStage.scale).not.toHaveBeenCalled();
+  });
+
+  it('onTouchMove calls schedulePositionUpdate so viewport culling stays current', () => {
+    const { hook, schedulePositionUpdate } = renderPinch();
+
+    // Start pinch with a baseline distance.
+    act(() =>
+      hook.result.current.handlers.onTouchStart({
+        evt: {
+          touches: [
+            { clientX: 0, clientY: 0 },
+            { clientX: 100, clientY: 0 },
+          ],
+        },
+        target: { className: 'Layer', findAncestor: () => undefined },
+      } as any)
+    );
+
+    // Move with a significantly different distance to pass the jitter guard.
+    act(() =>
+      hook.result.current.handlers.onTouchMove({
+        evt: {
+          preventDefault: vi.fn(),
+          touches: [
+            { clientX: 0, clientY: 0 },
+            { clientX: 200, clientY: 0 },
+          ],
+        },
+      } as any)
+    );
+
+    expect(schedulePositionUpdate).toHaveBeenCalled();
   });
 });
