@@ -299,20 +299,18 @@ const StarSystem: React.FC<StarSystemProps> = ({
     if (!shouldPulseSize || !systemCircleRef.current) return;
 
     const systemNode = systemCircleRef.current;
-    const pirateIconNode = pirateIconRef.current;
-    const holdTheLineIconNode = holdTheLineIconRef.current;
-    const captureEventIconNode = captureEventIconRef.current;
 
+    // Read icon nodes from refs each frame so the animation picks up newly-mounted
+    // icons without restarting — avoids a mid-frame glitch when an image loads.
     const animation = new Konva.Animation((frame) => {
       if (!frame) return;
       const wave = (Math.sin(frame.time * 0.0055) + 1) / 2;
       const scale = 0.92 + wave * 0.655;
 
       systemNode.scale({ x: scale, y: scale });
-      if (pirateIconNode) pirateIconNode.scale({ x: scale, y: scale });
-      if (holdTheLineIconNode) holdTheLineIconNode.scale({ x: scale, y: scale });
-      if (captureEventIconNode)
-        captureEventIconNode.scale({ x: scale, y: scale });
+      pirateIconRef.current?.scale({ x: scale, y: scale });
+      holdTheLineIconRef.current?.scale({ x: scale, y: scale });
+      captureEventIconRef.current?.scale({ x: scale, y: scale });
     }, systemNode.getLayer());
 
     animation.start();
@@ -320,11 +318,11 @@ const StarSystem: React.FC<StarSystemProps> = ({
     return () => {
       animation.stop();
       systemNode.scale({ x: 1, y: 1 });
-      if (pirateIconNode) pirateIconNode.scale({ x: 1, y: 1 });
-      if (holdTheLineIconNode) holdTheLineIconNode.scale({ x: 1, y: 1 });
-      if (captureEventIconNode) captureEventIconNode.scale({ x: 1, y: 1 });
+      pirateIconRef.current?.scale({ x: 1, y: 1 });
+      holdTheLineIconRef.current?.scale({ x: 1, y: 1 });
+      captureEventIconRef.current?.scale({ x: 1, y: 1 });
     };
-  }, [shouldPulseSize, pirateIconImage, holdTheLineIconImage, captureEventIconImage]);
+  }, [shouldPulseSize]);
 
   const damageLevelText =
     system.damageLevel !== undefined &&
