@@ -5,7 +5,7 @@ import useWarmapAPI from './useWarmapAPI';
 import useSettings from './useSettings';
 
 const useFiltering = () => {
-  const { rawSystems, factions, capitals, fetchFactionData, fetchSystemData } =
+  const { rawSystems, factions, capitals, fetchError, isLoading, fetchFactionData, fetchSystemData } =
     useWarmapAPI();
 
   const { settings, setFlashActive } = useSettings();
@@ -41,6 +41,8 @@ const useFiltering = () => {
     projectSystemData,
     factions,
     capitals,
+    fetchError,
+    isLoading,
     fetchFactionData,
     fetchSystemData,
     settings,

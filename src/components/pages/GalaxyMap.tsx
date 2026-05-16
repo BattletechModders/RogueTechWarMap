@@ -51,6 +51,8 @@ const GalaxyMap = () => {
     displaySystems,
     factions,
     capitals,
+    fetchError,
+    isLoading,
     fetchFactionData,
     fetchSystemData,
     settings,
@@ -75,7 +77,21 @@ const GalaxyMap = () => {
     return () => clearInterval(interval);
   }, []);
 
+  if (fetchError) {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', height: '100vh', gap: '12px',
+        color: '#e57373', fontFamily: 'Roboto Mono, monospace',
+      }}>
+        <span style={{ fontSize: '1.1rem' }}>Failed to load war map data</span>
+        <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{fetchError}</span>
+      </div>
+    );
+  }
+
   if (
+    !isLoading &&
     displaySystems &&
     displaySystems.length > 0 &&
     factions &&
@@ -91,7 +107,15 @@ const GalaxyMap = () => {
     );
   }
 
-  return null;
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      height: '100vh', color: '#90caf9', fontFamily: 'Roboto Mono, monospace',
+      fontSize: '0.9rem',
+    }}>
+      Loading war map…
+    </div>
+  );
 };
 
 const GalaxyMapRender = ({
