@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "bench": "vitest bench"
+    "bench": "vitest bench",
+    "prepare": "simple-git-hooks"
   },
   "dependencies": {
     "@material-tailwind/react": "^2.1.10",
@@ -37,24 +38,29 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@vitest/coverage-v8": "^4.1.6",
-    "jsdom": "^26.1.0",
     "@types/node": "^24.10.0",
     "@types/react": "18.2.42",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
+    "@vitest/coverage-v8": "^4.1.6",
     "autoprefixer": "^10.4.20",
     "cross-env": "^10.1.0",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
+    "jsdom": "^26.1.0",
     "postcss": "^8.4.47",
+    "simple-git-hooks": "^2.13.1",
     "tailwindcss": "^3.4.12",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^8.0.1",
     "vitest": "^4.1.6"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "yarn lint",
+    "pre-push": "npx tsc -p tsconfig.vitest.json --noEmit && yarn test"
   },
   "resolutions": {
     "minimatch": "^3.1.3",
