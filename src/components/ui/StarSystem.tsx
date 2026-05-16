@@ -204,7 +204,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
     }, group.getLayer());
 
     animation.start();
-    return () => animation.stop();
+    return () => { animation.stop(); };
   }, [scaleRef]);
 
   useEffect(() => {
