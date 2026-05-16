@@ -1,9 +1,16 @@
 {
-  "extends": "./tsconfig.node.json",
+  "extends": "./tsconfig.app.json",
   "compilerOptions": {
-    "types": ["vitest", "node"],
+    "types": ["vitest/globals", "vitest", "node", "@testing-library/jest-dom"],
     "moduleResolution": "Bundler",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "jsx": "react-jsx"
   },
-  "include": ["tests/**/*", "vitest.config.ts"]
+  "include": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/test/**/*",
+    "tests/**/*.bench.ts",
+    "vitest.config.ts"
+  ]
 }
