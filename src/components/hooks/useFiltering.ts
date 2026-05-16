@@ -18,6 +18,7 @@ const useFiltering = () => {
         const displayName = faction?.prettyName ?? 'Unknown Faction';
         const projectedSystem: DisplayStarSystemType = {
           ...value,
+          id: `${value.name}-${value.posX}-${value.posY}`,
           isCapital: capitalSet.has(value.name),
           factionColour: faction && faction.colour ? faction.colour : 'gray',
           factionName: displayName,

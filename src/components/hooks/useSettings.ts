@@ -5,7 +5,7 @@ const useSettings = () => {
   const [settings, setSettingState] = useState<Settings>(initialSettings);
 
   const setFlashActive = (state: boolean) => {
-    setSettingState({ ...settings, flashActivePlayes: state });
+    setSettingState({ ...settings, flashActivePlayers: state });
   };
 
   return {

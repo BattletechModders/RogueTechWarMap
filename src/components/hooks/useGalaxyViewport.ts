@@ -18,8 +18,8 @@ export function useGalaxyViewport({
 
   const scaleRef = useRef<number>(1);
   const positionRef = useRef<Point>({
-    x: window.innerWidth / 2,
-    y: window.innerHeight / 2,
+    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 0,
+    y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0,
   });
 
   // Exposes current scale and position to React consumers that need rerenders.

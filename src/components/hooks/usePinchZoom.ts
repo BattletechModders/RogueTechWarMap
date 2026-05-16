@@ -127,6 +127,7 @@ export function usePinchZoom({
         stage.position(newPos);
 
         requestBatchDraw(stage);
+        setZoomScaleFactor(newScale);
 
         lastDistance.current = newDistance;
       });
