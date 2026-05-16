@@ -22,6 +22,7 @@ const renderPinch = (opts?: Partial<{ minScale: number; maxScale: number }>) => 
   const requestBatchDraw = vi.fn();
   const schedulePositionUpdate = vi.fn();
   const setZoomScaleFactor = vi.fn();
+  const notifyScaleListeners = vi.fn();
   const hideTooltip = vi.fn();
   const fakeStage = buildFakeStage();
 
@@ -36,13 +37,14 @@ const renderPinch = (opts?: Partial<{ minScale: number; maxScale: number }>) => 
       requestBatchDraw,
       schedulePositionUpdate,
       setZoomScaleFactor,
+      notifyScaleListeners,
       hideTooltip,
       minScale: opts?.minScale,
       maxScale: opts?.maxScale,
     });
   });
 
-  return { hook, fakeStage, requestBatchDraw, schedulePositionUpdate, setZoomScaleFactor, hideTooltip };
+  return { hook, fakeStage, requestBatchDraw, schedulePositionUpdate, setZoomScaleFactor, notifyScaleListeners, hideTooltip };
 };
 
 describe('usePinchZoom', () => {
