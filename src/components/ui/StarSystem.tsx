@@ -233,12 +233,18 @@ const StarSystem: React.FC<StarSystemProps> = ({
 
     animation.start();
 
+    // Capture ref values now so the cleanup can reset their scale even if the
+    // icons unmount before this effect's cleanup runs.
+    const pirateIcon = pirateIconRef.current;
+    const holdTheLineIcon = holdTheLineIconRef.current;
+    const captureEventIcon = captureEventIconRef.current;
+
     return () => {
       animation.stop();
       systemNode.scale({ x: 1, y: 1 });
-      pirateIconRef.current?.scale({ x: 1, y: 1 });
-      holdTheLineIconRef.current?.scale({ x: 1, y: 1 });
-      captureEventIconRef.current?.scale({ x: 1, y: 1 });
+      pirateIcon?.scale({ x: 1, y: 1 });
+      holdTheLineIcon?.scale({ x: 1, y: 1 });
+      captureEventIcon?.scale({ x: 1, y: 1 });
     };
   }, [shouldPulseSize]);
 

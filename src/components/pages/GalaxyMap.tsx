@@ -292,7 +292,7 @@ const GalaxyMapRender = ({
       container.removeEventListener('gestureend', preventDefault);
       container.removeEventListener('touchmove', preventDefault);
     };
-  }, []);
+  }, [stageRef]);
 
   const isMobile = stageSize.width > 0 && stageSize.width < 768;
   const tooltipScale = isMobile ? 1.5 / view.scale : 2 / view.scale;

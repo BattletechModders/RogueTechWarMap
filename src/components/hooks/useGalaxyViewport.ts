@@ -113,6 +113,7 @@ export function useGalaxyViewport({
     [
       maxScale,
       minScale,
+      notifyScaleListeners,
       requestBatchDraw,
       schedulePositionUpdate,
       wheelThrottleMs,
@@ -134,7 +135,11 @@ export function useGalaxyViewport({
       scale: scaleRef.current,
       position: renderPosition,
     }),
-    // Re-render is required here because refs update without triggering React by design.
+    // zoomScaleFactor is not read in the body but is intentionally listed here:
+    // scaleRef is a ref so changes to it don't trigger React re-renders on their own.
+    // Including zoomScaleFactor (which IS state) ensures view.scale stays current
+    // after a zoom gesture, because scaleRef.current is read at memo-evaluation time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [renderPosition, zoomScaleFactor]
   );
 
