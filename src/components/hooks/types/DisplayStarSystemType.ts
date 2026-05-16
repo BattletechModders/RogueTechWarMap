@@ -1,9 +1,7 @@
-import type { StarSystemWithState } from './StarSystemWithState';
+import { StarSystemType } from './StarSystemType';
 
-export type DisplayStarSystemType = StarSystemWithState & {
-  id: string;
+export type DisplayStarSystemType = StarSystemType & {
   isCapital: boolean;
   factionColour: string;
   factionName: string;
-  normalizedName: string;
 };

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { FactionDataType, StarSystemType } from './types';
 import { API_BASE_URL } from '../helpers/ApiHelper.ts';
-import { applyDevStateInjection } from '../helpers/devStateInjector';
 
 const useWarmapAPI = () => {
   const [rawSystems, setRawSystems] = useState<StarSystemType[]>([]);
@@ -41,7 +40,7 @@ const useWarmapAPI = () => {
         `${API_BASE_URL}/api/v1/starmap/warmap`
       ).then((res) => res.json());
 
-      setRawSystems(applyDevStateInjection(systemData));
+      setRawSystems(systemData);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     }
