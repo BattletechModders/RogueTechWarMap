@@ -6,6 +6,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   return {
     base: mode === 'development' ? '/' : env.VITE_BASE_URL,
+    server: {
+      allowedHosts: ['nightmare'],
+    },
     plugins: [react()],
     build: {
       chunkSizeWarningLimit: 700,
