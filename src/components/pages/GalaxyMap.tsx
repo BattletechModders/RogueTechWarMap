@@ -468,25 +468,13 @@ const GalaxyMapRender = ({
     const title = lines[0] ?? '';
     const subtitle = lines[1]?.startsWith('(') ? lines[1] : '';
     const rawDetails = lines.slice(subtitle ? 2 : 1);
-    const details: string[] = [];
-    let inControlBlock = false;
 
-    for (const line of rawDetails) {
-      if (line === 'Control:') {
-        inControlBlock = true;
-        continue;
-      }
-
-      if (inControlBlock) {
-        const isKeyValueLine = /^[A-Za-z ]+:\s/.test(line);
-        if (!isKeyValueLine) {
-          continue;
-        }
-        inControlBlock = false;
-      }
-
-      details.push(line);
-    }
+    // Control lines are rendered separately via tooltip.controlItems — keep only
+    // the known labelled fields so faction percentage lines are never silently dropped.
+    const DETAIL_PREFIXES = ['Owner:', 'Damage:', 'State:'];
+    const details = rawDetails.filter((line) =>
+      DETAIL_PREFIXES.some((prefix) => line.startsWith(prefix))
+    );
 
     return { title, subtitle, details };
   }, [tooltip.text]);
