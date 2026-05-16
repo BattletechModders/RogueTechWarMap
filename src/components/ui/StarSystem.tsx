@@ -17,69 +17,32 @@ import type { TooltipControlItem } from '../GalaxyMap/gm.types';
 
 const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;
-let pirateIconImageCache: HTMLImageElement | null = null;
-let pirateIconImagePromise: Promise<HTMLImageElement> | null = null;
-let holdTheLineIconImageCache: HTMLImageElement | null = null;
-let holdTheLineIconImagePromise: Promise<HTMLImageElement> | null = null;
-let captureEventIconImageCache: HTMLImageElement | null = null;
-let captureEventIconImagePromise: Promise<HTMLImageElement> | null = null;
 
-const loadPirateIconImage = (): Promise<HTMLImageElement> => {
-  if (pirateIconImageCache) return Promise.resolve(pirateIconImageCache);
-  if (pirateIconImagePromise) return pirateIconImagePromise;
+const makeIconLoader = (url: string) => {
+  let cache: HTMLImageElement | null = null;
+  let promise: Promise<HTMLImageElement> | null = null;
 
-  pirateIconImagePromise = new Promise((resolve, reject) => {
-    const image = new window.Image();
-    image.src = pirateIconUrl;
-    image.onload = () => {
-      pirateIconImageCache = image;
-      resolve(image);
-    };
-    image.onerror = () => {
-      reject(new Error('Failed to load pirate raid icon.'));
-    };
-  });
+  return (): Promise<HTMLImageElement> => {
+    if (cache) return Promise.resolve(cache);
+    if (promise) return promise;
 
-  return pirateIconImagePromise;
+    promise = new Promise((resolve, reject) => {
+      const image = new window.Image();
+      image.src = url;
+      image.onload = () => {
+        cache = image;
+        resolve(image);
+      };
+      image.onerror = () => reject(new Error(`Failed to load icon: ${url}`));
+    });
+
+    return promise;
+  };
 };
 
-const loadHoldTheLineIconImage = (): Promise<HTMLImageElement> => {
-  if (holdTheLineIconImageCache) return Promise.resolve(holdTheLineIconImageCache);
-  if (holdTheLineIconImagePromise) return holdTheLineIconImagePromise;
-
-  holdTheLineIconImagePromise = new Promise((resolve, reject) => {
-    const image = new window.Image();
-    image.src = holdTheLineIconUrl;
-    image.onload = () => {
-      holdTheLineIconImageCache = image;
-      resolve(image);
-    };
-    image.onerror = () => {
-      reject(new Error('Failed to load hold the line icon.'));
-    };
-  });
-
-  return holdTheLineIconImagePromise;
-};
-
-const loadCaptureEventIconImage = (): Promise<HTMLImageElement> => {
-  if (captureEventIconImageCache) return Promise.resolve(captureEventIconImageCache);
-  if (captureEventIconImagePromise) return captureEventIconImagePromise;
-
-  captureEventIconImagePromise = new Promise((resolve, reject) => {
-    const image = new window.Image();
-    image.src = captureEventIconUrl;
-    image.onload = () => {
-      captureEventIconImageCache = image;
-      resolve(image);
-    };
-    image.onerror = () => {
-      reject(new Error('Failed to load capture event icon.'));
-    };
-  });
-
-  return captureEventIconImagePromise;
-};
+const loadPirateIconImage = makeIconLoader(pirateIconUrl);
+const loadHoldTheLineIconImage = makeIconLoader(holdTheLineIconUrl);
+const loadCaptureEventIconImage = makeIconLoader(captureEventIconUrl);
 
 interface StarSystemProps {
   system: DisplayStarSystemType;
@@ -201,65 +164,29 @@ const StarSystem: React.FC<StarSystemProps> = ({
 
   useEffect(() => {
     if (!hasPirateRaid) return;
-    if (pirateIconImageCache) {
-      setPirateIconImage(pirateIconImageCache);
-      return;
-    }
-
     let cancelled = false;
     loadPirateIconImage()
-      .then((image) => {
-        if (!cancelled) setPirateIconImage(image);
-      })
-      .catch(() => {
-        if (!cancelled) setPirateIconImage(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .then((image) => { if (!cancelled) setPirateIconImage(image); })
+      .catch(() => { if (!cancelled) setPirateIconImage(null); });
+    return () => { cancelled = true; };
   }, [hasPirateRaid]);
 
   useEffect(() => {
     if (!hasHoldTheLineEvent) return;
-    if (holdTheLineIconImageCache) {
-      setHoldTheLineIconImage(holdTheLineIconImageCache);
-      return;
-    }
-
     let cancelled = false;
     loadHoldTheLineIconImage()
-      .then((image) => {
-        if (!cancelled) setHoldTheLineIconImage(image);
-      })
-      .catch(() => {
-        if (!cancelled) setHoldTheLineIconImage(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .then((image) => { if (!cancelled) setHoldTheLineIconImage(image); })
+      .catch(() => { if (!cancelled) setHoldTheLineIconImage(null); });
+    return () => { cancelled = true; };
   }, [hasHoldTheLineEvent]);
 
   useEffect(() => {
     if (!hasCaptureEvent) return;
-    if (captureEventIconImageCache) {
-      setCaptureEventIconImage(captureEventIconImageCache);
-      return;
-    }
-
     let cancelled = false;
     loadCaptureEventIconImage()
-      .then((image) => {
-        if (!cancelled) setCaptureEventIconImage(image);
-      })
-      .catch(() => {
-        if (!cancelled) setCaptureEventIconImage(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .then((image) => { if (!cancelled) setCaptureEventIconImage(image); })
+      .catch(() => { if (!cancelled) setCaptureEventIconImage(null); });
+    return () => { cancelled = true; };
   }, [hasCaptureEvent]);
 
   useEffect(() => {
