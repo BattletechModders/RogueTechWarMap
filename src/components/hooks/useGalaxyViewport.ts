@@ -146,6 +146,7 @@ export function useGalaxyViewport({
     zoomScaleFactor,
 
     requestBatchDraw,
+    schedulePositionUpdate,
     setZoomScaleFactor,
     registerScaleListener,
     notifyScaleListeners,
