@@ -59,7 +59,7 @@
     "vitest": "^4.1.6"
   },
   "simple-git-hooks": {
-    "pre-commit": "yarn lint",
+    "pre-commit": "sh .githooks/pre-commit",
     "pre-push": "bash scripts/pre-push.sh"
   },
   "resolutions": {

@@ -7,6 +7,15 @@ on:
     branches: [main, system-state-nyx]
 
 jobs:
+  validate-json:
+    name: Validate JSON
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JSON syntax
+        run: |
+          python3 .github/scripts/validate_json.py
+
   test:
     name: Vitest (Node ${{ matrix.node }})
     runs-on: ubuntu-latest

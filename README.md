@@ -1,74 +1,73 @@
-# Overview
+# RogueTech War Map
 
-This project is for the rewrite of the Rogue War Online Map. The project is written in React and uses Vite - https://vitejs.dev/guide/
+An interactive, live-updating galaxy map for the [RogueTech](https://roguetech.fandom.com/wiki/RogueTech_Wiki) BattleTech mod. The map shows every star system in the Inner Sphere, coloured by the faction that currently controls it, with active player activity and special event indicators updated in real time from the RogueTech server.
 
-# Setup environment
+**Live map:** [roguewar.org](https://roguewar.org)
 
-## Setup your local environment
+---
 
-- Install Git.
-- Install Git client of choice (SourceTree is good if you don't have a favourite)
-- Install a node version manager (e.g. https://github.com/coreybutler/nvm-windows) and node
-- Install `yarn` by doing the following
-  - `corepack enable` - enable **corepack**
-  - `corepack yarn` - install **yarn**
-- Run `yarn --version`
-  - If the command fails to execute, open a powershell window with admin permissions and run
-    `Set-ExecutionPolicy RemoteSigned` to set your execution policy.
+## For developers
 
-## How the project was setup
+The app is a React + TypeScript single-page application built with Vite. The map canvas is rendered with [react-konva](https://konvajs.org/docs/react/).
 
-- `yarn add -D vite` to install vite
-- `yarn run tailwindcss init -p` to configure tailwind
-- Run `yarn install` to install all the required dependencies
+### Prerequisites
 
-# React + TypeScript + Vite
+- **Node 20+** — use [nvm](https://github.com/nvm-ws/nvm) (Linux/macOS) or [nvm-windows](https://github.com/coreybutler/nvm-windows). The repo includes an `.nvmrc`.
+- **Yarn 1.x** — enable via `corepack enable`, then run `corepack yarn` to install.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### Getting started
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-});
+```bash
+git clone <repo-url>
+cd RogueTechWarMap
+nvm use          # switch to the project Node version
+yarn install     # installs deps and registers git hooks
+cp .env .env.local   # or just use .env directly — it's already set up for local dev
+yarn dev         # starts Vite dev server at http://localhost:5173
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+> **Windows note:** if `yarn` fails to run in PowerShell, open an admin shell and run `Set-ExecutionPolicy RemoteSigned`.
 
-```js
-// eslint.config.js
-import react from "eslint-plugin-react";
+### Environment variables
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: "18.3" } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs["jsx-runtime"].rules,
-  },
-});
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_BASE_URL` | Production only | Router basename and Vite `base` path. Must be set for `yarn build`. |
+| `VITE_API_URL` | Optional | Backend API origin. Defaults to `https://roguewar.org`. |
+| `VITE_ENABLE_STATE_TEST` | Optional | Enables dev-state injection for testing event visuals without a live API. Already set in `.env`. |
+
+### Commands
+
+| Command | Description |
+|---|---|
+| `yarn dev` | Start dev server with HMR |
+| `yarn build` | Type-check + production build |
+| `yarn lint` | Run ESLint |
+| `yarn test` | Run unit tests (single pass) |
+| `yarn test:watch` | Run tests in watch mode |
+| `yarn test:coverage` | Run tests and generate a coverage report |
+| `yarn bench` | Run performance benchmarks |
+
+**Run a single test file:**
+```bash
+yarn test -- src/components/hooks/useGalaxyViewport.test.ts
 ```
+
+### Git hooks
+
+Hooks are managed by `simple-git-hooks` and registered automatically on `yarn install`.
+
+- **pre-commit** — runs ESLint and validates any staged `.json` files
+- **pre-push** — runs a full typecheck (`tsc --noEmit`) and the test suite
+
+CI (GitHub Actions) enforces lint, typecheck, and coverage on every push and pull request to `main`.
+
+---
+
+## Contributing
+
+1. **Branch off `main`.** Use a short descriptive name (`fix-tooltip-overflow`, `feat-system-flash`).
+2. **Keep PRs focused.** One concern per PR makes review easier and reduces the chance of merge conflicts on a fast-moving canvas.
+3. **Tests for logic, not markup.** Hooks, selectors, helpers, and interaction utilities should be covered. UI integration tests are welcome but not required for every change.
+4. **The pre-push hook is the bar.** If `tsc` and `yarn test` pass locally, CI will pass.
+5. Open a PR against `main` with a description of what changed and why.
