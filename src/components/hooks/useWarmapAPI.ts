@@ -21,6 +21,7 @@ export function validateSystems(data: unknown): StarSystemType[] {
       typeof s.name === 'string' && s.name.length > 0 &&
       (typeof s.posX === 'number' || typeof s.posX === 'string') &&
       (typeof s.posY === 'number' || typeof s.posY === 'string') &&
+      !isNaN(Number(s.posX)) && !isNaN(Number(s.posY)) &&
       typeof s.owner === 'string' &&
       Array.isArray(s.factions);
     if (!valid) {

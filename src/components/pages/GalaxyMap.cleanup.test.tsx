@@ -195,16 +195,18 @@ describe('GalaxyMapRender — gesture listener cleanup', () => {
     expect(events).toContain('gestureend');
   });
 
-  it('registers the expected window-level gesture and resize events', () => {
+  it('registers only the resize event at the window level', () => {
     const { added } = collectListeners(window);
 
     const { unmount } = render(React.createElement(GalaxyMapRender, minimalProps));
     unmount();
 
     const events = added.map((l) => l.event);
-    expect(events).toContain('gesturestart');
-    expect(events).toContain('gesturechange');
-    expect(events).toContain('gestureend');
     expect(events).toContain('resize');
+    // gesture* events are WebKit-only and already handled at the document level;
+    // the redundant window-level gesture listeners were removed.
+    expect(events).not.toContain('gesturestart');
+    expect(events).not.toContain('gesturechange');
+    expect(events).not.toContain('gestureend');
   });
 });

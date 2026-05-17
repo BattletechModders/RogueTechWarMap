@@ -62,6 +62,11 @@ describe('validateSystems', () => {
     expect(result).toHaveLength(1);
   });
 
+  it('drops entries where posX or posY is a non-numeric string', () => {
+    expect(validateSystems([{ ...validSystem, posX: 'abc' }])).toHaveLength(0);
+    expect(validateSystems([{ ...validSystem, posY: 'not-a-number' }])).toHaveLength(0);
+  });
+
   it('filters out bad entries while keeping valid ones', () => {
     const result = validateSystems([validSystem, { name: '' }, validSystem]);
     expect(result).toHaveLength(2);
