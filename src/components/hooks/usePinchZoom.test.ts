@@ -10,6 +10,7 @@ type FakeStage = {
   scaleX: ReturnType<typeof vi.fn>;
   getPosition: ReturnType<typeof vi.fn>;
   batchDraw: ReturnType<typeof vi.fn>;
+  container: ReturnType<typeof vi.fn>;
 };
 
 const buildFakeStage = (): FakeStage => ({
@@ -18,6 +19,9 @@ const buildFakeStage = (): FakeStage => ({
   scaleX: vi.fn(() => 1),
   getPosition: vi.fn(() => ({ x: 0, y: 0 })),
   batchDraw: vi.fn(),
+  container: vi.fn(() => ({
+    getBoundingClientRect: () => ({ left: 0, top: 0 }),
+  })),
 });
 
 const renderPinch = (opts?: Partial<{
@@ -120,7 +124,7 @@ describe('usePinchZoom', () => {
     expect(hook.result.current.isPinching).toBe(true);
   });
 
-  it('touchEnd calls hideTooltip when dropping from pinch to single touch', () => {
+  it('touchEnd does not hide tooltip when dropping from pinch to single touch', () => {
     const { hook, hideTooltip } = renderPinch();
 
     act(() =>
@@ -134,11 +138,11 @@ describe('usePinchZoom', () => {
       hook.result.current.handlers.onTouchEnd({ evt: { touches: [{ clientX: 0, clientY: 0 }] } } as any)
     );
 
-    expect(hideTooltip).toHaveBeenCalled();
+    expect(hideTooltip).not.toHaveBeenCalled();
   });
 
   it('touchEnd with < 2 touches resets isPinching to false', () => {
-    const { hook, setZoomScaleFactor } = renderPinch();
+    const { hook, notifyScaleListeners, schedulePositionUpdate, setZoomScaleFactor } = renderPinch();
 
     // start pinching
     act(() =>
@@ -163,6 +167,8 @@ describe('usePinchZoom', () => {
 
     expect(hook.result.current.isPinching).toBe(false);
     expect(setZoomScaleFactor).toHaveBeenCalled();
+    expect(schedulePositionUpdate).toHaveBeenCalled();
+    expect(notifyScaleListeners).toHaveBeenCalled();
   });
 
   it('onTouchMove is a no-op when not pinching', () => {
@@ -183,8 +189,8 @@ describe('usePinchZoom', () => {
     expect(fakeStage.scale).not.toHaveBeenCalled();
   });
 
-  it('onTouchMove calls schedulePositionUpdate so viewport culling stays current', () => {
-    const { hook, schedulePositionUpdate } = renderPinch();
+  it('onTouchMove keeps pinch updates imperative without React sync', () => {
+    const { hook, notifyScaleListeners, schedulePositionUpdate, setZoomScaleFactor } = renderPinch();
 
     // Start pinch with a baseline distance.
     act(() =>
@@ -212,7 +218,107 @@ describe('usePinchZoom', () => {
       } as any)
     );
 
-    expect(schedulePositionUpdate).toHaveBeenCalled();
+    expect(schedulePositionUpdate).not.toHaveBeenCalled();
+    expect(setZoomScaleFactor).not.toHaveBeenCalled();
+    expect(notifyScaleListeners).not.toHaveBeenCalled();
+  });
+
+  it('translates the stage when the pinch center moves even if distance stays the same', () => {
+    const { hook, fakeStage } = renderPinch();
+
+    act(() =>
+      hook.result.current.handlers.onTouchStart({
+        evt: {
+          touches: [
+            { clientX: 0, clientY: 0 },
+            { clientX: 100, clientY: 0 },
+          ],
+        },
+        target: { className: 'Layer', findAncestor: () => undefined },
+      } as any)
+    );
+
+    act(() =>
+      hook.result.current.handlers.onTouchMove({
+        evt: {
+          preventDefault: vi.fn(),
+          touches: [
+            { clientX: 50, clientY: 0 },
+            { clientX: 150, clientY: 0 },
+          ],
+        },
+      } as any)
+    );
+
+    expect(fakeStage.scale).toHaveBeenCalledWith({ x: 1, y: 1 });
+    expect(fakeStage.position).toHaveBeenCalledWith({ x: 50, y: 0 });
+  });
+
+  it('applies tiny pinch-center drift continuously when scale is unchanged', () => {
+    const { hook, fakeStage } = renderPinch();
+
+    act(() =>
+      hook.result.current.handlers.onTouchStart({
+        evt: {
+          touches: [
+            { clientX: 0, clientY: 0 },
+            { clientX: 100, clientY: 0 },
+          ],
+        },
+        target: { className: 'Layer', findAncestor: () => undefined },
+      } as any)
+    );
+
+    act(() =>
+      hook.result.current.handlers.onTouchMove({
+        evt: {
+          preventDefault: vi.fn(),
+          touches: [
+            { clientX: 1, clientY: 0 },
+            { clientX: 101, clientY: 0 },
+          ],
+        },
+      } as any)
+    );
+
+    expect(fakeStage.scale).toHaveBeenCalledWith({ x: 1, y: 1 });
+    expect(fakeStage.position).toHaveBeenCalledWith({ x: 1, y: 0 });
+  });
+
+  it('uses stage-local coordinates when the stage container is offset in the page', () => {
+    const { hook, fakeStage } = renderPinch();
+    fakeStage.container.mockReturnValue({
+      getBoundingClientRect: () => ({ left: 40, top: 100 }),
+    });
+
+    act(() =>
+      hook.result.current.handlers.onTouchStart({
+        evt: {
+          touches: [
+            { clientX: 140, clientY: 200 },
+            { clientX: 240, clientY: 200 },
+          ],
+        },
+        target: { className: 'Layer', findAncestor: () => undefined },
+      } as any)
+    );
+
+    act(() =>
+      hook.result.current.handlers.onTouchMove({
+        evt: {
+          preventDefault: vi.fn(),
+          touches: [
+            { clientX: 140, clientY: 200 },
+            { clientX: 340, clientY: 200 },
+          ],
+        },
+      } as any)
+    );
+
+    expect(fakeStage.position).toHaveBeenCalledTimes(1);
+    const [newPos] = fakeStage.position.mock.calls[0];
+    expect(newPos.x).toBeCloseTo(-100);
+    expect(newPos.y).toBeCloseTo(-100);
   });
 
   it('does not call stage.scale when both touch points are identical (zero distance)', () => {
@@ -350,7 +456,7 @@ describe('usePinchZoom', () => {
     // This test verifies that firing both interaction paths concurrently
     // does not leave scaleRef in an inconsistent state.  Each path writes
     // scaleRef independently; the last writer wins, which is acceptable.
-    const { hook, schedulePositionUpdate } = renderPinch();
+    const { hook, fakeStage, schedulePositionUpdate } = renderPinch();
 
     act(() =>
       hook.result.current.handlers.onTouchStart({
@@ -380,6 +486,7 @@ describe('usePinchZoom', () => {
 
     // schedulePositionUpdate proves the pinch frame ran and the hook is
     // still functional — not stuck or throwing.
-    expect(schedulePositionUpdate).toHaveBeenCalled();
+    expect(fakeStage.scale).toHaveBeenCalled();
+    expect(schedulePositionUpdate).not.toHaveBeenCalled();
   });
 });
