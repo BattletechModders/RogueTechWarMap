@@ -1,9 +1,12 @@
 #!/bin/sh
-# Validates staged JSON files before commit.
-# Activate with: git config core.hooksPath .githooks
+# Pre-commit hook: lint TypeScript/JavaScript and validate staged JSON.
+# Managed via simple-git-hooks — runs automatically after yarn install.
 
-staged=$(git diff --cached --name-only --diff-filter=ACM | grep '\.json$')
+# ESLint all sources
+yarn lint || exit 1
+
+# Validate staged JSON files (skip tsconfig*.json — they use JSONC)
+staged=$(git diff --cached --name-only --diff-filter=ACM | grep '\.json$' | grep -v 'tsconfig')
 [ -z "$staged" ] && exit 0
-
 # shellcheck disable=SC2086
 python3 "$(git rev-parse --show-toplevel)/.githooks/validate_staged_json.py" $staged
