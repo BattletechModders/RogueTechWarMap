@@ -84,6 +84,7 @@ export function usePinchZoom({
           sample.touch2.clientX - sample.touch1.clientX,
           sample.touch2.clientY - sample.touch1.clientY
         );
+        if (newDistance === 0) return;
         if (!lastDistance.current) {
           lastDistance.current = newDistance;
           return;

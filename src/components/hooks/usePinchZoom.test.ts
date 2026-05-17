@@ -192,4 +192,35 @@ describe('usePinchZoom', () => {
 
     expect(schedulePositionUpdate).toHaveBeenCalled();
   });
+
+  it('does not call stage.scale when both touch points are identical (zero distance)', () => {
+    const { hook, fakeStage } = renderPinch();
+
+    act(() =>
+      hook.result.current.handlers.onTouchStart({
+        evt: {
+          touches: [
+            { clientX: 50, clientY: 50 },
+            { clientX: 100, clientY: 50 },
+          ],
+        },
+        target: { className: 'Layer', findAncestor: () => undefined },
+      } as any)
+    );
+
+    // Both fingers at the same point — distance is 0, would produce NaN scale.
+    act(() =>
+      hook.result.current.handlers.onTouchMove({
+        evt: {
+          preventDefault: vi.fn(),
+          touches: [
+            { clientX: 75, clientY: 75 },
+            { clientX: 75, clientY: 75 },
+          ],
+        },
+      } as any)
+    );
+
+    expect(fakeStage.scale).not.toHaveBeenCalled();
+  });
 });
