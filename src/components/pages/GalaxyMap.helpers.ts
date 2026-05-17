@@ -1,4 +1,34 @@
-import type { StageSize } from '../GalaxyMap/gm.types';
+import type { StageSize, ViewTransform } from '../GalaxyMap/gm.types';
+
+export interface ViewportBounds {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+export const getViewportBounds = (
+  stageSize: StageSize,
+  view: ViewTransform,
+  screenMargin = 120
+): ViewportBounds => {
+  if (stageSize.width <= 0 || stageSize.height <= 0) {
+    return {
+      left: Number.NEGATIVE_INFINITY,
+      right: Number.POSITIVE_INFINITY,
+      top: Number.NEGATIVE_INFINITY,
+      bottom: Number.POSITIVE_INFINITY,
+    };
+  }
+
+  const margin = Math.max(screenMargin / view.scale, 1);
+  const left = (0 - view.position.x) / view.scale - margin;
+  const top = (0 - view.position.y) / view.scale - margin;
+  const right = (stageSize.width - view.position.x) / view.scale + margin;
+  const bottom = (stageSize.height - view.position.y) / view.scale + margin;
+
+  return { left, right, top, bottom };
+};
 
 export const getViewportSize = (): StageSize => {
   if (typeof window === 'undefined') {

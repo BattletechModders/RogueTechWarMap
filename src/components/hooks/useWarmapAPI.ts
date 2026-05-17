@@ -70,7 +70,9 @@ const useWarmapAPI = () => {
 
   const fetchFactionData = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/factions/warmap`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/factions/warmap`, {
+        signal: AbortSignal.timeout(10_000),
+      });
       if (!res.ok) throw new Error(`Factions request failed: ${res.status} ${res.statusText}`);
       const raw = await res.json();
       const factionData = validateFactions(raw);
@@ -98,7 +100,9 @@ const useWarmapAPI = () => {
 
   const fetchSystemData = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/starmap/warmap`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/starmap/warmap`, {
+        signal: AbortSignal.timeout(10_000),
+      });
       if (!res.ok) throw new Error(`Systems request failed: ${res.status} ${res.statusText}`);
       const raw = await res.json();
       const systemData = validateSystems(raw);

@@ -237,6 +237,31 @@ describe('useWarmapAPI', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  it('sets fetchError when the request times out (AbortError)', async () => {
+    const abortError = Object.assign(new Error('signal timed out'), { name: 'TimeoutError' });
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(abortError);
+
+    const { result } = renderHook(() => useWarmapAPI());
+
+    await act(async () => { await result.current.fetchFactionData(); });
+
+    expect(result.current.fetchError).toBe('signal timed out');
+    expect(result.current.isLoading).toBe(true); // systems fetch still pending
+  });
+
+  it('passes a signal to fetch so the request can be aborted on timeout', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({}),
+    } as Response);
+
+    const { result } = renderHook(() => useWarmapAPI());
+    await act(async () => { await result.current.fetchFactionData(); });
+
+    const callOptions = fetchSpy.mock.calls[0][1];
+    expect(callOptions?.signal).toBeInstanceOf(AbortSignal);
+  });
+
   it('silently drops malformed systems rather than crashing', async () => {
     const malformed = [{ name: '', posX: 0, posY: 0, owner: 'X', factions: [] }];
     mockFetch({}, malformed);

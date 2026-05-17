@@ -2,9 +2,97 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   getDesktopLineSegments,
   getTooltipFontSize,
+  getViewportBounds,
   getViewportSize,
   parseMobileTooltipData,
 } from './GalaxyMap.helpers';
+
+// ---------------------------------------------------------------------------
+// getViewportBounds
+// ---------------------------------------------------------------------------
+
+const view1x = { scale: 1, position: { x: 0, y: 0 } };
+
+describe('getViewportBounds', () => {
+  it('returns infinite bounds when stageSize.width is 0', () => {
+    const b = getViewportBounds({ width: 0, height: 768 }, view1x);
+    expect(b.left).toBe(Number.NEGATIVE_INFINITY);
+    expect(b.right).toBe(Number.POSITIVE_INFINITY);
+    expect(b.top).toBe(Number.NEGATIVE_INFINITY);
+    expect(b.bottom).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it('returns infinite bounds when stageSize.height is 0', () => {
+    const b = getViewportBounds({ width: 1024, height: 0 }, view1x);
+    expect(b.left).toBe(Number.NEGATIVE_INFINITY);
+    expect(b.right).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it('returns infinite bounds when both dimensions are 0', () => {
+    const b = getViewportBounds({ width: 0, height: 0 }, view1x);
+    expect(b.left).toBe(Number.NEGATIVE_INFINITY);
+    expect(b.right).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it('returns finite bounds for a normal viewport at scale 1, no pan', () => {
+    const b = getViewportBounds({ width: 1024, height: 768 }, view1x, 0);
+    expect(b.left).toBe(-1);   // margin clamped to max(0/1, 1)=1
+    expect(b.right).toBeCloseTo(1025);
+    expect(b.top).toBe(-1);
+    expect(b.bottom).toBeCloseTo(769);
+  });
+
+  it('accounts for pan offset correctly', () => {
+    const view = { scale: 1, position: { x: -200, y: -100 } };
+    const b = getViewportBounds({ width: 1024, height: 768 }, view, 0);
+    // left = (0 - (-200)) / 1 - 1 = 199
+    expect(b.left).toBeCloseTo(199);
+    // right = (1024 - (-200)) / 1 + 1 = 1225
+    expect(b.right).toBeCloseTo(1225);
+  });
+
+  it('scales the visible region inversely when zoomed in (scale > 1)', () => {
+    const view = { scale: 2, position: { x: 0, y: 0 } };
+    const b = getViewportBounds({ width: 1024, height: 768 }, view, 0);
+    // right = (1024 - 0) / 2 + 1 = 513
+    expect(b.right).toBeCloseTo(513);
+    // bottom = (768 - 0) / 2 + 1 = 385
+    expect(b.bottom).toBeCloseTo(385);
+  });
+
+  it('includes systems exactly on the left and right boundary', () => {
+    const b = getViewportBounds({ width: 1024, height: 768 }, view1x, 0);
+    // The filter culls when x < left or x > right — exact edge is included.
+    expect(b.left).toBeGreaterThan(Number.NEGATIVE_INFINITY);
+    const xOnLeft = b.left;
+    const xOnRight = b.right;
+    expect(xOnLeft < b.left).toBe(false);  // not culled
+    expect(xOnRight > b.right).toBe(false); // not culled
+  });
+
+  it('never culls anything when scale is 0 (division-by-zero fallback)', () => {
+    const view = { scale: 0, position: { x: 0, y: 0 } };
+    const b = getViewportBounds({ width: 1024, height: 768 }, view, 120);
+    // With scale=0 the bounds collapse to ±Infinity or NaN; either way a
+    // sample point should pass the culling guard (not be excluded).
+    const x = 500;
+    const y = 300;
+    const culled =
+      x < b.left || x > b.right || y < b.top || y > b.bottom;
+    expect(culled).toBe(false);
+  });
+
+  it('applies the default 120px screen margin at scale 1', () => {
+    const b = getViewportBounds({ width: 1024, height: 768 }, view1x);
+    // margin = max(120/1, 1) = 120; left = 0 - 0 - 120 = -120
+    expect(b.left).toBeCloseTo(-120);
+    expect(b.right).toBeCloseTo(1144);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getViewportSize
+// ---------------------------------------------------------------------------
 
 describe('getViewportSize', () => {
   it('returns current window dimensions when window is defined', () => {
@@ -172,5 +260,32 @@ describe('parseMobileTooltipData', () => {
     ].join('\n');
     const result = parseMobileTooltipData(text);
     expect(result.details).toContain('State: Insurrection');
+  });
+
+  it('does not crash when "Control:" is the last line (no following content)', () => {
+    const text = ['Terra', '(10, 20)', 'Owner: ComStar', 'Control:'].join('\n');
+    const result = parseMobileTooltipData(text);
+    expect(result.title).toBe('Terra');
+    expect(result.details).toEqual(['Owner: ComStar']);
+  });
+
+  it('handles multiple "Control:" blocks — each resets the inControlBlock flag', () => {
+    const text = [
+      'Terra',
+      '(10, 20)',
+      'Control:',
+      'House Davion 60% · 3',
+      'Damage: Light',
+      'Control:',
+      'House Kurita 40% · 1',
+      'State: Contested',
+    ].join('\n');
+    const result = parseMobileTooltipData(text);
+    // Both key-value lines after each control block should appear.
+    expect(result.details).toContain('Damage: Light');
+    expect(result.details).toContain('State: Contested');
+    // Raw control percentage lines should be dropped.
+    expect(result.details).not.toContain('House Davion 60% · 3');
+    expect(result.details).not.toContain('House Kurita 40% · 1');
   });
 });

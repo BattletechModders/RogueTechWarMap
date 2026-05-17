@@ -1,11 +1,11 @@
 import {
   StageSize,
   GalaxyMapRenderProps,
-  ViewTransform,
 } from '../GalaxyMap/gm.types';
 import { buildFactionFilterOptions } from '../GalaxyMap/gm.selectors';
 import {
   getViewportSize,
+  getViewportBounds,
   getTooltipFontSize,
   getDesktopLineSegments,
   parseMobileTooltipData,
@@ -118,7 +118,7 @@ const GalaxyMap = () => {
   );
 };
 
-const GalaxyMapRender = ({
+export const GalaxyMapRender = ({
   systems,
   factions,
   settings,
@@ -143,6 +143,8 @@ const GalaxyMapRender = ({
   /* Empty means "all factions"; when populated, only matching owners are rendered. */
   const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
 
+  const [stageSize, setStageSize] = useState<StageSize>(getViewportSize());
+
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
   const tooltipVisibleRef = useRef(false);
   const touchedSystemNameRef = useRef<string | null>(null);
@@ -160,9 +162,8 @@ const GalaxyMapRender = ({
     hideTooltip,
     minScale: MIN_SCALE,
     maxScale: MAX_SCALE,
+    stageSize,
   });
-
-  const [stageSize, setStageSize] = useState<StageSize>(getViewportSize());
 
   // Block native Firefox pinch zoom at the document level so the custom map handler stays in control.
   useEffect(() => {
@@ -300,29 +301,6 @@ const GalaxyMapRender = ({
     () => buildFactionFilterOptions(systems, factions),
     [systems, factions]
   );
-
-  const getViewportBounds = (
-    stageSize: StageSize,
-    view: ViewTransform,
-    screenMargin = 120
-  ) => {
-    if (stageSize.width <= 0 || stageSize.height <= 0) {
-      return {
-        left: Number.NEGATIVE_INFINITY,
-        right: Number.POSITIVE_INFINITY,
-        top: Number.NEGATIVE_INFINITY,
-        bottom: Number.POSITIVE_INFINITY,
-      };
-    }
-
-    const margin = Math.max(screenMargin / view.scale, 1);
-    const left = (0 - view.position.x) / view.scale - margin;
-    const top = (0 - view.position.y) / view.scale - margin;
-    const right = (stageSize.width - view.position.x) / view.scale + margin;
-    const bottom = (stageSize.height - view.position.y) / view.scale + margin;
-
-    return { left, right, top, bottom };
-  };
 
   const visibleSystems = useMemo(() => {
     const viewport = getViewportBounds(stageSize, view, 120);
