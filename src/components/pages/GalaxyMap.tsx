@@ -270,6 +270,7 @@ export const GalaxyMapRender = ({
     if (typeof stage.container !== 'function') return;
 
     const container = stage.container();
+    container.style.touchAction = 'none';
     const preventDefault = (e: Event) => {
       if (e.cancelable) e.preventDefault();
     };
@@ -286,6 +287,7 @@ export const GalaxyMapRender = ({
     container.addEventListener('touchmove', preventDefault, { passive: false });
 
     return () => {
+      container.style.touchAction = '';
       container.removeEventListener('gesturestart', preventDefault);
       container.removeEventListener('gesturechange', preventDefault);
       container.removeEventListener('gestureend', preventDefault);
