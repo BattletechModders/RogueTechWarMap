@@ -45,6 +45,18 @@ beforeEach(() => {
   }
 });
 
+// jsdom doesn't implement HTMLCanvasElement.getContext — stub it so importing
+// GalaxyMap.tsx (which calls getContext at module level for text measurement)
+// doesn't spam "Not implemented" warnings without needing the `canvas` package.
+if (typeof HTMLCanvasElement !== 'undefined') {
+  HTMLCanvasElement.prototype.getContext = function () {
+    return {
+      font: '',
+      measureText: (text: string) => ({ width: text.length * 8 }),
+    } as unknown as CanvasRenderingContext2D;
+  } as typeof HTMLCanvasElement.prototype.getContext;
+}
+
 if (typeof window !== 'undefined') {
   if (!window.matchMedia) {
     window.matchMedia = (query: string) => ({
