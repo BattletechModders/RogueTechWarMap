@@ -292,6 +292,8 @@ export const GalaxyMapRender = ({
       const x = Number(system.posX);
       const y = -Number(system.posY);
 
+      if (isNaN(x) || isNaN(y)) return false;
+
       if (
         x < viewport.left ||
         x > viewport.right ||
