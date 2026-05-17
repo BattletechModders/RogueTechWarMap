@@ -2431,10 +2431,10 @@ make-dir@^4.0.0:
   dependencies:
     semver "^7.5.3"
 
-match-sorter@^6.3.4:
-  version "6.4.0"
-  resolved "https://registry.yarnpkg.com/match-sorter/-/match-sorter-6.4.0.tgz#ae9c166cb3c9efd337690b3160c0e28cb8377c13"
-  integrity sha512-d4664ahzdL1QTTvmK1iI0JsrxWeJ6gn33qkYtnPg3mcn+naBLtXSgSPOe+X2vUgtgGwaAk3eiaj7gwKjjMAq+Q==
+match-sorter@^8.3.0:
+  version "8.3.0"
+  resolved "https://registry.yarnpkg.com/match-sorter/-/match-sorter-8.3.0.tgz#85cb4c3b6b25df110b44d66ed6661625efb21834"
+  integrity sha512-8Py1GbZi5zsclYSFcPAH4H5xfTbeD0bOREA7qP/t8bW4MbOSlPl8sbqHOedEV7O+Bxyvxm6xs/v6BXJGe+JDNA==
   dependencies:
     "@babel/runtime" "^7.23.8"
     remove-accents "0.5.0"

@@ -21,7 +21,7 @@
     "konva": "^9.3.18",
     "localforage": "^1.10.0",
     "lucide-react": "^0.515.0",
-    "match-sorter": "^6.3.4",
+    "match-sorter": "^8.3.0",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-axios": "^2.0.6",
