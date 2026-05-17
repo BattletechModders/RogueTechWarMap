@@ -142,6 +142,7 @@ export const GalaxyMapRender = ({
 
   /* Empty means "all factions"; when populated, only matching owners are rendered. */
   const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
+  const deferredSelectedFactions = useDeferredValue(selectedFactions);
 
   const [stageSize, setStageSize] = useState<StageSize>(getViewportSize());
 
@@ -197,25 +198,6 @@ export const GalaxyMapRender = ({
         options
       );
       document.removeEventListener('gestureend', preventZoomGesture, options);
-    };
-  }, []);
-
-  // Keep an additional window-level gesture lock for Firefox variants that skip document events.
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof document === 'undefined') {
-      return undefined;
-    }
-
-    const lockScale = (e: Event) => e.preventDefault();
-
-    window.addEventListener('gesturestart', lockScale, { passive: false });
-    window.addEventListener('gesturechange', lockScale, { passive: false });
-    window.addEventListener('gestureend', lockScale, { passive: false });
-
-    return () => {
-      window.removeEventListener('gesturestart', lockScale);
-      window.removeEventListener('gesturechange', lockScale);
-      window.removeEventListener('gestureend', lockScale);
     };
   }, []);
 
@@ -304,7 +286,7 @@ export const GalaxyMapRender = ({
 
   const visibleSystems = useMemo(() => {
     const viewport = getViewportBounds(stageSize, view, 120);
-    const selectedFactionsSet = new Set(selectedFactions);
+    const selectedFactionsSet = new Set(deferredSelectedFactions);
 
     return systems.filter((system) => {
       const x = Number(system.posX);
@@ -324,7 +306,7 @@ export const GalaxyMapRender = ({
         selectedFactionsSet.has(system.factionName)
       );
     });
-  }, [selectedFactions, stageSize, systems, view]);
+  }, [deferredSelectedFactions, stageSize, systems, view]);
   const desktopPointerHeight = 10;
   const desktopPointerWidth = 12;
   const desktopTitleFontSize = tooltipFontSize * 1.12;
