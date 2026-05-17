@@ -21,7 +21,7 @@ vi.mock('react-konva', () => {
           getStage: () => null,
           batchDraw: vi.fn(),
           destroy: vi.fn(),
-          container: vi.fn(() => ({ addEventListener: vi.fn(), removeEventListener: vi.fn() })),
+          container: vi.fn(() => ({ addEventListener: vi.fn(), removeEventListener: vi.fn(), style: { touchAction: '' } })),
           getPointerPosition: vi.fn(() => ({ x: 0, y: 0 })),
           getRelativePointerPosition: vi.fn(() => ({ x: 0, y: 0 })),
           x: vi.fn(() => 0),
