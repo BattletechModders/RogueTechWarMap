@@ -49,12 +49,10 @@ beforeEach(() => {
 // GalaxyMap.tsx (which calls getContext at module level for text measurement)
 // doesn't spam "Not implemented" warnings without needing the `canvas` package.
 if (typeof HTMLCanvasElement !== 'undefined') {
-  HTMLCanvasElement.prototype.getContext = function () {
-    return {
-      font: '',
-      measureText: (text: string) => ({ width: text.length * 8 }),
-    } as unknown as CanvasRenderingContext2D;
-  } as typeof HTMLCanvasElement.prototype.getContext;
+  (HTMLCanvasElement.prototype as any).getContext = () => ({
+    font: '',
+    measureText: (text: string) => ({ width: text.length * 8 }),
+  });
 }
 
 if (typeof window !== 'undefined') {
