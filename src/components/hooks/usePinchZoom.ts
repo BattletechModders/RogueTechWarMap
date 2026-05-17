@@ -97,7 +97,7 @@ export function usePinchZoom({
       };
       lastAppliedCenter.current = startCenter;
     },
-    [getTouchPointInStage, scaleRef]
+    [getTouchPointInStage]
   );
 
   useEffect(() => {
