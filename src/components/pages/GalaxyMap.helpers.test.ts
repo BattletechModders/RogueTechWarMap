@@ -261,4 +261,31 @@ describe('parseMobileTooltipData', () => {
     const result = parseMobileTooltipData(text);
     expect(result.details).toContain('State: Insurrection');
   });
+
+  it('does not crash when "Control:" is the last line (no following content)', () => {
+    const text = ['Terra', '(10, 20)', 'Owner: ComStar', 'Control:'].join('\n');
+    const result = parseMobileTooltipData(text);
+    expect(result.title).toBe('Terra');
+    expect(result.details).toEqual(['Owner: ComStar']);
+  });
+
+  it('handles multiple "Control:" blocks — each resets the inControlBlock flag', () => {
+    const text = [
+      'Terra',
+      '(10, 20)',
+      'Control:',
+      'House Davion 60% · 3',
+      'Damage: Light',
+      'Control:',
+      'House Kurita 40% · 1',
+      'State: Contested',
+    ].join('\n');
+    const result = parseMobileTooltipData(text);
+    // Both key-value lines after each control block should appear.
+    expect(result.details).toContain('Damage: Light');
+    expect(result.details).toContain('State: Contested');
+    // Raw control percentage lines should be dropped.
+    expect(result.details).not.toContain('House Davion 60% · 3');
+    expect(result.details).not.toContain('House Kurita 40% · 1');
+  });
 });

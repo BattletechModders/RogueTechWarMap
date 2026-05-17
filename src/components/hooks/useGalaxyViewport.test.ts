@@ -191,4 +191,45 @@ describe('useGalaxyViewport', () => {
     act(() => flushRaf());
     expect(stage.batchDraw).toHaveBeenCalledTimes(2);
   });
+
+  it('schedulePositionUpdate updates renderPosition after the RAF fires', () => {
+    const { result } = renderHook(() => useGalaxyViewport());
+
+    // Manually advance positionRef to simulate a drag.
+    result.current.positionRef.current = { x: 42, y: 99 };
+
+    act(() => result.current.schedulePositionUpdate());
+    expect(rafQueue).toHaveLength(1);
+
+    act(() => flushRaf());
+    expect(result.current.view.position).toEqual({ x: 42, y: 99 });
+  });
+
+  it('schedulePositionUpdate coalesces concurrent calls into one RAF', () => {
+    const { result } = renderHook(() => useGalaxyViewport());
+
+    act(() => {
+      result.current.schedulePositionUpdate();
+      result.current.schedulePositionUpdate();
+    });
+
+    expect(rafQueue).toHaveLength(1);
+  });
+
+  it('registerScaleListener unsubscribe removes the listener so it no longer fires', () => {
+    const { result } = renderHook(() => useGalaxyViewport());
+    const listener = vi.fn();
+
+    let unsubscribe!: () => void;
+    act(() => {
+      unsubscribe = result.current.registerScaleListener(listener);
+    });
+
+    act(() => result.current.notifyScaleListeners(2));
+    expect(listener).toHaveBeenCalledWith(2);
+
+    act(() => unsubscribe());
+    act(() => result.current.notifyScaleListeners(3));
+    expect(listener).toHaveBeenCalledTimes(1); // not called again
+  });
 });

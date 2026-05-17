@@ -240,4 +240,69 @@ describe('usePinchZoom', () => {
 
     expect(fakeStage.scale).not.toHaveBeenCalled();
   });
+
+  it('sets baseline distance on first move when onTouchStart recorded zero distance', () => {
+    // onTouchStart with identical points → lastDistance = 0 (falsy).
+    // The first onTouchMove RAF should set the baseline and return without scaling.
+    const { hook, fakeStage } = renderPinch();
+
+    act(() =>
+      hook.result.current.handlers.onTouchStart({
+        evt: { touches: [{ clientX: 0, clientY: 0 }, { clientX: 0, clientY: 0 }] },
+        target: { className: 'Layer', findAncestor: () => undefined },
+      } as any)
+    );
+
+    act(() =>
+      hook.result.current.handlers.onTouchMove({
+        evt: {
+          preventDefault: vi.fn(),
+          touches: [{ clientX: 0, clientY: 0 }, { clientX: 100, clientY: 0 }],
+        },
+      } as any)
+    );
+
+    // First move just records the baseline — no scale change yet.
+    expect(fakeStage.scale).not.toHaveBeenCalled();
+
+    // Second move now has a valid baseline and should trigger a scale update.
+    act(() =>
+      hook.result.current.handlers.onTouchMove({
+        evt: {
+          preventDefault: vi.fn(),
+          touches: [{ clientX: 0, clientY: 0 }, { clientX: 200, clientY: 0 }],
+        },
+      } as any)
+    );
+
+    expect(fakeStage.scale).toHaveBeenCalled();
+  });
+
+  it('calls cancelAnimationFrame when onTouchEnd fires after a pinch move', () => {
+    const { hook } = renderPinch();
+
+    act(() =>
+      hook.result.current.handlers.onTouchStart({
+        evt: {
+          touches: [{ clientX: 0, clientY: 0 }, { clientX: 100, clientY: 0 }],
+        },
+        target: { className: 'Layer', findAncestor: () => undefined },
+      } as any)
+    );
+
+    act(() =>
+      hook.result.current.handlers.onTouchMove({
+        evt: {
+          preventDefault: vi.fn(),
+          touches: [{ clientX: 0, clientY: 0 }, { clientX: 200, clientY: 0 }],
+        },
+      } as any)
+    );
+
+    act(() =>
+      hook.result.current.handlers.onTouchEnd({ evt: { touches: [] } } as any)
+    );
+
+    expect(window.cancelAnimationFrame).toHaveBeenCalled();
+  });
 });
