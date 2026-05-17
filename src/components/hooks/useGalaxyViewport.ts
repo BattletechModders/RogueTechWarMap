@@ -22,7 +22,7 @@ export function useGalaxyViewport({
     y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0,
   });
 
-  // Synchronous scale-change listeners: called inside the same RAF as requestBatchDraw
+  // Synchronous scale-change listeners: called before requestBatchDraw queues its RAF
   // so group scales are always up-to-date before the canvas redraws.
   const scaleListenersRef = useRef<Set<(scale: number) => void>>(new Set());
 

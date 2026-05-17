@@ -166,7 +166,7 @@ export const GalaxyMapRender = ({
     stageSize,
   });
 
-  // Block native Firefox pinch zoom at the document level so the custom map handler stays in control.
+  // Block native browser pinch-zoom at the document level so the custom map handler stays in control.
   useEffect(() => {
     if (typeof document === 'undefined') {
       return undefined;
