@@ -9,6 +9,7 @@ type FakeStage = {
   position: ReturnType<typeof vi.fn>;
   scaleX: ReturnType<typeof vi.fn>;
   getPosition: ReturnType<typeof vi.fn>;
+  batchDraw: ReturnType<typeof vi.fn>;
 };
 
 const buildFakeStage = (): FakeStage => ({
@@ -16,10 +17,10 @@ const buildFakeStage = (): FakeStage => ({
   position: vi.fn(),
   scaleX: vi.fn(() => 1),
   getPosition: vi.fn(() => ({ x: 0, y: 0 })),
+  batchDraw: vi.fn(),
 });
 
 const renderPinch = (opts?: Partial<{ minScale: number; maxScale: number }>) => {
-  const requestBatchDraw = vi.fn();
   const schedulePositionUpdate = vi.fn();
   const setZoomScaleFactor = vi.fn();
   const notifyScaleListeners = vi.fn();
@@ -34,7 +35,6 @@ const renderPinch = (opts?: Partial<{ minScale: number; maxScale: number }>) => 
       stageRef,
       scaleRef,
       positionRef,
-      requestBatchDraw,
       schedulePositionUpdate,
       setZoomScaleFactor,
       notifyScaleListeners,
@@ -44,7 +44,7 @@ const renderPinch = (opts?: Partial<{ minScale: number; maxScale: number }>) => 
     });
   });
 
-  return { hook, fakeStage, requestBatchDraw, schedulePositionUpdate, setZoomScaleFactor, notifyScaleListeners, hideTooltip };
+  return { hook, fakeStage, schedulePositionUpdate, setZoomScaleFactor, notifyScaleListeners, hideTooltip };
 };
 
 describe('usePinchZoom', () => {

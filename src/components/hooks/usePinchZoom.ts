@@ -8,8 +8,6 @@ type UsePinchZoomArgs = {
   scaleRef: React.MutableRefObject<number>;
   positionRef: React.MutableRefObject<Point>;
 
-  // Shared from useGalaxyViewport so this hook can force a batched Konva redraw after math updates.
-  requestBatchDraw: (stage: Konva.Stage) => void;
   schedulePositionUpdate: () => void;
   setZoomScaleFactor: React.Dispatch<React.SetStateAction<number>>;
   notifyScaleListeners: (scale: number) => void;
@@ -24,7 +22,6 @@ export function usePinchZoom({
   stageRef,
   scaleRef,
   positionRef,
-  requestBatchDraw,
   schedulePositionUpdate,
   setZoomScaleFactor,
   notifyScaleListeners,
@@ -133,7 +130,9 @@ export function usePinchZoom({
 
         // Update star-size compensation before the canvas redraws so there's no lag.
         notifyScaleListeners(newScale);
-        requestBatchDraw(stage);
+        // We're already inside a RAF callback — draw directly rather than queuing
+        // another RAF (which requestBatchDraw would do), keeping latency at 1 frame.
+        stage.batchDraw();
         // Keep renderPosition in sync so visibleSystems viewport culling uses the
         // current position, not the pre-pinch position from the last drag update.
         schedulePositionUpdate();
@@ -148,7 +147,6 @@ export function usePinchZoom({
       minScale,
       notifyScaleListeners,
       positionRef,
-      requestBatchDraw,
       scaleRef,
       schedulePositionUpdate,
       setZoomScaleFactor,
