@@ -160,6 +160,9 @@ export function usePinchZoom({
     if (e.evt.touches.length < 2) {
       setIsPinching(false);
       setZoomScaleFactor(scaleRef.current);
+      // Dismiss any visible tooltip — onTouchStart only fires for new gestures so
+      // a pinch → single-finger transition would otherwise leave the tooltip open.
+      hideTooltip?.();
       latestPinchSample.current = null;
       if (frameRequestId.current !== null) {
         cancelAnimationFrame(frameRequestId.current);
@@ -167,7 +170,7 @@ export function usePinchZoom({
       }
       frameQueued.current = false;
     }
-  }, [scaleRef, setZoomScaleFactor]);
+  }, [hideTooltip, scaleRef, setZoomScaleFactor]);
 
   return {
     isPinching,

@@ -115,6 +115,23 @@ describe('usePinchZoom', () => {
     expect(hook.result.current.isPinching).toBe(true);
   });
 
+  it('touchEnd calls hideTooltip when dropping from pinch to single touch', () => {
+    const { hook, hideTooltip } = renderPinch();
+
+    act(() =>
+      hook.result.current.handlers.onTouchStart({
+        evt: { touches: [{ clientX: 0, clientY: 0 }, { clientX: 10, clientY: 0 }] },
+        target: { className: 'Layer', findAncestor: () => undefined },
+      } as any)
+    );
+
+    act(() =>
+      hook.result.current.handlers.onTouchEnd({ evt: { touches: [{ clientX: 0, clientY: 0 }] } } as any)
+    );
+
+    expect(hideTooltip).toHaveBeenCalled();
+  });
+
   it('touchEnd with < 2 touches resets isPinching to false', () => {
     const { hook, setZoomScaleFactor } = renderPinch();
 
