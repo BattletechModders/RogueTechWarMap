@@ -4,6 +4,11 @@ import react from '@vitejs/plugin-react-swc';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+
+  if (mode !== 'development' && !env.VITE_BASE_URL) {
+    throw new Error('VITE_BASE_URL must be set for production builds');
+  }
+
   return {
     base: mode === 'development' ? '/' : env.VITE_BASE_URL,
     server: {

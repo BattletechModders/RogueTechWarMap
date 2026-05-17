@@ -9,6 +9,7 @@ type FakeStage = {
   position: ReturnType<typeof vi.fn>;
   scaleX: ReturnType<typeof vi.fn>;
   getPosition: ReturnType<typeof vi.fn>;
+  batchDraw: ReturnType<typeof vi.fn>;
 };
 
 const buildFakeStage = (): FakeStage => ({
@@ -16,10 +17,10 @@ const buildFakeStage = (): FakeStage => ({
   position: vi.fn(),
   scaleX: vi.fn(() => 1),
   getPosition: vi.fn(() => ({ x: 0, y: 0 })),
+  batchDraw: vi.fn(),
 });
 
 const renderPinch = (opts?: Partial<{ minScale: number; maxScale: number }>) => {
-  const requestBatchDraw = vi.fn();
   const schedulePositionUpdate = vi.fn();
   const setZoomScaleFactor = vi.fn();
   const notifyScaleListeners = vi.fn();
@@ -34,7 +35,6 @@ const renderPinch = (opts?: Partial<{ minScale: number; maxScale: number }>) => 
       stageRef,
       scaleRef,
       positionRef,
-      requestBatchDraw,
       schedulePositionUpdate,
       setZoomScaleFactor,
       notifyScaleListeners,
@@ -44,7 +44,7 @@ const renderPinch = (opts?: Partial<{ minScale: number; maxScale: number }>) => 
     });
   });
 
-  return { hook, fakeStage, requestBatchDraw, schedulePositionUpdate, setZoomScaleFactor, notifyScaleListeners, hideTooltip };
+  return { hook, fakeStage, schedulePositionUpdate, setZoomScaleFactor, notifyScaleListeners, hideTooltip };
 };
 
 describe('usePinchZoom', () => {
@@ -113,6 +113,23 @@ describe('usePinchZoom', () => {
     };
     act(() => hook.result.current.handlers.onTouchStart(evt as any));
     expect(hook.result.current.isPinching).toBe(true);
+  });
+
+  it('touchEnd calls hideTooltip when dropping from pinch to single touch', () => {
+    const { hook, hideTooltip } = renderPinch();
+
+    act(() =>
+      hook.result.current.handlers.onTouchStart({
+        evt: { touches: [{ clientX: 0, clientY: 0 }, { clientX: 10, clientY: 0 }] },
+        target: { className: 'Layer', findAncestor: () => undefined },
+      } as any)
+    );
+
+    act(() =>
+      hook.result.current.handlers.onTouchEnd({ evt: { touches: [{ clientX: 0, clientY: 0 }] } } as any)
+    );
+
+    expect(hideTooltip).toHaveBeenCalled();
   });
 
   it('touchEnd with < 2 touches resets isPinching to false', () => {
@@ -191,5 +208,36 @@ describe('usePinchZoom', () => {
     );
 
     expect(schedulePositionUpdate).toHaveBeenCalled();
+  });
+
+  it('does not call stage.scale when both touch points are identical (zero distance)', () => {
+    const { hook, fakeStage } = renderPinch();
+
+    act(() =>
+      hook.result.current.handlers.onTouchStart({
+        evt: {
+          touches: [
+            { clientX: 50, clientY: 50 },
+            { clientX: 100, clientY: 50 },
+          ],
+        },
+        target: { className: 'Layer', findAncestor: () => undefined },
+      } as any)
+    );
+
+    // Both fingers at the same point — distance is 0, would produce NaN scale.
+    act(() =>
+      hook.result.current.handlers.onTouchMove({
+        evt: {
+          preventDefault: vi.fn(),
+          touches: [
+            { clientX: 75, clientY: 75 },
+            { clientX: 75, clientY: 75 },
+          ],
+        },
+      } as any)
+    );
+
+    expect(fakeStage.scale).not.toHaveBeenCalled();
   });
 });
