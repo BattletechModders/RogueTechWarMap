@@ -31,6 +31,9 @@ jobs:
       - name: Lint
         run: yarn lint
 
+      - name: Typecheck app sources
+        run: npx tsc -p tsconfig.app.json --noEmit
+
       - name: Typecheck test sources
         run: npx tsc -p tsconfig.vitest.json --noEmit
 

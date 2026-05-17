@@ -143,6 +143,8 @@ export const GalaxyMapRender = ({
   /* Empty means "all factions"; when populated, only matching owners are rendered. */
   const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
 
+  const [stageSize, setStageSize] = useState<StageSize>(getViewportSize());
+
   const { tooltip, showTooltip, hideTooltip } = useTooltip(scaleRef);
   const tooltipVisibleRef = useRef(false);
   const touchedSystemNameRef = useRef<string | null>(null);
@@ -160,9 +162,8 @@ export const GalaxyMapRender = ({
     hideTooltip,
     minScale: MIN_SCALE,
     maxScale: MAX_SCALE,
+    stageSize,
   });
-
-  const [stageSize, setStageSize] = useState<StageSize>(getViewportSize());
 
   // Block native Firefox pinch zoom at the document level so the custom map handler stays in control.
   useEffect(() => {

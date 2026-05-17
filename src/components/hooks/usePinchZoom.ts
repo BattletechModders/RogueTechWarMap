@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Konva from 'konva';
 import type { Point } from '../GalaxyMap/gm.types';
 import { getDistance } from '../GalaxyMap/gm.interactions';
@@ -16,6 +16,10 @@ type UsePinchZoomArgs = {
 
   minScale?: number;
   maxScale?: number;
+
+  // Passed from GalaxyMapRender so the hook can detect orientation changes
+  // (resize events) and discard stale touch-coordinate samples mid-pinch.
+  stageSize?: { width: number; height: number };
 };
 
 export function usePinchZoom({
@@ -28,6 +32,7 @@ export function usePinchZoom({
   hideTooltip,
   minScale = 0.2,
   maxScale = 25,
+  stageSize,
 }: UsePinchZoomArgs) {
   const [isPinching, setIsPinching] = useState(false);
   const lastDistance = useRef(0);
@@ -37,6 +42,23 @@ export function usePinchZoom({
     touch1: { clientX: number; clientY: number };
     touch2: { clientX: number; clientY: number };
   } | null>(null);
+
+  // When the viewport dimensions change (orientation flip or window resize during
+  // a pinch), the saved touch coordinates reference the old screen layout and
+  // would produce a wrong scale delta on the next frame.  Reset so the next
+  // onTouchMove re-establishes a clean baseline.
+  // isPinching is intentionally omitted from deps: this effect should only fire
+  // when the stage dimensions change, not every time isPinching toggles.
+  useEffect(() => {
+    if (!isPinching) return;
+    lastDistance.current = 0;
+    latestPinchSample.current = null;
+    if (frameRequestId.current !== null) {
+      cancelAnimationFrame(frameRequestId.current);
+      frameRequestId.current = null;
+    }
+    frameQueued.current = false;
+  }, [stageSize?.width, stageSize?.height]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onTouchStart = useCallback(
     (e: Konva.KonvaEventObject<TouchEvent>) => {
