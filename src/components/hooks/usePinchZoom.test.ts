@@ -124,7 +124,7 @@ describe('usePinchZoom', () => {
     expect(hook.result.current.isPinching).toBe(true);
   });
 
-  it('touchEnd calls hideTooltip when dropping from pinch to single touch', () => {
+  it('touchEnd does not hide tooltip when dropping from pinch to single touch', () => {
     const { hook, hideTooltip } = renderPinch();
 
     act(() =>
@@ -138,7 +138,7 @@ describe('usePinchZoom', () => {
       hook.result.current.handlers.onTouchEnd({ evt: { touches: [{ clientX: 0, clientY: 0 }] } } as any)
     );
 
-    expect(hideTooltip).toHaveBeenCalled();
+    expect(hideTooltip).not.toHaveBeenCalled();
   });
 
   it('touchEnd with < 2 touches resets isPinching to false', () => {

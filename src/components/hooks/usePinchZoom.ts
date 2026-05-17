@@ -219,12 +219,10 @@ export function usePinchZoom({
         notifyScaleListeners(scaleRef.current);
         setZoomScaleFactor(scaleRef.current);
         schedulePositionUpdate();
-        hideTooltip?.();
         resetPinchGesture();
       }
     },
     [
-      hideTooltip,
       notifyScaleListeners,
       resetPinchGesture,
       scaleRef,
