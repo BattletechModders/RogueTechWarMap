@@ -19,6 +19,13 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 700,
       rollupOptions: {
         output: {
+          // Pin the entry filename so the roguewar.org wrapper template can
+          // hardcode a single stable URL (/warmap/assets/app.js). Vendor
+          // chunks and CSS keep their content-hash for cache-busting; they
+          // are loaded by the entry, not by the wrapper template. The server
+          // should serve app.js with a short/no-cache header so deploys take
+          // effect promptly.
+          entryFileNames: 'assets/app.js',
           manualChunks(id) {
             if (id.includes('/konva') || id.includes('/react-konva')) {
               return 'vendor-konva';
