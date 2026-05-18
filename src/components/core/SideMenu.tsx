@@ -10,7 +10,7 @@ interface MenuItemInterface {
 
 function MenuItem(props: MenuItemInterface) {
   return (
-    <li className="items-center text-xl text-white font-bold mb-2 rounded hover:bg-gray-500 hover:shadow py-2">
+    <li className="items-center text-xl text-white font-bold mb-2 rounded-sm hover:bg-gray-500 hover:shadow-sm py-2">
       <Link to={props.path}>
         {<props.icon className="inline-block w-6 h-6 mr-2 -mt-2" />}
         {props.label}
