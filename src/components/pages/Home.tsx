@@ -1,12 +1,4 @@
 import PageTemplate from '../core/PageTemplate';
-import {
-  Card,
-  CardHeader,
-  CardBody,
-  CardFooter,
-  Typography,
-  Button,
-} from '@material-tailwind/react';
 
 enum CardStyle {
   Primary = '-primary',
@@ -34,21 +26,19 @@ export function HomeCard({
   const textColor = style === CardStyle.Primary ? 'text-primary' : 'text-info';
 
   return (
-    <Card
+    <div
       className={`mt-6 w-96 h-56 border-2 ${borderColor} p-5 rounded-lg ml-14 inline-block h-96 relative grow-0`}
     >
-      <CardHeader className={`relative font-bold ${textColor}`}>
-        {heading}
-      </CardHeader>
-      <CardBody className="relative pt-2">{children}</CardBody>
-      <CardFooter className="pt-10 absolute inset-x-5 bottom-8 ">
-        <a target="_blank" href={buttonUri}>
-          <Button className={` ${buttonColor} rounded p-2`}>
+      <div className={`relative font-bold ${textColor}`}>{heading}</div>
+      <div className="relative pt-2">{children}</div>
+      <div className="pt-10 absolute inset-x-5 bottom-8 ">
+        <a target="_blank" rel="noreferrer" href={buttonUri}>
+          <button className={` ${buttonColor} rounded-sm p-2`}>
             {buttonLabel}
-          </Button>
+          </button>
         </a>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -58,25 +48,25 @@ export function Home() {
       <PageTemplate>
         <h1 className="text-4xl text-center">Welcome to the War Commander</h1>
         <br />
-        <Typography className="text-center py-5">
+        <p className="text-center py-5">
           Welcome to the RogueTech Online, the asynchronous multiplayer map for
           RogueTech.
-        </Typography>
+        </p>
         <br />
-        <Typography className="text-center py-5">
+        <p className="text-center py-5">
           From here you can view stats for the various factions, see who
           controls the myriad of star systems within the Inner Sphere, view
           information on current events and learn how the system works.
-        </Typography>
+        </p>
         <br />
         <br />
         <h3 className="text-center text-2xl "> How to Participate</h3>
-        <Typography className="text-center py-10">
+        <p className="text-center py-10">
           To participate more than an observer on RogueTech Online you must be a
           member of the RogueWar discord (linked below). Once on the discord,
           you can register your career to gain access to the online shops, and
           become an active member of RTO.
-        </Typography>
+        </p>
         <br />
         <div className="flex flex-wrap">
           <HomeCard
@@ -85,11 +75,11 @@ export function Home() {
             buttonUri="https://discord.gg/JU8tuMG"
             buttonLabel="RogueWar Discord"
           >
-            <Typography>
+            <p>
               RogueTech Online has a dedicated discord where you can gather with
               fellow players of your factions and be notified of new online
               events as they go live, this is where you must go to participate
-            </Typography>
+            </p>
           </HomeCard>
           <HomeCard
             style={CardStyle.Primary}
@@ -97,10 +87,10 @@ export function Home() {
             buttonUri="https://discourse.modsinexile.com/t/rogue-tech/134"
             buttonLabel=" Go To Mods-In-Exile"
           >
-            <Typography className="card-text">
+            <p className="card-text">
               RogueTech can be found on Mods-In-Exile. RogueTech Online is an
               exclusive part of RogueTech.
-            </Typography>
+            </p>
           </HomeCard>
           <HomeCard
             style={CardStyle.Primary}
@@ -108,14 +98,14 @@ export function Home() {
             buttonUri="https://discord.gg/93kxWQZ"
             buttonLabel="RT Discord"
           >
-            <Typography className="card-text">
+            <p className="card-text">
               RogueTech's primary discord server is where you can file tickets
               and get support with bugs or crashes. You can also chat with
               fellow RT players, share builds and ask for advice.
-            </Typography>
-            <Typography className="mt-10 font-semibold">
+            </p>
+            <p className="mt-10 font-semibold">
               Note: This is the only place where the RT crew will offer support.
-            </Typography>
+            </p>
           </HomeCard>
           <HomeCard
             style={CardStyle.Primary}
@@ -123,11 +113,11 @@ export function Home() {
             buttonUri="https://roguetech.gamepedia.com"
             buttonLabel="Wiki"
           >
-            <Typography>
+            <p>
               RogueTech has a general Wiki full of helpful information. If you
               need to know how something works, or information that isn't here,
               try the wiki.
-            </Typography>
+            </p>
           </HomeCard>
           <HomeCard
             style={CardStyle.Primary}
@@ -135,12 +125,12 @@ export function Home() {
             buttonUri="https://ko-fi.com/roguetech28443"
             buttonLabel="Donate"
           >
-            <Typography>
+            <p>
               The RT crew do not expect to receive any compensation for our
               work. However if you would like to help keep our over-worked
               support staff caffeinated or the Urbie factories running you can
               donate here.
-            </Typography>
+            </p>
           </HomeCard>
         </div>
       </PageTemplate>

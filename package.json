@@ -16,7 +16,6 @@
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
-    "@material-tailwind/react": "^2.1.10",
     "axios": "^1.13.5",
     "konva": "^9.3.18",
     "localforage": "^1.10.0",
@@ -52,7 +51,8 @@
     "jsdom": "^29.1.1",
     "postcss": "^8.4.47",
     "simple-git-hooks": "^2.13.1",
-    "tailwindcss": "^3.4.12",
+    "tailwindcss": "^4.3.0",
+    "@tailwindcss/postcss": "^4.3.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^8.0.1",
