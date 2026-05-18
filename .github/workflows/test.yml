@@ -49,6 +49,31 @@ jobs:
       - name: Run tests with coverage
         run: yarn test:coverage
 
+      - name: Build production bundle
+        run: yarn build
+        env:
+          VITE_BASE_URL: /
+
+      - name: Verify Tailwind utilities are emitted
+        # Regression gate for the 2026-05-17 black-map incident: dependabot bumped
+        # tailwindcss v3 -> v4, PostCSS silently dropped every utility, and the
+        # Konva stage collapsed to 0x0. Fail loudly if utilities are missing.
+        run: |
+          css=$(ls dist/assets/*.css 2>/dev/null | head -1)
+          if [ -z "$css" ]; then
+            echo "FAIL: no CSS bundle found in dist/assets/"
+            exit 1
+          fi
+          missing=0
+          for util in '\.w-full' '\.h-full' '\.flex' '\.text-center'; do
+            if ! grep -q "$util" "$css"; then
+              echo "FAIL: utility \"$util\" missing from $css"
+              missing=1
+            fi
+          done
+          [ "$missing" = "0" ] || exit 1
+          echo "OK: Tailwind utilities present in $css"
+
       - name: Upload coverage report
         if: matrix.node == '20'
         uses: actions/upload-artifact@v7
