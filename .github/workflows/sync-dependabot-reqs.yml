@@ -1,0 +1,47 @@
+name: Keep dependabot-reqs in sync with main
+
+# Dependabot computes its updates against the manifests on its target branch
+# (dependabot-reqs, set in .github/dependabot.yml). This workflow merges main
+# into dependabot-reqs whenever main changes, so the weekly recommendations are
+# always evaluated against the latest package.json / lockfile.
+#
+# Uses a merge (not a rebase/force-push): dependabot-reqs is the *base* of open
+# Dependabot PRs, so its tip must only ever advance, never be rewritten.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-dependabot-reqs
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dependabot-reqs
+        uses: actions/checkout@v4
+        with:
+          ref: dependabot-reqs
+          fetch-depth: 0
+
+      - name: Merge main into dependabot-reqs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          if git merge-base --is-ancestor origin/main HEAD; then
+            echo "dependabot-reqs already contains main; nothing to sync."
+            exit 0
+          fi
+          if ! git merge --no-edit origin/main; then
+            echo "::error::Merge conflict syncing main into dependabot-reqs — resolve manually (likely a manifest edited on both branches)."
+            git merge --abort
+            exit 1
+          fi
+          git push origin HEAD:dependabot-reqs
