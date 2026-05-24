@@ -5,10 +5,10 @@ updates:
     schedule:
       interval: weekly
     # Route updates to a staging branch so they can be tested before merging to main.
-    target-branch: "dependabot"
+    target-branch: "dependabot-reqs"
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
-    target-branch: "dependabot"
+    target-branch: "dependabot-reqs"
