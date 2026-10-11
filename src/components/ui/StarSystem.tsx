@@ -18,8 +18,12 @@ const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;
 const CONTROL_LABEL_MIN_SCALE = 5.5;
 const CONTROL_LABEL_WIDTH = 16;
-const CONTROL_LABEL_FONT_SIZE = 2.4;
+const CONTROL_LABEL_FONT_SIZE = 3;
 const CONTROL_LABEL_OFFSET = 1.3;
+
+const getControlLabelFontSize = (scale: number): number =>
+  (CONTROL_LABEL_FONT_SIZE * CONTROL_LABEL_MIN_SCALE) /
+  Math.max(scale, CONTROL_LABEL_MIN_SCALE);
 
 const makeIconLoader = (url: string) => {
   let cache: HTMLImageElement | null = null;
@@ -186,6 +190,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
       controlLabelRef.current?.visible(
         !!controlLabel && scale >= CONTROL_LABEL_MIN_SCALE
       );
+      controlLabelRef.current?.fontSize(getControlLabelFontSize(scale));
     });
   }, [controlLabel, registerScaleListener]);
 
@@ -260,6 +265,9 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const initialGroupScale = 1 / Math.min(scaleRef.current ?? 1, 1);
   const initialShowControlLabel =
     (scaleRef.current ?? 1) >= CONTROL_LABEL_MIN_SCALE;
+  const initialControlLabelFontSize = getControlLabelFontSize(
+    scaleRef.current ?? 1
+  );
 
   return (
     <Group
@@ -470,7 +478,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
           width={CONTROL_LABEL_WIDTH}
           text={controlLabel}
           fontFamily="Roboto Mono, monospace"
-          fontSize={CONTROL_LABEL_FONT_SIZE}
+          fontSize={initialControlLabelFontSize}
           fill="#888"
           align="center"
           opacity={circleOpacity}
