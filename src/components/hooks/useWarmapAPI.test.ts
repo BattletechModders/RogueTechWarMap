@@ -137,6 +137,7 @@ describe('useWarmapAPI', () => {
     expect(result.current.isLoading).toBe(true);
     expect(result.current.fetchError).toBeNull();
     expect(result.current.rawSystems).toEqual([]);
+    expect(result.current.adjacencyPairs).toEqual([]);
     expect(result.current.factions).toEqual({});
   });
 
@@ -279,5 +280,31 @@ describe('useWarmapAPI', () => {
 
     expect(result.current.rawSystems).toHaveLength(0);
     expect(result.current.fetchError).toBeNull();
+  });
+
+  it('populates adjacency pairs from the public adjacency API', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          adjacencyMap: {
+            starsystemdef_Terra: ['starsystemdef_Altair'],
+            starsystemdef_Altair: ['starsystemdef_Terra'],
+            starsystemdef_Butzfleth: 'broken',
+            starsystemdef_Macintosh: ['starsystemdef_AsSamik', null],
+          },
+        }),
+    } as Response);
+
+    const { result } = renderHook(() => useWarmapAPI());
+
+    await act(async () => {
+      await result.current.fetchAdjacencyData();
+    });
+
+    expect(result.current.adjacencyPairs).toEqual([
+      ['Terra', 'Altair'],
+      ['Macintosh', 'AsSamik'],
+    ]);
   });
 });

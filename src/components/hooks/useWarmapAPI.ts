@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import { FactionDataType, FactionType, StarSystemType } from './types';
 import { API_BASE_URL } from '../helpers/ApiHelper.ts';
 import { applyDevStateInjection } from '../helpers/devStateInjector';
+import { parseAdjacencyPairs } from '../helpers/AdjacencyHelper.ts';
+import type { AdjacencyPair } from '../helpers/AdjacencyHelper.ts';
 
 // ---------------------------------------------------------------------------
 // Runtime shape guards — the API is external and can return anything.
@@ -56,6 +58,7 @@ export function validateFactions(data: unknown): FactionDataType {
 
 const useWarmapAPI = () => {
   const [rawSystems, setRawSystems] = useState<StarSystemType[]>([]);
+  const [adjacencyPairs, setAdjacencyPairs] = useState<AdjacencyPair[]>([]);
   const [factions, setFactions] = useState<FactionDataType>({});
   const [capitals, setCapitals] = useState<string[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -119,14 +122,31 @@ const useWarmapAPI = () => {
     }
   };
 
+  const fetchAdjacencyData = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/starmap/adjacency/warmap`, {
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) throw new Error(`Adjacency request failed: ${res.status} ${res.statusText}`);
+      const raw = await res.json();
+
+      setAdjacencyPairs(parseAdjacencyPairs(raw));
+    } catch (error) {
+      console.warn('[useWarmapAPI] failed to load adjacency data:', error);
+      setAdjacencyPairs([]);
+    }
+  };
+
   return {
     rawSystems,
+    adjacencyPairs,
     factions,
     capitals,
     fetchError,
     isLoading,
     fetchFactionData,
     fetchSystemData,
+    fetchAdjacencyData,
   };
 };
 

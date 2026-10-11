@@ -21,12 +21,14 @@ describe('useFiltering', () => {
     const { result } = renderHook(() => useFiltering());
     expect(result.current).toMatchObject({
       displaySystems: [],
+      adjacencyPairs: [],
       factions: {},
       capitals: [],
     });
     expect(typeof result.current.projectSystemData).toBe('function');
     expect(typeof result.current.fetchFactionData).toBe('function');
     expect(typeof result.current.fetchSystemData).toBe('function');
+    expect(typeof result.current.fetchAdjacencyData).toBe('function');
     expect(typeof result.current.setFlashActive).toBe('function');
     expect(result.current.settings).toEqual({ flashActivePlayers: true });
   });
