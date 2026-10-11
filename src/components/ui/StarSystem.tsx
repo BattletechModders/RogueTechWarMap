@@ -16,9 +16,9 @@ import type { TooltipControlItem } from '../GalaxyMap/gm.types';
 
 const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;
-const CONTROL_LABEL_MIN_SCALE = 4;
+const CONTROL_LABEL_MIN_SCALE = 5.5;
 const CONTROL_LABEL_WIDTH = 16;
-const CONTROL_LABEL_FONT_SIZE = 2.6;
+const CONTROL_LABEL_FONT_SIZE = 2.4;
 const CONTROL_LABEL_OFFSET = 1.3;
 
 const makeIconLoader = (url: string) => {
@@ -471,12 +471,9 @@ const StarSystem: React.FC<StarSystemProps> = ({
           text={controlLabel}
           fontFamily="Roboto Mono, monospace"
           fontSize={CONTROL_LABEL_FONT_SIZE}
-          fill="#eee"
+          fill="#888"
           align="center"
           opacity={circleOpacity}
-          shadowColor="#aaa"
-          shadowBlur={1.5}
-          shadowOpacity={0.8}
           visible={initialShowControlLabel}
           listening={false}
         />
