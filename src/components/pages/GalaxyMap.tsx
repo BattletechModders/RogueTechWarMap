@@ -24,7 +24,6 @@ import useTooltip from '../hooks/useTooltip';
 import useFiltering from '../hooks/useFiltering';
 import { useGalaxyViewport } from '../hooks/useGalaxyViewport';
 import { usePinchZoom } from '../hooks/usePinchZoom';
-import { normalizeAdjacencySystemName } from '../helpers/AdjacencyHelper.ts';
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
@@ -330,32 +329,25 @@ export const GalaxyMapRender = ({
       return [];
     }
 
-    // normalize system name since the from and to names are also normalized
     // using globalThis cause "Map" is the name of the exported module in this file
     const systemsByName = new globalThis.Map(
-      systems.map((system) => [
-        normalizeAdjacencySystemName(system.name),
-        system,
-      ])
+      systems.map((system) => [system.coreId, system])
     );
     const visibleSystemNames = new Set(
-      visibleSystems.map((system) => normalizeAdjacencySystemName(system.name))
+      visibleSystems.map((system) => system.coreId)
     );
 
     return adjacencyPairs.flatMap(([fromName, toName], index) => {
-      const fromKey = normalizeAdjacencySystemName(fromName);
-      const toKey = normalizeAdjacencySystemName(toName);
-
       // only draw lines when visible in viewport
       if (
-        !visibleSystemNames.has(fromKey) ||
-        !visibleSystemNames.has(toKey)
+        !visibleSystemNames.has(fromName) ||
+        !visibleSystemNames.has(toName)
       ) {
         return [];
       }
 
-      const fromSystem = systemsByName.get(fromKey);
-      const toSystem = systemsByName.get(toKey);
+      const fromSystem = systemsByName.get(fromName);
+      const toSystem = systemsByName.get(toName);
 
       if (!fromSystem || !toSystem) {
         return [];

@@ -21,6 +21,7 @@ export function validateSystems(data: unknown): StarSystemType[] {
     const s = item as Record<string, unknown>;
     const valid =
       typeof s.name === 'string' && s.name.length > 0 &&
+      (s.coreId === undefined || typeof s.coreId === 'string') &&
       (typeof s.posX === 'number' || typeof s.posX === 'string') &&
       (typeof s.posY === 'number' || typeof s.posY === 'string') &&
       !isNaN(Number(s.posX)) && !isNaN(Number(s.posY)) &&

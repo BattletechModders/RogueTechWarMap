@@ -303,8 +303,8 @@ describe('useWarmapAPI', () => {
     });
 
     expect(result.current.adjacencyPairs).toEqual([
-      ['Terra', 'Altair'],
-      ['Macintosh', 'AsSamik'],
+      ['starsystemdef_Terra', 'starsystemdef_Altair'],
+      ['starsystemdef_Macintosh', 'starsystemdef_AsSamik'],
     ]);
   });
 });
