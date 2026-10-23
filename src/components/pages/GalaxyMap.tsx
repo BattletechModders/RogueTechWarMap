@@ -31,7 +31,7 @@ const TOOLTIP_FONT_FAMILY = 'Roboto Mono, monospace';
 const ADJACENCY_LINE_COLOR = '#bbb';
 const ADJACENCY_LINE_OPACITY = 0.3;
 const ADJACENCY_LINE_WIDTH = 1;
-const ADJACENCY_LINE_MIN_SCALE = 5.5;
+const ADJACENCY_LINE_MIN_SCALE = 4.5;
 
 const tooltipMeasureContext =
   typeof document !== 'undefined'
