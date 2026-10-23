@@ -337,6 +337,8 @@ export const GalaxyMapRender = ({
       visibleSystems.map((system) => system.coreId)
     );
 
+    const lineOpacity = shouldFilter ? ADJACENCY_LINE_OPACITY * 0.3 : ADJACENCY_LINE_OPACITY;
+
     return adjacencyPairs.flatMap(([fromName, toName], index) => {
       // only draw lines when visible in viewport
       if (
@@ -369,11 +371,11 @@ export const GalaxyMapRender = ({
           stroke={ADJACENCY_LINE_COLOR}
           // scale route lines with zooms
           strokeWidth={ADJACENCY_LINE_WIDTH / view.scale}
-          opacity={ADJACENCY_LINE_OPACITY}
+          opacity={lineOpacity}
         />
       );
     });
-  }, [adjacencyPairs, systems, view.scale, visibleSystems]); // only runs on change of these elements due to cost
+  }, [adjacencyPairs, shouldFilter, systems, view.scale, visibleSystems]); // only runs on change of these elements due to cost
 
   const desktopPointerHeight = 10;
   const desktopPointerWidth = 12;
