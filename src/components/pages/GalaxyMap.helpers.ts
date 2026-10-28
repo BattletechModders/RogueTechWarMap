@@ -135,3 +135,16 @@ export const parseMobileTooltipData = (text: string | undefined): MobileTooltipD
 
   return { title, subtitle, details };
 };
+
+/**
+ * viewport density is just how many star systems are visible in frame.
+ * around 500 is densest based on counting the number of visible system at max
+ * zooms around terra
+ */
+export const calculateViewportDensity = (visibleSystemCount: number): number => {
+  if (visibleSystemCount === 0) {
+    return 0;
+  }
+
+  return Math.min(1.0, visibleSystemCount / 500);
+};

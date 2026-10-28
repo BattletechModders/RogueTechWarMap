@@ -16,14 +16,24 @@ import type { TooltipControlItem } from '../GalaxyMap/gm.types';
 
 const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;
-const CONTROL_LABEL_MIN_SCALE = 4.5;
+const CONTROL_LABEL_MIN_SCALE = 4.9;
 const CONTROL_LABEL_WIDTH = 16;
 const CONTROL_LABEL_FONT_SIZE = 3.6;
-const CONTROL_LABEL_OFFSET = 1.3;
+const CONTROL_LABEL_OFFSET = 0.4;
 
-const getControlLabelFontSize = (scale: number): number =>
-  (CONTROL_LABEL_FONT_SIZE * CONTROL_LABEL_MIN_SCALE) /
-  Math.max(scale, CONTROL_LABEL_MIN_SCALE);
+/**
+ * font size scales based on the map scale and then a density calculation based
+ * on the number of visible systems
+ */
+const getControlLabelFontSize = (scale: number, density: number): number => {
+  const baseFontSize = (CONTROL_LABEL_FONT_SIZE * CONTROL_LABEL_MIN_SCALE) /
+    Math.max(scale, CONTROL_LABEL_MIN_SCALE);
+
+  // Scale down font size in dense area
+  const densityMultiplier = 1.0 - (density * 0.25);
+
+  return baseFontSize * densityMultiplier;
+};
 
 const makeIconLoader = (url: string) => {
   let cache: HTMLImageElement | null = null;
@@ -71,6 +81,7 @@ interface StarSystemProps {
   touchedSystemNameRef: React.MutableRefObject<string | null>;
   highlighted?: boolean;
   opacity?: number;
+  density?: number;
 }
 
 const StarSystem: React.FC<StarSystemProps> = ({
@@ -85,6 +96,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
   touchedSystemNameRef,
   highlighted = false,
   opacity = 1,
+  density = 0,
 }) => {
   const baseRadius = system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS;
 
@@ -190,9 +202,9 @@ const StarSystem: React.FC<StarSystemProps> = ({
       controlLabelRef.current?.visible(
         !!controlLabel && scale >= CONTROL_LABEL_MIN_SCALE
       );
-      controlLabelRef.current?.fontSize(getControlLabelFontSize(scale));
+      controlLabelRef.current?.fontSize(getControlLabelFontSize(scale, density));
     });
-  }, [controlLabel, registerScaleListener]);
+  }, [controlLabel, density, registerScaleListener]);
 
   useEffect(() => {
     if (
@@ -266,7 +278,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
   const initialShowControlLabel =
     (scaleRef.current ?? 1) >= CONTROL_LABEL_MIN_SCALE;
   const initialControlLabelFontSize = getControlLabelFontSize(
-    scaleRef.current ?? 1
+    scaleRef.current ?? 1,
+    density
   );
 
   return (
@@ -479,7 +492,7 @@ const StarSystem: React.FC<StarSystemProps> = ({
           text={controlLabel}
           fontFamily="Roboto Mono, monospace"
           fontSize={initialControlLabelFontSize}
-          fill="#888"
+          fill="#ccc"
           align="center"
           opacity={circleOpacity}
           visible={initialShowControlLabel}

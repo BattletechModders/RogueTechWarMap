@@ -9,6 +9,7 @@ import {
   getTooltipFontSize,
   getDesktopLineSegments,
   parseMobileTooltipData,
+  calculateViewportDensity,
 } from './GalaxyMap.helpers';
 import {
   useDeferredValue,
@@ -29,9 +30,9 @@ const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
 const TOOLTIP_FONT_FAMILY = 'Roboto Mono, monospace';
 const ADJACENCY_LINE_COLOR = '#bbb';
-const ADJACENCY_LINE_OPACITY = 0.3;
+const ADJACENCY_LINE_OPACITY = 0.25;
 const ADJACENCY_LINE_WIDTH = 1;
-const ADJACENCY_LINE_MIN_SCALE = 4.5;
+const ADJACENCY_LINE_MIN_SCALE = 4.9;
 
 const tooltipMeasureContext =
   typeof document !== 'undefined'
@@ -383,6 +384,11 @@ export const GalaxyMapRender = ({
   const desktopBodyFontSize = tooltipFontSize * 0.92;
   const desktopLineHeight = desktopTitleFontSize * 1.2;
 
+  const viewportDensity = useMemo(
+    () => calculateViewportDensity(visibleSystems.length),
+    [visibleSystems.length]
+  );
+
   const renderedSystems = useMemo(
     () =>
       visibleSystems.map((system) => {
@@ -404,6 +410,7 @@ export const GalaxyMapRender = ({
             touchedSystemNameRef={touchedSystemNameRef}
             highlighted={shouldFilter && isMatch}
             opacity={opacity}
+            density={viewportDensity}
           />
         );
       }),
@@ -416,6 +423,7 @@ export const GalaxyMapRender = ({
       settings,
       shouldFilter,
       showTooltip,
+      viewportDensity,
       visibleSystems,
     ]
   );
