@@ -30,7 +30,7 @@ const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
 const TOOLTIP_FONT_FAMILY = 'Roboto Mono, monospace';
 const ADJACENCY_LINE_COLOR = '#bbb';
-const ADJACENCY_LINE_OPACITY = 0.25;
+const ADJACENCY_LINE_OPACITY = 0.3;
 const ADJACENCY_LINE_WIDTH = 1;
 const ADJACENCY_LINE_MIN_SCALE = 5.3;
 
