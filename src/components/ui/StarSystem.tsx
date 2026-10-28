@@ -16,7 +16,7 @@ import type { TooltipControlItem } from '../GalaxyMap/gm.types';
 
 const CAPITAL_RADIUS = 2.5;
 const PLANET_RADIUS = 1;
-const CONTROL_LABEL_MIN_SCALE = 4.9;
+const CONTROL_LABEL_MIN_SCALE = 5.3;
 const CONTROL_LABEL_WIDTH = 16;
 const CONTROL_LABEL_FONT_SIZE = 3.6;
 const CONTROL_LABEL_OFFSET = 0.4;
