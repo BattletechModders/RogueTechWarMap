@@ -58,6 +58,7 @@ vi.mock('react-konva', () => {
     Circle: passthrough('span'),
     Group: passthrough('div'),
     Image: passthrough('div'),
+    Text: passthrough('span'),
   };
 });
 

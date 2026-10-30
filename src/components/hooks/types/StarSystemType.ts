@@ -2,6 +2,7 @@ import { ControlInfo } from './ControlInfo';
 import type { StarSystemState } from './StarSystemState';
 
 export interface StarSystemType {
+  coreId: string;
   name: string;
   posX: number;
   posY: number;

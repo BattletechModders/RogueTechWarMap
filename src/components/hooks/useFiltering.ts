@@ -5,8 +5,17 @@ import useWarmapAPI from './useWarmapAPI';
 import useSettings from './useSettings';
 
 const useFiltering = () => {
-  const { rawSystems, factions, capitals, fetchError, isLoading, fetchFactionData, fetchSystemData } =
-    useWarmapAPI();
+  const {
+    rawSystems,
+    adjacencyPairs,
+    factions,
+    capitals,
+    fetchError,
+    isLoading,
+    fetchFactionData,
+    fetchSystemData,
+    fetchAdjacencyData,
+  } = useWarmapAPI();
 
   const { settings, setFlashActive } = useSettings();
   const capitalSet = useMemo(() => new Set(capitals), [capitals]);
@@ -38,6 +47,7 @@ const useFiltering = () => {
 
   return {
     displaySystems,
+    adjacencyPairs,
     projectSystemData,
     factions,
     capitals,
@@ -45,6 +55,7 @@ const useFiltering = () => {
     isLoading,
     fetchFactionData,
     fetchSystemData,
+    fetchAdjacencyData,
     settings,
     setFlashActive,
   };

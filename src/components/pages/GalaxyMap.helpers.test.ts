@@ -5,6 +5,7 @@ import {
   getViewportBounds,
   getViewportSize,
   parseMobileTooltipData,
+  calculateViewportDensity,
 } from './GalaxyMap.helpers';
 
 // ---------------------------------------------------------------------------
@@ -287,5 +288,39 @@ describe('parseMobileTooltipData', () => {
     // Raw control percentage lines should be dropped.
     expect(result.details).not.toContain('House Davion 60% · 3');
     expect(result.details).not.toContain('House Kurita 40% · 1');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// calculateViewportDensity
+// ---------------------------------------------------------------------------
+
+describe('calculateViewportDensity', () => {
+  it('returns 0 when no systems are visible', () => {
+    expect(calculateViewportDensity(0)).toBe(0);
+  });
+
+  it('returns low density for sparse viewports (50 systems)', () => {
+    const density = calculateViewportDensity(50);
+    expect(density).toBeCloseTo(0.1, 2); // 50/500
+  });
+
+  it('returns moderate density for typical viewports (200 systems)', () => {
+    const density = calculateViewportDensity(200);
+    expect(density).toBeCloseTo(0.4, 2); // 200/500
+  });
+
+  it('caps density at 1.0 for dense viewports (500 systems)', () => {
+    expect(calculateViewportDensity(500)).toBe(1.0);
+  });
+
+  it('caps density at 1.0 for very dense viewports (1000+ systems)', () => {
+    expect(calculateViewportDensity(1000)).toBe(1.0);
+    expect(calculateViewportDensity(2000)).toBe(1.0);
+  });
+
+  it('handles edge case of 1 system', () => {
+    const density = calculateViewportDensity(1);
+    expect(density).toBeCloseTo(0.002, 3); // 1/500
   });
 });

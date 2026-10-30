@@ -9,6 +9,7 @@ import {
   getTooltipFontSize,
   getDesktopLineSegments,
   parseMobileTooltipData,
+  calculateViewportDensity,
 } from './GalaxyMap.helpers';
 import {
   useDeferredValue,
@@ -28,6 +29,11 @@ import { usePinchZoom } from '../hooks/usePinchZoom';
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 25;
 const TOOLTIP_FONT_FAMILY = 'Roboto Mono, monospace';
+const ADJACENCY_LINE_COLOR = '#bbb';
+const ADJACENCY_LINE_OPACITY = 0.3;
+const ADJACENCY_LINE_WIDTH = 1;
+const ADJACENCY_LINE_MIN_SCALE = 5.3;
+
 const tooltipMeasureContext =
   typeof document !== 'undefined'
     ? document.createElement('canvas').getContext('2d')
@@ -49,26 +55,31 @@ const measureTooltipTextWidth = (
 const GalaxyMap = () => {
   const {
     displaySystems,
+    adjacencyPairs,
     factions,
     capitals,
     fetchError,
     isLoading,
     fetchFactionData,
     fetchSystemData,
+    fetchAdjacencyData,
     settings,
   } = useFiltering();
 
   const fetchFactionDataRef = useRef(fetchFactionData);
   const fetchSystemDataRef = useRef(fetchSystemData);
+  const fetchAdjacencyDataRef = useRef(fetchAdjacencyData);
 
   useEffect(() => {
     fetchFactionDataRef.current = fetchFactionData;
     fetchSystemDataRef.current = fetchSystemData;
-  }, [fetchFactionData, fetchSystemData]);
+    fetchAdjacencyDataRef.current = fetchAdjacencyData;
+  }, [fetchAdjacencyData, fetchFactionData, fetchSystemData]);
 
   useEffect(() => {
     fetchFactionDataRef.current();
     fetchSystemDataRef.current();
+    fetchAdjacencyDataRef.current();
 
     const interval = setInterval(() => {
       fetchSystemDataRef.current();
@@ -101,6 +112,7 @@ const GalaxyMap = () => {
     return (
       <GalaxyMapRender
         systems={displaySystems}
+        adjacencyPairs={adjacencyPairs}
         factions={factions}
         settings={settings}
       />
@@ -120,6 +132,7 @@ const GalaxyMap = () => {
 
 export const GalaxyMapRender = ({
   systems,
+  adjacencyPairs,
   factions,
   settings,
 }: GalaxyMapRenderProps) => {
@@ -311,11 +324,70 @@ export const GalaxyMapRender = ({
       );
     });
   }, [deferredSelectedFactions, stageSize, systems, view]);
+
+  const renderedAdjacencyLines = useMemo(() => {
+    if (view.scale < ADJACENCY_LINE_MIN_SCALE) {
+      return [];
+    }
+
+    // using globalThis cause "Map" is the name of the exported module in this file
+    const systemsByName = new globalThis.Map(
+      systems.map((system) => [system.coreId, system])
+    );
+    const visibleSystemNames = new Set(
+      visibleSystems.map((system) => system.coreId)
+    );
+
+    const lineOpacity = shouldFilter ? ADJACENCY_LINE_OPACITY * 0.3 : ADJACENCY_LINE_OPACITY;
+
+    return adjacencyPairs.flatMap(([fromName, toName], index) => {
+      // only draw lines when visible in viewport
+      if (
+        !visibleSystemNames.has(fromName) ||
+        !visibleSystemNames.has(toName)
+      ) {
+        return [];
+      }
+
+      const fromSystem = systemsByName.get(fromName);
+      const toSystem = systemsByName.get(toName);
+
+      if (!fromSystem || !toSystem) {
+        return [];
+      }
+
+      const fromX = Number(fromSystem.posX);
+      const fromY = -Number(fromSystem.posY);
+      const toX = Number(toSystem.posX);
+      const toY = -Number(toSystem.posY);
+
+      if ([fromX, fromY, toX, toY].some((value) => Number.isNaN(value))) {
+        return [];
+      }
+
+      return (
+        <Line
+          key={`${fromName}-${toName}-${index}`}
+          points={[fromX, fromY, toX, toY]}
+          stroke={ADJACENCY_LINE_COLOR}
+          // scale route lines with zooms
+          strokeWidth={ADJACENCY_LINE_WIDTH / view.scale}
+          opacity={lineOpacity}
+        />
+      );
+    });
+  }, [adjacencyPairs, shouldFilter, systems, view.scale, visibleSystems]); // only runs on change of these elements due to cost
+
   const desktopPointerHeight = 10;
   const desktopPointerWidth = 12;
   const desktopTitleFontSize = tooltipFontSize * 1.12;
   const desktopBodyFontSize = tooltipFontSize * 0.92;
   const desktopLineHeight = desktopTitleFontSize * 1.2;
+
+  const viewportDensity = useMemo(
+    () => calculateViewportDensity(visibleSystems.length),
+    [visibleSystems.length]
+  );
 
   const renderedSystems = useMemo(
     () =>
@@ -338,6 +410,7 @@ export const GalaxyMapRender = ({
             touchedSystemNameRef={touchedSystemNameRef}
             highlighted={shouldFilter && isMatch}
             opacity={opacity}
+            density={viewportDensity}
           />
         );
       }),
@@ -350,6 +423,7 @@ export const GalaxyMapRender = ({
       settings,
       shouldFilter,
       showTooltip,
+      viewportDensity,
       visibleSystems,
     ]
   );
@@ -455,6 +529,10 @@ export const GalaxyMapRender = ({
               align="center"
             />
           )}
+        </Layer>
+        {/*listening is false because we want to block click and drag behaviour with the lines*/}
+        <Layer listening={false}>
+          {renderedAdjacencyLines}
         </Layer>
         <Layer>
           {renderedSystems}

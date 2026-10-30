@@ -3,6 +3,7 @@ import type {
   FactionDataType,
   Settings,
 } from '../hooks/types';
+import type { AdjacencyPair } from '../helpers/AdjacencyHelper';
 
 export type Point = { x: number; y: number };
 
@@ -38,6 +39,7 @@ export interface ViewTransform {
 
 export interface GalaxyMapRenderProps {
   systems: DisplayStarSystemType[];
+  adjacencyPairs: AdjacencyPair[];
   factions: FactionDataType;
   settings: Settings;
 }

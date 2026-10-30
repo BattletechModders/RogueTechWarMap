@@ -108,6 +108,7 @@ vi.mock('../ui/BottomFilterPanel', () => ({ default: () => null }));
 
 const minimalProps = {
   systems: [],
+  adjacencyPairs: [],
   factions: {},
   settings: initialSettings,
 };
