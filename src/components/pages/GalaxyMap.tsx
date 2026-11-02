@@ -150,6 +150,7 @@ export const GalaxyMapRender = ({
   const [searchTerm, setSearchTerm] = useState('');
   const deferredSearchTerm = useDeferredValue(searchTerm);
   const [showAllControl, setShowAllControl] = useState(false);
+  const [hoveredSystemId, setHoveredSystemId] = useState<string | null>(null);
   const normalizedSearch = deferredSearchTerm.trim().toLowerCase();
   const shouldFilter = normalizedSearch.length >= 2;
 
@@ -365,18 +366,20 @@ export const GalaxyMapRender = ({
         return [];
       }
 
+      const isHighlighted = hoveredSystemId && (fromSystem.id === hoveredSystemId || toSystem.id === hoveredSystemId);
+
       return (
         <Line
           key={`${fromName}-${toName}-${index}`}
           points={[fromX, fromY, toX, toY]}
           stroke={ADJACENCY_LINE_COLOR}
           // scale route lines with zooms
-          strokeWidth={ADJACENCY_LINE_WIDTH / view.scale}
-          opacity={lineOpacity}
+          strokeWidth={isHighlighted ? (ADJACENCY_LINE_WIDTH * 2.25) / view.scale : ADJACENCY_LINE_WIDTH / view.scale}
+          opacity={isHighlighted ? ADJACENCY_LINE_OPACITY * 3 : lineOpacity}
         />
       );
     });
-  }, [adjacencyPairs, shouldFilter, systems, view.scale, visibleSystems]); // only runs on change of these elements due to cost
+  }, [adjacencyPairs, hoveredSystemId, shouldFilter, systems, view.scale, visibleSystems]); // only runs on change of these elements due to cost
 
   const desktopPointerHeight = 10;
   const desktopPointerWidth = 12;
@@ -411,6 +414,8 @@ export const GalaxyMapRender = ({
             highlighted={shouldFilter && isMatch}
             opacity={opacity}
             density={viewportDensity}
+            systemMouseEnter={() => setHoveredSystemId(system.id)}
+            systemMouseLeave={() => setHoveredSystemId(null)}
           />
         );
       }),
