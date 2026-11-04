@@ -82,6 +82,8 @@ interface StarSystemProps {
   highlighted?: boolean;
   opacity?: number;
   density?: number;
+  systemMouseEnter?: () => void;
+  systemMouseLeave?: () => void;
 }
 
 const StarSystem: React.FC<StarSystemProps> = ({
@@ -97,6 +99,8 @@ const StarSystem: React.FC<StarSystemProps> = ({
   highlighted = false,
   opacity = 1,
   density = 0,
+  systemMouseEnter,
+  systemMouseLeave,
 }) => {
   const baseRadius = system.isCapital ? CAPITAL_RADIUS : PLANET_RADIUS;
 
@@ -289,6 +293,22 @@ const StarSystem: React.FC<StarSystemProps> = ({
       y={centerY}
       scale={{ x: initialGroupScale, y: initialGroupScale }}
     >
+      {controlLabel && (
+        <Text
+          ref={controlLabelRef}
+          x={-CONTROL_LABEL_WIDTH / 2}
+          y={radius + CONTROL_LABEL_OFFSET}
+          width={CONTROL_LABEL_WIDTH}
+          text={controlLabel}
+          fontFamily="Roboto Mono, monospace"
+          fontSize={initialControlLabelFontSize}
+          fill="#ccc"
+          align="center"
+          opacity={circleOpacity}
+          visible={initialShowControlLabel}
+          listening={false}
+        />
+      )}
       {isInsurrectionLike && (
         <Circle
           ref={insurrectGlowRef}
@@ -384,8 +404,12 @@ const StarSystem: React.FC<StarSystemProps> = ({
             undefined,
             tooltipData.controlItems
           );
+          systemMouseEnter?.();
         }}
-        onMouseLeave={hideTooltip}
+        onMouseLeave={() => {
+          hideTooltip();
+          systemMouseLeave?.();
+        }}
         onTouchStart={(e) => {
           if (e.evt.touches.length === 1) {
             e.evt.preventDefault();
@@ -480,22 +504,6 @@ const StarSystem: React.FC<StarSystemProps> = ({
             1,
             shineEdgeColor,
           ]}
-          listening={false}
-        />
-      )}
-      {controlLabel && (
-        <Text
-          ref={controlLabelRef}
-          x={-CONTROL_LABEL_WIDTH / 2}
-          y={radius + CONTROL_LABEL_OFFSET}
-          width={CONTROL_LABEL_WIDTH}
-          text={controlLabel}
-          fontFamily="Roboto Mono, monospace"
-          fontSize={initialControlLabelFontSize}
-          fill="#ccc"
-          align="center"
-          opacity={circleOpacity}
-          visible={initialShowControlLabel}
           listening={false}
         />
       )}
