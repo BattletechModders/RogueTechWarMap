@@ -32,12 +32,16 @@ const BottomFilterPanel = ({
   factions,
   selectedFactions,
   setSelectedFactions,
+  hideAdjacency,
+  setHideAdjacency,
 }: {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   factions: string[];
   selectedFactions: string[];
   setSelectedFactions: (v: string[]) => void;
+  hideAdjacency: boolean;
+  setHideAdjacency: (v: boolean) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -171,6 +175,24 @@ const BottomFilterPanel = ({
                 margin: '0 0.25rem 0.5rem',
               }}
             />
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                margin: '0 0.25rem 0.5rem',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={hideAdjacency}
+                onChange={(e) => setHideAdjacency(e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              hide adjacency
+            </label>
           </div>
 
           <div
