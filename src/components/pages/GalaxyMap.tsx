@@ -150,6 +150,7 @@ export const GalaxyMapRender = ({
   const [searchTerm, setSearchTerm] = useState('');
   const deferredSearchTerm = useDeferredValue(searchTerm);
   const [showAllControl, setShowAllControl] = useState(false);
+  const [hideAdjacency, setHideAdjacency] = useState(false);
   const normalizedSearch = deferredSearchTerm.trim().toLowerCase();
   const shouldFilter = normalizedSearch.length >= 2;
 
@@ -532,7 +533,7 @@ export const GalaxyMapRender = ({
         </Layer>
         {/*listening is false because we want to block click and drag behaviour with the lines*/}
         <Layer listening={false}>
-          {renderedAdjacencyLines}
+          {!hideAdjacency && renderedAdjacencyLines}
         </Layer>
         <Layer>
           {renderedSystems}
@@ -734,6 +735,8 @@ export const GalaxyMapRender = ({
         factions={factionOptions}
         selectedFactions={selectedFactions}
         setSelectedFactions={setSelectedFactions}
+        hideAdjacency={hideAdjacency}
+        setHideAdjacency={setHideAdjacency}
       />
     </>
   );
